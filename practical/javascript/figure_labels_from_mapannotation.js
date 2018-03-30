@@ -14,11 +14,14 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
+
 
 // Adds labels to image panels in OMERO.figure
 // using Key Value pairs (map annotations) on the images.
 //
+// Using the browser devtools to manipulate OMERO.figure is an experimental
+// feature for developers.
+// N.B.: Never paste untrusted code into your browser console.
 // To use, open the OMERO.figure file in your browser.
 // Select the image panels you want to add labels to.
 // Open devtools in Chrome / Firefox and select Console tab.

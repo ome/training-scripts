@@ -14,11 +14,15 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
 
+// Using the browser devtools to manipulate OMERO.figure is an experimental
+// feature for developers.
+// N.B.: Never paste untrusted code into your browser console.
+//
 // Creates a Movie layout for selected images
 // with rows of panels showing time-points incremented by tIncrement
 // and wrapped into multiple rows according to columnCount.
+
 
 figureModel.panels.getSelected().forEach(p => {
     var j = p.toJSON();

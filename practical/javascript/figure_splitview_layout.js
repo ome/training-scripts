@@ -14,8 +14,11 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
 
+// Using the browser devtools to manipulate OMERO.figure is an experimental
+// feature for developers.
+// N.B.: Never paste untrusted code into your browser console.
+//
 // Creates a "Split View" layout from selected panels
 
 figureModel.getSelected().forEach(p => {
