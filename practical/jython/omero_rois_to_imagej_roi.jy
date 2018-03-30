@@ -21,7 +21,7 @@
 
 # This script loads the ROIs saved into OMERO and convert them into ImageJ ROIs
 # The rois are then added to the roi manager.
-# Use this script in the Scripting Dialog of Fiji (File > New > Script). 
+# Use this script in the Scripting Dialog of Fiji (File > New > Script).
 # Select Python as language in the Scripting Dialog.
 # Error handling is omitted to ease the reading of the script but
 # this should be added
@@ -30,12 +30,9 @@
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
 from java.lang import Long
-from java.lang import String
-import java
 
 
 # OMERO Dependencies
-import omero
 from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
@@ -47,12 +44,10 @@ from omero.gateway.model import PointData
 from omero.gateway.model import PolylineData
 from omero.gateway.model import PolygonData
 from omero.gateway.model import RectangleData
-from omero.log import Logger
 from omero.log import SimpleLogger
-from omero.model import Pixels
 
 
-from ij import IJ, ImagePlus
+from ij import IJ
 from ij.gui import Line, OvalRoi, PointRoi, PolygonRoi, Roi
 from ij.plugin.frame import RoiManager
 from ij.process import FloatPolygon
@@ -69,6 +64,7 @@ group_id = "-1"
 image_id = "1001"
 USERNAME = "username"
 PASSWORD = "password"
+
 
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id,
                     image_id):
@@ -176,6 +172,7 @@ def convert_polygon_polyline(data, type):
     format_shape(data, shape)
     return shape
 
+
 def convert_omero_rois_to_ij_rois(rois_results):
     "Convert the omero ROI into imageJ ROI"
 
@@ -186,7 +183,6 @@ def convert_omero_rois_to_ij_rois(rois_results):
             iterator = roi.getIterator()
             for s in iterator:
                 for shape in s:
-                    c = None
                     if isinstance(shape, RectangleData):
                         output.append(convert_rectangle(shape))
                     elif isinstance(shape, EllipseData):

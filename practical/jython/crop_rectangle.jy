@@ -1,6 +1,6 @@
 #!/usr/bin/env jython
 # -*- coding: utf-8 -*-
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (C) 2017 University of Dundee. All rights reserved.
 #
 #
@@ -17,25 +17,23 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 #  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # This Jython script uses ImageJ to Subtract Background.
-# Use this script in the Scripting Dialog of Fiji (File > New > Script). 
+# Use this script in the Scripting Dialog of Fiji (File > New > Script).
 # Select Python as language in the Scripting Dialog.
-# Error handling is omitted to ease the reading of the script but 
-this should be added
+# Error handling is omitted to ease the reading of the script but
+# this should be added
 # if used in production to make sure the services are closed
-# Information can be found at 
+# Information can be found at
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
 import os
-from os import path
 
 from java.lang import Long
 from java.lang import String
 from java.util import ArrayList
 from java.lang.reflect import Array
-import java
 
 # OMERO Dependencies
 from omero.gateway import Gateway
@@ -44,7 +42,6 @@ from omero.gateway import SecurityContext
 from omero.gateway.facility import BrowseFacility
 from omero.gateway.facility import DataManagerFacility
 from omero.gateway.model import DatasetData
-from omero.log import Logger
 from omero.log import SimpleLogger
 
 from ome.formats.importer import ImportConfig
@@ -53,7 +50,7 @@ from ome.formats.importer import ImportLibrary
 from ome.formats.importer import ImportCandidates
 from ome.formats.importer.cli import ErrorHandler
 from ome.formats.importer.cli import LoggingImportMonitor
-import loci.common
+
 from loci.formats.in import DefaultMetadataOptions
 from loci.formats.in import MetadataLevel
 from ij import IJ
@@ -70,6 +67,7 @@ group_id = "-1"
 dataset_id = "1022"
 USERNAME = "username"
 PASSWORD = "password"
+
 
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id):
     "Open the image using the Bio-Formats Importer"
@@ -138,8 +136,6 @@ def upload_image(path, gateway, id):
     value += str(id)
     config.target.set(value)
 
-    loci.common.DebugTools.enableLogging("DEBUG")
-
     store = config.createStore()
     reader = OMEROWrapper(config)
 
@@ -178,9 +174,9 @@ for image_id in image_ids:
 
     # Save modified image as OME-TIFF using Bio-Formats
     imp = IJ.getImage()
-    path = imp.getTitle() + ".ome.tiff"
-    print(path)
-    options = "save=" + path + " export compression=Uncompressed"
+    path_to_file = imp.getTitle() + ".ome.tiff"
+    print(path_to_file)
+    options = "save=" + path_to_file + " export compression=Uncompressed"
     IJ.run(imp, "Bio-Formats Exporter", options)
     imp.changes = False
     imp.close()
@@ -188,10 +184,10 @@ for image_id in image_ids:
     # Upload the generated OME-TIFF to OMERO
     print("uploading...")
     str2d = Array.newInstance(String, [1])
-    str2d[0] = path
+    str2d[0] = path_to_file
     success = upload_image(str2d, gateway, d.getId())
     # delete the local OME-TIFF image
-    os.remove(path)
+    os.remove(path_to_file)
     print("imported")
 
 print("Done")
