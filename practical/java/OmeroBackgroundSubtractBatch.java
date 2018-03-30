@@ -48,7 +48,7 @@ import omero.log.SimpleLogger;
 /**
  * This script uses ImageJ to Subtract Background
  * The purpose of the script is to be used in the Scripting Dialog
- * of Fiji.
+ * of Fiji (File > New > Script).
  */
 public class OmeroBgSubtractBatch {
 
@@ -94,7 +94,7 @@ public class OmeroBgSubtractBatch {
     }
 
     /**
-     * Connects to OMERO and returns a agteway instance allowing to interact
+     * Connects to OMERO and returns a gateway instance allowing to interact
      * with the server
      *
      * @return See above
