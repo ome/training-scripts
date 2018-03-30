@@ -19,6 +19,7 @@
 // Creates a Movie layout for selected images
 // with rows of panels showing time-points incremented by tIncrement
 // and wrapped into multiple rows according to columnCount.
+
 figureModel.panels.getSelected().forEach(p => {
     var j = p.toJSON();
     var left = j.x;

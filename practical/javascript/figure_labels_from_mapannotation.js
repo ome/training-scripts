@@ -26,7 +26,6 @@
 // This will load map annotations JSON for each selected image and create labels.
 // Can observe under the Network tab in devtools to see JSON loaded.
 
-
 figureModel.getSelected().forEach(function(p){
     var image_id = p.get('imageId');
     var url = WEBINDEX_URL + "api/annotations/?type=map&image=" + image_id;
