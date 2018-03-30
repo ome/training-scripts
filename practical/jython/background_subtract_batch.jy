@@ -167,13 +167,11 @@ dm = gateway.getFacility(DataManagerFacility)
 user = gateway.getLoggedInUser()
 ctx = SecurityContext(user.getGroupId())
 d = dm.createDataset(ctx, d, None)
-# Exercise 1 changes to be added here
 
 # Loop though each image
 for image_id in image_ids:
     print(""+image_id)
     open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id)
-    # section to modify cf. Exercise 2
     IJ.run("Enhance Contrast...", "saturated=0.3")
     IJ.run("Subtract Background...", "rolling=50 stack")
 
