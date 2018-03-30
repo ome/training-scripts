@@ -1,0 +1,161 @@
+#!/usr/bin/env jython
+# -*- coding: utf-8 -*-
+# -----------------------------------------------------------------------------
+#  Copyright (C) 2018 University of Dundee. All rights reserved.
+#
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
+# This script loads the thumbnails associated to images and open them in
+# ImageJ. The thumbnails are turned into greyscale images in order to be
+# viewed in ImageJ
+# The purpose of the script is to be used in the Scripting Dialog
+# of Fiji (File > New > Script). 
+# Select Python as language in the Scripting Dialog.
+# Error handling is omitted to ease the reading of the script but
+# this should be added
+# if used in production to make sure the services are closed
+# Information can be found at
+# https://docs.openmicroscopy.org/latest/omero/developers/Java.html
+
+from javax.imageio import ImageIO
+from java.awt.image import BufferedImage
+from java.io import ByteArrayInputStream
+from java.lang import Long
+from java.lang import String
+from java.util import ArrayList
+import java
+
+
+# OMERO Dependencies
+import omero
+from omero.gateway import Gateway
+from omero.gateway import LoginCredentials
+from omero.gateway import SecurityContext
+from omero.gateway.facility import BrowseFacility
+from omero.log import Logger
+from omero.log import SimpleLogger
+
+from ij import IJ, ImagePlus
+from ij.process import ByteProcessor
+
+
+# Setup
+# =====
+
+# OMERO Server details
+HOST = "outreach.openmicroscopy.org"
+PORT = 4064
+group_id = "-1"
+#  parameters to edit
+dataset_id = "1022"
+USERNAME = "username"
+PASSWORD = "password"
+
+
+def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id,
+                    image_id):
+    "Open the image using the Bio-Formats Importer"
+
+    options = ""
+    options += "location=[OMERO] open=[omero:server="
+    options += HOST
+    options += "\nuser="
+    options += USERNAME
+    options += "\nport="
+    options += str(PORT)
+    options += "\npass="
+    options += PASSWORD
+    options += "\ngroupID="
+    options += group_id
+    options += "\niid="
+    options += image_id
+    options += "]"
+    options += " windowless=true "
+    IJ.runPlugIn("loci.plugins.LociImporter", options)
+
+
+def connect_to_omero():
+    "Connect to OMERO"
+
+    credentials = LoginCredentials()
+    credentials.getServer().setHostname(HOST)
+    credentials.getServer().setPort(PORT)
+    credentials.getUser().setUsername(USERNAME.strip())
+    credentials.getUser().setPassword(PASSWORD.strip())
+    simpleLogger = SimpleLogger()
+    gateway = Gateway(simpleLogger)
+    gateway.connect(credentials)
+    return gateway
+
+
+def get_images(gateway, dataset_id):
+    "List all image's ids contained in a Dataset"
+
+    browse = gateway.getFacility(BrowseFacility)
+    user = gateway.getLoggedInUser()
+    ctx = SecurityContext(user.getGroupId())
+    ids = ArrayList(1)
+    val = Long(dataset_id)
+    ids.add(val)
+    return browse.getImagesForDatasets(ctx, ids)
+
+
+def load_thumbnail(gateway, image, size_x, size_y):
+    "Loads the thumbnail a given size for the specified image"
+    user = gateway.getLoggedInUser()
+    ctx = SecurityContext(user.getGroupId())
+    store = gateway.getThumbnailService(ctx)
+    pixels = image.getDefaultPixels()
+    store.setPixelsId(pixels.getId())
+    # retrieve a 96x96 thumbnail.
+    array = store.getThumbnail(omero.rtypes.rint(size_x),
+                               omero.rtypes.rint(size_y))
+    stream = ByteArrayInputStream(array)
+    image = ImageIO.read(stream)
+    store.close()
+    stream.close()
+    return image
+
+
+def convert_to_gray_scale(image):
+    result = BufferedImage(image.getWidth(),
+                           image.getHeight(),
+                           BufferedImage.TYPE_BYTE_GRAY)
+    g = result.getGraphics()
+    g.drawImage(image, 0, 0, None)
+    g.dispose()
+    return result
+
+
+# Connect to OMERO
+gateway = connect_to_omero()
+
+# Retrieve the images contained in the specified dataset
+images = get_images(gateway, dataset_id)
+
+# loop through the images
+for image in images:
+    print(String.valueOf(image.getId()))
+    data = load_thumbnail(gateway, image, 96, 96)
+    processor = ByteProcessor((convert_to_gray_scale(data)))
+    # Save modified image as OME-TIFF using Bio-Formats
+    name = "thumbnail_%s" % image.getId()
+    imp = ImagePlus(name, processor)
+    imp.show()
+
+
+gateway.disconnect()
