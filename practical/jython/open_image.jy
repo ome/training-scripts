@@ -31,11 +31,10 @@ import shutil
 
 from java.lang import Float, Long
 from java.lang import String
-from java.lang.reflect import Array
 import java
 
 
-# Omero Dependencies
+# OMERO Dependencies
 import omero
 from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
@@ -54,7 +53,6 @@ from ij.plugin.frame import RoiManager
 # OMERO Server details
 HOST = "outreach.openmicroscopy.org"
 PORT = 4064
-group_id = "-1"
 #  parameters to edit
 image_id = "1001"
 USERNAME = "username"

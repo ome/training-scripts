@@ -35,8 +35,7 @@ from java.lang import System
 from java.lang import Math
 from java.util import ArrayList
 from java.util import Arrays
-from java.lang.reflect import Array
-from jarray import zeros, array
+from jarray import zeros
 import java
 
 # OMERO Dependencies
