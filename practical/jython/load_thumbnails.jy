@@ -19,11 +19,10 @@
 #
 # ------------------------------------------------------------------------------
 
-# This script loads the thumbnails associated to images and open them in
+# This script loads the thumbnails associated to images and opens them in
 # ImageJ. The thumbnails are turned into greyscale images in order to be
-# viewed in ImageJ
-# The purpose of the script is to be used in the Scripting Dialog
-# of Fiji (File > New > Script). 
+# viewed in ImageJ.
+# Use this script in the Scripting Dialog of Fiji (File > New > Script). 
 # Select Python as language in the Scripting Dialog.
 # Error handling is omitted to ease the reading of the script but
 # this should be added

@@ -21,8 +21,7 @@
 
 # This script loads the ROIs saved into OMERO and convert them into ImageJ ROIs
 # The rois are then added to the roi manager.
-# The purpose of the script is to be used in the Scripting Dialog
-# of Fiji (File > New > Script). 
+# Use this script in the Scripting Dialog of Fiji (File > New > Script). 
 # Select Python as language in the Scripting Dialog.
 # Error handling is omitted to ease the reading of the script but
 # this should be added
