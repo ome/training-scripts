@@ -17,8 +17,9 @@
 #
 # ------------------------------------------------------------------------------
 
-# This script downloads a file and opens it in ImageJ using Bio-Formats exporter.
-# Use this script in the Scripting Dialog of Fiji (File > New > Script). 
+# This script downloads a file and opens it in ImageJ using Bio-Formats
+# exporter.
+# Use this script in the Scripting Dialog of Fiji (File > New > Script).
 # Select Python as language in the Scripting Dialog.
 # Error handling is omitted to ease the reading of the script but this
 # should be added if used in production to make sure the services are closed
@@ -28,22 +29,17 @@
 import tempfile
 import shutil
 
-from java.lang import Float, Long
-from java.lang import String
-import java
+from java.lang import Long
 
 
 # OMERO Dependencies
-import omero
 from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
 from omero.gateway.facility import TransferFacility
-from omero.log import Logger
 from omero.log import SimpleLogger
 
-from ij import IJ, ImagePlus
-from ij.plugin.frame import RoiManager
+from ij import IJ
 
 
 # Setup
