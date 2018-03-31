@@ -21,7 +21,6 @@ echo Starting
 PATH=/opt/omero/server/OMERO.server/bin/omero
 PASSWORD="password"
 HOST=outreach.openmicroscopy.org
-HOST=
 for i in {1..40}
 do  $PATH login -u user-$i -s $HOST -w $PASSWORD
     DatasetId=$($PATH obj new Dataset name=siRNAi-HeLa)
