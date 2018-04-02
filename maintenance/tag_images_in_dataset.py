@@ -57,7 +57,7 @@ for i in range(1, 40):
         print "Tagging image %s to tag %s" % (iid, tagid)
         try:
             updateService.saveObject(link)
-        except:
+        except Exception:
             print "Already tagged!"
 
     for i in ds.listChildren():
