@@ -21,59 +21,74 @@
 
 """
 This script changes the calibration on all images contained in a Dataset
-with a specified name ("Condensation") belonging to users user-1 through
+with a specified name belonging to users user-1 through
 user-40.
 Each calibration change is made by the owner of the Dataset and the images
 themselves.
 """
 
+import argparse
 import omero
 from omero.gateway import BlitzGateway
 from omero.model.enums import UnitsLength
 
 
-for i in range(1, 41):
+def run(host, password, target):
 
-    username = "user-%s" % i
-    password = "password"
-    host = "outreach.openmicroscopy.org"
-    print username
-    conn = BlitzGateway(username, password, host=host, port=4064)
-    conn.connect()
+    for i in range(1, 41):
 
-    params = omero.sys.ParametersI()
-    params.addString('username', username)
-    query = "from Dataset where name='Condensation' \
-             AND details.owner.omeName=:username"
-    service = conn.getQueryService()
-    dataset = service.findAllByQuery(query, params, conn.SERVICE_OPTS)
-    dataset_obj = dataset[0]
-    datasetId = dataset[0].getId().getValue()
+        username = "user-%s" % i
+        print username
+        conn = BlitzGateway(username, password, host=host, port=4064)
+        conn.connect()
 
-    print 'dataset', datasetId
-    params2 = omero.sys.ParametersI()
-    params2.addId(dataset_obj.getId())
-    query = "select l.child.id from DatasetImageLink \
-             l where l.parent.id = :id"
-    images = service.projection(query, params2, conn.SERVICE_OPTS)
+        params = omero.sys.ParametersI()
+        params.addString('username', username)
+        query = "from Dataset where name='%s' \
+             AND details.owner.omeName=:username" % target
+        service = conn.getQueryService()
+        dataset = service.findAllByQuery(query, params, conn.SERVICE_OPTS)
+        if len(dataset) == 0:
+            print "No dataset with name %s found" % target
 
-    images_obj = images[0]
+        dataset_obj = dataset[0]
+        datasetId = dataset[0].getId().getValue()
 
-    values = []
-    for k in range(0, len(images)):
+        print 'dataset', datasetId
+        params2 = omero.sys.ParametersI()
+        params2.addId(dataset_obj.getId())
+        query = "select l.child.id from DatasetImageLink \
+                 l where l.parent.id = :id"
+        images = service.projection(query, params2, conn.SERVICE_OPTS)
+        values = []
+        for k in range(0, len(images)):
 
-        image_id = images[k][0].getValue()
-        delta_t = 300
+            image_id = images[k][0].getValue()
+            delta_t = 300
 
-        image = conn.getObject("Image", image_id)
+            image = conn.getObject("Image", image_id)
 
-        u = omero.model.LengthI(0.33, UnitsLength.MICROMETER)
-        p = image.getPrimaryPixels()._obj
-        p.setPhysicalSizeX(u)
-        p.setPhysicalSizeY(u)
-        values.append(p)
+            u = omero.model.LengthI(0.33, UnitsLength.MICROMETER)
+            p = image.getPrimaryPixels()._obj
+            p.setPhysicalSizeX(u)
+            p.setPhysicalSizeY(u)
+            values.append(p)
 
-    if len(images) > 0:
-        conn.getUpdateService().saveArray(values)
+        if len(images) > 0:
+            conn.getUpdateService().saveArray(values)
 
     conn.close()
+
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('host')
+    parser.add_argument('password')
+    parser.add_argument('target')
+    args = parser.parse_args(args)
+    run(args.host, args.password, args.target)
+
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1:])
