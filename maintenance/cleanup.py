@@ -20,15 +20,19 @@
 # ------------------------------------------------------------------------------
 
 
-# This Python script
-# does delete all the ratings and rois on all the images of user-1
-# through user-40 and of trainer-1 in dataset "Condensation"
-# The script also counts the number of the images in each
-# "Condensation" dataset and
-# warns if there is any other number than 32.
-# Further the script unlinks all tags from the images
-# in each "Condensation" dataset other than the tag
-# with id 4236
+"""
+This script first finds and lists, then cleans up objects
+(ROIs, Ratings and Tags) attached to all images contained in a Dataset with a
+specified name ("Condensation") belonging to users user-1 through user-40
+and to "trainer-1".
+The listing is done by each user on their own data.
+The information is collected and the final cleanup is done by an
+administrator ("trainer-1"), who makes sure that also objects linked to images
+by other users will get unlinked or deleted.
+The cleanup of ROIs and Ratings means deletion of these.
+The cleanup of Tags just deletes the link between the Tag and the image,
+thus removing the Tag, but not deleting it.
+"""
 
 
 import omero
@@ -119,6 +123,7 @@ def delete_objs(username, password, host):
         conn.deleteObjects("LongAnnotation", obj_ids_rating, deleteAnns=True,
                            deleteChildren=False, wait=True)
     conn.close()
+
 
 password = "password"
 host = "outreach.openmicroscopy.org"

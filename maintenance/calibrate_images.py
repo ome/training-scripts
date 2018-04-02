@@ -19,13 +19,20 @@
 #
 # ------------------------------------------------------------------------------
 
+"""
+This script changes the calibration on all images contained in a Dataset
+with a specified name ("Condensation") belonging to users user-1 through
+user-40.
+Each calibration change is made by the owner of the Dataset and the images
+themselves.
+"""
 
 import omero
 from omero.gateway import BlitzGateway
 from omero.model.enums import UnitsLength
 
 
-for i in range(2, 41):
+for i in range(1, 41):
 
     username = "user-%s" % i
     password = "password"

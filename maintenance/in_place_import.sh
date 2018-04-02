@@ -17,6 +17,11 @@
 #
 # ------------------------------------------------------------------------------
 
+# This script imports in-place data for 40 different users, 
+# user-1 through user-40 into a target dataset. 
+# The data are being imported by the users themselves, 
+# i.e. after import each of the 40 users has their own batch of data.
+
 echo Starting
 PATH=/opt/omero/server/OMERO.server/bin/omero
 PASSWORD="password"

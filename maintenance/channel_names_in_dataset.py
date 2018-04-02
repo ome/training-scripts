@@ -20,6 +20,14 @@
 # ------------------------------------------------------------------------------
 
 
+"""
+This script changes the channel names on all images contained in a Dataset
+with a specified name ("Condensation") belonging to users user-1 through
+user-40.
+Each calibration change is made by the owner of the Dataset and the images
+themselves.
+"""
+
 from omero.gateway import BlitzGateway
 
 # Go through all users in the range,
@@ -27,7 +35,7 @@ from omero.gateway import BlitzGateway
 
 dataset_name = "Condensation"
 
-for user_number in range(38, 40):
+for user_number in range(1, 41):
     username = "user-%s" % user_number
     password = "password"
     host = "outreach.openmicroscopy.org"
