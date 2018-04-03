@@ -33,13 +33,13 @@ from omero.gateway import BlitzGateway
 from omero.model.enums import UnitsLength
 
 
-def run(host, password, target):
+def run(password, target, host, port):
 
     for i in range(1, 41):
 
         username = "user-%s" % i
         print username
-        conn = BlitzGateway(username, password, host=host, port=4064)
+        conn = BlitzGateway(username, password, host=host, port=port)
         conn.connect()
 
         params = omero.sys.ParametersI()
@@ -82,11 +82,13 @@ def run(host, password, target):
 
 def main(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('host')
     parser.add_argument('password')
     parser.add_argument('target')
+    parser.add_argument('--server', default="outreach.openmicroscopy.org",
+                        help="OMERO server hostname")
+    parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.host, args.password, args.target)
+    run(args.password, args.target, args.server, args.port)
 
 
 if __name__ == '__main__':
