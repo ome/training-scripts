@@ -19,50 +19,88 @@
 #
 # ------------------------------------------------------------------------------
 
-
-from omero.gateway import BlitzGateway
+import argparse
 import omero
+from omero.gateway import BlitzGateway
+from omero.model import ImageAnnotationLinkI
+from omero.model import ImageI
+from omero.model import TagAnnotationI
 
-# Go through all users in the range,
-# Adding a single existing tag to all images in the named Dataset
-# filtering images by name
-
-dataset_name = "Condensation"
 images_to_tag = ["A1.pattern1.tif",
                  "B12.pattern1.tif",
                  "B12.pattern2.tif",
                  "B12.pattern3.tif",
                  "C4.pattern9.tif",
-                 "C4.pattern.tif"]
-tag = 4236
+                 "C4.pattern.tif",
+                 "CFPNEAT01_R3D.dv"]
 
-for i in range(1, 40):
 
-    username = "user-%s" % i
-    password = "password"
-    host = "outreach.openmicroscopy.org"
-    conn = BlitzGateway(username, password, host=host, port=4064)
+def run(password, target, tag, host, port):
 
-    updateService = conn.getUpdateService()
+    for i in range(1, 40):
 
-    ds = conn.getObject("Dataset", attributes={'name': dataset_name},
-                        opts={'owner': conn.getUserId()})
-    print "Dataset", ds
-
-    def link_tag(iid, tagid):
-
-        link = omero.model.ImageAnnotationLinkI()
-        link.parent = omero.model.ImageI(iid, False)
-        link.child = omero.model.TagAnnotationI(tagid, False)
-        print "Tagging image %s to tag %s" % (iid, tagid)
+        username = "user-%s" % i
+        conn = BlitzGateway(username, password, host=host, port=4064)
         try:
-            updateService.saveObject(link)
-        except Exception:
-            print "Already tagged!"
+            conn.connect()
+            updateService = conn.getUpdateService()
+            ds = conn.getObject("Dataset", attributes={'name': target},
+                                opts={'owner': conn.getUserId()})
+            if ds is None:
+                print "No dataset with name %s found" % target
+                continue
+            params = omero.sys.ParametersI()
+            params.addString('username', "trainer-1")
+            query = "from TagAnnotation where textvalue='%s' \
+                    AND details.owner.omeName=:username" % tag
+            query_service = conn.getQueryService()
+            tags = query_service.findAllByQuery(query, params,
+                                                conn.SERVICE_OPTS)
+            if len(tags) == 0:
+                print "No tag with name %s found" % tag
+                continue
+            tag_id = tags[0].id.getValue()
+            print tag_id
+            links = []
+            for image in ds.listChildren():
+                name = image.getName()
+                if name in images_to_tag:
+                    # Check first that the image is not tagged
+                    params = omero.sys.ParametersI()
+                    params.addLong('parent', image.id)
+                    params.addLong('child', tag_id)
+                    query = "select link from ImageAnnotationLink as link \
+                             where link.parent.id=:parent \
+                             AND link.child.id=:child"
+                    values = query_service.findAllByQuery(query, params,
+                                                          conn.SERVICE_OPTS)
+                    if len(values) == 0:
+                        link = ImageAnnotationLinkI()
+                        link.parent = ImageI(image.id, False)
+                        link.child = TagAnnotationI(tag_id, False)
+                        links.append(link)
+                    else:
+                        print "Tag %s already linked to %s" % (tag, name)
+            if len(links) > 0:
+                updateService.saveArray(links)
+        except Exception as exc:
+            print "Error when tagging the images: %s" % str(exc)
+        finally:
+            conn.close()
 
-    for i in ds.listChildren():
-        if i.getName() in images_to_tag:
-            link_tag(i.id, tag)
 
-    # Close connection for each user when done
-    conn.close()
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('password')
+    parser.add_argument('target')
+    parser.add_argument('tag')
+    parser.add_argument('--server', default="outreach.openmicroscopy.org",
+                        help="OMERO server hostname")
+    parser.add_argument('--port', default=4064, help="OMERO server port")
+    args = parser.parse_args(args)
+    run(args.password, args.target, args.tag, args.server, args.port)
+
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1:])

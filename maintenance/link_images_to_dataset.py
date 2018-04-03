@@ -20,39 +20,68 @@
 # ------------------------------------------------------------------------------
 
 
+"""
+This script creates a new dataset and link all images with a given name
+to it for users user-1 through user-40.
+"""
+
+import argparse
 import omero
 from omero.gateway import BlitzGateway
 
 
-for i in range(1, 3):
+def run(password, dataset_name, target, host, port):
 
-    username = "user-%s" % i
-    password = "password"
-    host = "outreach.openmicroscopy.org"
-    conn = BlitzGateway(username, password, host=host, port=4064)
-    conn.connect()
+    for i in range(1, 41):
+        username = "user-%s" % i
 
-    params = omero.sys.ParametersI()
-    params.addString('username', username)
-    query = "from Image where name='P-TRE_10_R3D_D3D.dv' \
-            AND details.owner.omeName=:username"
-    query_service = conn.getQueryService()
-    image = query_service.findAllByQuery(query, params, conn.SERVICE_OPTS)
+        conn = BlitzGateway(username, password, host=host, port=port)
+        try:
+            conn.connect()
 
-    image_id = image[0].getId().getValue()
+            params = omero.sys.ParametersI()
+            params.addString('username', username)
+            query = "from Image where name='%s' \
+                    AND details.owner.omeName=:username" % target
+            query_service = conn.getQueryService()
+            images = query_service.findAllByQuery(query, params,
+                                                  conn.SERVICE_OPTS)
 
-    print 'image', image[0].getName().getValue()
-    print 'id', image_id
+            if len(images) == 0:
+                print "No images with name %s found" % target
+                continue
+            image_id = images[0].getId().getValue()
 
-    dataset_obj = omero.model.DatasetI()
-    dataset_obj.setName(omero.rtypes.rstring("Fiji-batch"))
-    dataset_obj = conn.getUpdateService().saveAndReturnObject(dataset_obj)
-    dataset_id = dataset_obj.getId().getValue()
-    print username, dataset_id
+            print 'id', image_id
 
-    link = omero.model.DatasetImageLinkI()
-    link.setParent(dataset_obj)
-    link.setChild(omero.model.ImageI(image_id, False))
-    conn.getUpdateService().saveObject(link)
+            dataset = omero.model.DatasetI()
+            dataset.setName(omero.rtypes.rstring(dataset_name))
+            dataset = conn.getUpdateService().saveAndReturnObject(dataset)
+            dataset_id = dataset.getId().getValue()
+            print username, dataset_id
 
-    conn.close()
+            link = omero.model.DatasetImageLinkI()
+            link.setParent(dataset)
+            link.setChild(omero.model.ImageI(image_id, False))
+            conn.getUpdateService().saveObject(link)
+        except Exception as exc:
+            print "Error while linking images: %s" % str(exc)
+        finally:
+            conn.close()
+
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('password')
+    parser.add_argument('dataset')
+    parser.add_argument('target')
+    parser.add_argument('--server', default="outreach.openmicroscopy.org",
+                        help="OMERO server hostname")
+    parser.add_argument('--port', default=4064, help="OMERO server port")
+    args = parser.parse_args(args)
+    run(args.password, args.dataset, args.target, args.server, args.port)
+
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1:])

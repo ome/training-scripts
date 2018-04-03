@@ -22,32 +22,53 @@
 
 """
 This script changes the channel names on all images contained in a Dataset
-with a specified name ("Condensation") belonging to users user-1 through
+with a specified name belonging to users user-1 through
 user-40.
 Each calibration change is made by the owner of the Dataset and the images
 themselves.
 """
 
+import argparse
 from omero.gateway import BlitzGateway
 
-# Go through all users in the range,
-# Set channel names for all images in named Dataset
 
-dataset_name = "Condensation"
+def run(password, target, host, port):
 
-for user_number in range(1, 41):
-    username = "user-%s" % user_number
-    password = "password"
-    host = "outreach.openmicroscopy.org"
-    conn = BlitzGateway(username, password, host=host, port=4064)
-    conn.connect()
+    for user_number in range(1, 41):
+        username = "user-%s" % user_number
 
-    ds = conn.getObject("Dataset", attributes={'name': dataset_name},
-                        opts={'owner': conn.getUserId()})
-    print "Dataset", ds
+        conn = BlitzGateway(username, password, host=host, port=port)
+        try:
+            conn.connect()
 
-    conn.setChannelNames("Dataset", [ds.getId()],
-                         {1: "H2B", 2: "nuclear lamina"})
+            ds = conn.getObject("Dataset", attributes={'name': target},
+                                opts={'owner': conn.getUserId()})
+            if ds is None:
+                print "No dataset with name %s found" % target
+                continue
 
-    # Close connection for each user when done
-    conn.close()
+            print "Dataset", ds.getId()
+
+            conn.setChannelNames("Dataset", [ds.getId()],
+                                 {1: "H2B", 2: "nuclear lamina"})
+        except Exception as exc:
+            print "Error while changing the channel names: %s" % str(exc)
+        finally:
+            # Close connection for each user when done
+            conn.close()
+
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('password')
+    parser.add_argument('target')
+    parser.add_argument('--server', default="outreach.openmicroscopy.org",
+                        help="OMERO server hostname")
+    parser.add_argument('--port', default=4064, help="OMERO server port")
+    args = parser.parse_args(args)
+    run(args.password, args.target, args.server, args.port)
+
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1:])

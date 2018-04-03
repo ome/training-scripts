@@ -18,41 +18,63 @@
 #
 # ------------------------------------------------------------------------------
 
+"""
+This script creates a new project and link it to the specified Dataset
+for users user-1 through user-40.
+"""
 
+import argparse
 from omero.gateway import BlitzGateway
 from omero.model import DatasetI
-from omero.model import DatasetImageLinkI
-from omero.model import ImageI
+from omero.model import ProjectDatasetLinkI
 from omero.model import ProjectI
 from omero.rtypes import rstring
 
-# Go through all users in the range,
-# Create a new project and link it to a specified dat
 
-project_name = "images"
-dataset_name = ""
+def run(password, project_name, dataset_name, host, port):
 
-for user_number in range(3, 40):
-    username = "user-%s" % user_number
-    password = "password"
-    host = "outreach.openmicroscopy.org"
-    conn = BlitzGateway(username, password, host=host, port=4064)
-    conn.connect()
+    for user_number in range(1, 41):
+        username = "user-%s" % user_number
 
-    project = ProjectI()
-    project.setName(rstring(project_name))
-    update_service = conn.getUpdateService()
-    project = update_service.saveAndReturn(project)
+        conn = BlitzGateway(username, password, host=host, port=port)
+        try:
+            conn.connect()
+            project = ProjectI()
+            project.setName(rstring(project_name))
+            update_service = conn.getUpdateService()
+            project = update_service.saveAndReturnObject(project)
 
-    ds = conn.getObject("Dataset", attributes={'name': dataset_name},
-                        opts={'owner': conn.getUserId()})
-    dataset_id = ds.getId().getValue()
-    print username, dataset_id
+            ds = conn.getObject("Dataset", attributes={'name': dataset_name},
+                                opts={'owner': conn.getUserId()})
+            if ds is None:
+                print "No dataset with name %s found" % dataset_name
+                continue
 
-    link = ProjectDatasetLinkI()
-    link.setParent(ImageI(project.getId().getValue(), False))
-    link.setChild(DatasetI(dataset_id, False))
-    conn.getUpdateService().saveObject(link)
+            dataset_id = ds.getId()
+            print username, dataset_id
 
-    # Close connection for each user when done
-    conn.close()
+            link = ProjectDatasetLinkI()
+            link.setParent(ProjectI(project.getId().getValue(), False))
+            link.setChild(DatasetI(dataset_id, False))
+            conn.getUpdateService().saveObject(link)
+        except Exception as exc:
+            print "Error while creating project: %s" % str(exc)
+        finally:
+            conn.close()
+
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('password')
+    parser.add_argument('project')
+    parser.add_argument('dataset')
+    parser.add_argument('--server', default="outreach.openmicroscopy.org",
+                        help="OMERO server hostname")
+    parser.add_argument('--port', default=4064, help="OMERO server port")
+    args = parser.parse_args(args)
+    run(args.password, args.project, args.dataset, args.server, args.port)
+
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1:])

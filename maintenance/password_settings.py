@@ -19,18 +19,41 @@
 #
 # ------------------------------------------------------------------------------
 
+"""
+This script changes the password for users user-1 through user-40.
+"""
+
+import argparse
 import omero
+from omero.rtypes import rstring
 
-password = "password"
-client = omero.client('outreach.openmicroscopy.org')
-session = client.createSession('trainer-1', password)
 
-client.sf.setSecurityPassword(password)
-admin = session.getAdminService()
+def run(password, new_password, host, port):
 
-for i in range(1, 41):
-    print 'user-%s' % i
-    admin.changeUserPassword('user-%s' % i, omero.rtypes.rstring(password))
+    client = omero.client(host, port)
+    session = client.createSession('trainer-1', password)
+    client.sf.setSecurityPassword(password)
+    admin = session.getAdminService()
 
-print 'Done'
-client.closeSession()
+    for i in range(1, 41):
+        user = 'user-%s' % i
+        print user
+        admin.changeUserPassword(user, rstring(new_password))
+
+    client.closeSession()
+
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('password')
+    parser.add_argument('newpassword')
+    parser.add_argument('--server', default="outreach.openmicroscopy.org",
+                        help="OMERO server hostname")
+    parser.add_argument('--port', default=4064, help="OMERO server port")
+    args = parser.parse_args(args)
+    run(args.password, newpassword, args.server, args.port)
+
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1:])

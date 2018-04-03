@@ -40,46 +40,49 @@ def run(password, target, host, port):
         username = "user-%s" % i
         print username
         conn = BlitzGateway(username, password, host=host, port=port)
-        conn.connect()
+        try:
+            conn.connect()
 
-        params = omero.sys.ParametersI()
-        params.addString('username', username)
-        query = "from Dataset where name='%s' \
-             AND details.owner.omeName=:username" % target
-        service = conn.getQueryService()
-        dataset = service.findAllByQuery(query, params, conn.SERVICE_OPTS)
-        print len(dataset)
-        if len(dataset) == 0:
-            print "No dataset with name %s found" % target
-            continue
+            params = omero.sys.ParametersI()
+            params.addString('username', username)
+            query = "from Dataset where name='%s' \
+                     AND details.owner.omeName=:username" % target
+            service = conn.getQueryService()
+            dataset = service.findAllByQuery(query, params, conn.SERVICE_OPTS)
 
-        dataset_obj = dataset[0]
-        datasetId = dataset[0].getId().getValue()
+            if len(dataset) == 0:
+                print "No dataset with name %s found" % target
+                continue
 
-        print 'dataset', datasetId
-        params2 = omero.sys.ParametersI()
-        params2.addId(dataset_obj.getId())
-        query = "select l.child.id from DatasetImageLink \
-                 l where l.parent.id = :id"
-        images = service.projection(query, params2, conn.SERVICE_OPTS)
-        values = []
-        for k in range(0, len(images)):
+            dataset_obj = dataset[0]
+            datasetId = dataset[0].getId().getValue()
 
-            image_id = images[k][0].getValue()
-            delta_t = 300
+            print 'dataset', datasetId
+            params2 = omero.sys.ParametersI()
+            params2.addId(dataset_obj.getId())
+            query = "select l.child.id from DatasetImageLink \
+                     l where l.parent.id = :id"
+            images = service.projection(query, params2, conn.SERVICE_OPTS)
+            values = []
+            for k in range(0, len(images)):
 
-            image = conn.getObject("Image", image_id)
+                image_id = images[k][0].getValue()
+                delta_t = 300
 
-            u = omero.model.LengthI(0.33, UnitsLength.MICROMETER)
-            p = image.getPrimaryPixels()._obj
-            p.setPhysicalSizeX(u)
-            p.setPhysicalSizeY(u)
-            values.append(p)
+                image = conn.getObject("Image", image_id)
 
-        if len(images) > 0:
-            conn.getUpdateService().saveArray(values)
+                u = omero.model.LengthI(0.33, UnitsLength.MICROMETER)
+                p = image.getPrimaryPixels()._obj
+                p.setPhysicalSizeX(u)
+                p.setPhysicalSizeY(u)
+                values.append(p)
 
-    conn.close()
+            if len(images) > 0:
+                conn.getUpdateService().saveArray(values)
+        except Exception as exc:
+            print "Error during calibration: %s" % str(exc)
+        finally:
+            conn.close()
 
 
 def main(args):
