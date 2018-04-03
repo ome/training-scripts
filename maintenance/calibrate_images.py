@@ -48,8 +48,10 @@ def run(password, target, host, port):
              AND details.owner.omeName=:username" % target
         service = conn.getQueryService()
         dataset = service.findAllByQuery(query, params, conn.SERVICE_OPTS)
+        print len(dataset)
         if len(dataset) == 0:
             print "No dataset with name %s found" % target
+            continue
 
         dataset_obj = dataset[0]
         datasetId = dataset[0].getId().getValue()
