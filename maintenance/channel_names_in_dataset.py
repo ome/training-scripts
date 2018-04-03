@@ -22,8 +22,7 @@
 
 """
 This script changes the channel names on all images contained in a Dataset
-with a specified name belonging to users user-1 through
-user-40.
+with a specified name belonging to users user-1 through user-40.
 Each calibration change is made by the owner of the Dataset and the images
 themselves.
 """

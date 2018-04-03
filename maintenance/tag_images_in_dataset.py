@@ -19,6 +19,12 @@
 #
 # ------------------------------------------------------------------------------
 
+
+"""
+This script tags a set of images contained in the specified dataset.
+The dataset and the tag are specified as a parameter.
+"""
+
 import argparse
 import omero
 from omero.gateway import BlitzGateway
