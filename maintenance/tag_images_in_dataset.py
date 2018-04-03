@@ -37,8 +37,7 @@ images_to_tag = ["A1.pattern1.tif",
                  "B12.pattern2.tif",
                  "B12.pattern3.tif",
                  "C4.pattern9.tif",
-                 "C4.pattern.tif",
-                 "CFPNEAT01_R3D.dv"]
+                 "C4.pattern.tif"]
 
 
 def run(password, target, tag, host, port):
