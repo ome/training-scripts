@@ -21,7 +21,7 @@
 
 """
 This script changes the password for users user-1 through user-40.
-The change must be done by an admin e.g. trainer-1
+The change must be done by an admin e.g. trainer-1.
 """
 
 import argparse
