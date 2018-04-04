@@ -40,11 +40,12 @@ images_to_tag = ["A1.pattern1.tif",
                  "C4.pattern.tif"]
 
 
-def run(password, target, tag, host, port):
+def run(password, admin_name, target, tag, host, port):
 
-    for i in range(1, 40):
+    for i in range(1, 41):
 
         username = "user-%s" % i
+        print username
         conn = BlitzGateway(username, password, host=host, port=port)
         try:
             conn.connect()
@@ -55,7 +56,7 @@ def run(password, target, tag, host, port):
                 print "No dataset with name %s found" % target
                 continue
             params = omero.sys.ParametersI()
-            params.addString('username', "trainer-1")
+            params.addString('username', admin_name)
             query = "from TagAnnotation where textvalue='%s' \
                     AND details.owner.omeName=:username" % tag
             query_service = conn.getQueryService()
@@ -99,11 +100,13 @@ def main(args):
     parser.add_argument('password')
     parser.add_argument('target')
     parser.add_argument('tag')
+    parser.add_argument('--name', default="trainer-1",
+                        help="The username of the person cleaning up")
     parser.add_argument('--server', default="outreach.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.password, args.target, args.tag, args.server, args.port)
+    run(args.password, args.name, args.target, args.tag, args.server, args.port)
 
 
 if __name__ == '__main__':
