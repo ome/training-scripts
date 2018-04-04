@@ -127,18 +127,24 @@ def list_objs(conn, username, target):
 
 
 def delete_objs(conn):
-    print 'deleting', len(obj_ids_taglinks), ' tag links'
     if len(obj_ids_taglinks) > 0:
+        print 'deleting', len(obj_ids_taglinks), ' tag links'
         conn.deleteObjects("ImageAnnotationLink", obj_ids_taglinks,
                            deleteAnns=True, deleteChildren=False, wait=True)
-    print 'deleting %s rois' % len(obj_ids_rois)
+    else:
+        print 'No tag links to delete'
     if len(obj_ids_rois) > 0:
+        print 'deleting %s ROIs' % len(obj_ids_rois)
         conn.deleteObjects("Roi", obj_ids_rois, deleteAnns=True,
                            deleteChildren=True, wait=True)
-    print 'deleting %s ratings' % len(obj_ids_rating)
+    else:
+        print 'No ROIs to delete'
     if len(obj_ids_rating) > 0:
+        print 'deleting %s ratings' % len(obj_ids_rating)
         conn.deleteObjects("LongAnnotation", obj_ids_rating, deleteAnns=True,
                            deleteChildren=False, wait=True)
+    else:
+        print 'No ratings to delete'
 
 
 def run(password, admin_name, target, image, host, port):
