@@ -53,15 +53,17 @@ def cut_link(conn, username, image):
     query = "from Image where name='%s' \
             AND details.owner.omeName=:username" % image
     query_service = conn.getQueryService()
-    ctx = {'omero.group': '-1'}
-    images = query_service.findAllByQuery(query, params, ctx)
+    conn.SERVICE_OPTS.setOmeroGroup("-1")
+    images = query_service.findAllByQuery(query, params,
+                                          conn.SERVICE_OPTS)
     if len(images) == 0:
         print "No image with name %s found" % image
         return
     params = omero.sys.ParametersI()
     params.addLong('imageId', images[0].getId().getValue())
     query = "from DatasetImageLink where child.id=:imageId"
-    links = conn.getQueryService().findAllByQuery(query, params, ctx)
+    links = conn.getQueryService().findAllByQuery(query, params,
+                                                  conn.SERVICE_OPTS)
     if len(links) > 0:
         ids = []
         for link in links:
@@ -79,8 +81,9 @@ def list_objs(conn, username, target):
     query = "from Dataset where name='%s' \
              AND details.owner.omeName=:username" % target
     query_service = conn.getQueryService()
-    ctx = {'omero.group': '-1'}
-    datasets = query_service.findAllByQuery(query, params, ctx)
+    conn.SERVICE_OPTS.setOmeroGroup("-1")
+    datasets = query_service.findAllByQuery(query, params,
+                                            conn.SERVICE_OPTS)
     if len(datasets) == 0:
         print "No dataset with name %s found" % target
         return
@@ -90,15 +93,15 @@ def list_objs(conn, username, target):
     roi_service = conn.getRoiService()
     for image in dataset.listChildren():
         result = roi_service.findByImage(image.getId(), None)
+        if result is not None:
+            for roi in result.rois:
+                roi_id = roi.getId().getValue()
+                obj_ids_rois.append(roi_id)
 
-        for roi in result.rois:
-            roi_id = roi.getId().getValue()
-            obj_ids_rois.append(roi_id)
-
-        if not len(result.rois) == 0:
-            value = 'Will delete %s ROIs on image \
-                    %s of %s' % (len(result.rois), image.getId(), username)
-            print value
+            if not len(result.rois) == 0:
+                value = 'Will delete %s ROIs on image %s of \
+                         %s' % (len(result.rois), image.getId(), username)
+                print value
 
         for ann in image.listAnnotations():
             if ann.OMERO_TYPE == omero.model.LongAnnotationI:
@@ -112,7 +115,8 @@ def list_objs(conn, username, target):
                 params.addId(ann.getId())
                 query = "select l.id from ImageAnnotationLink as \
                         l where l.parent.id=:imageId AND l.child.id=:id"
-                linkIds = query_service.projection(query, params, ctx)
+                linkIds = query_service.projection(query, params,
+                                                   conn.SERVICE_OPTS)
                 for linkId in linkIds:
                     obj_ids_taglinks.append(linkId[0].getValue())
                     value = 'Will delete link %s on image \
