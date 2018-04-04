@@ -24,11 +24,11 @@
 This script first finds and lists, then cleans up objects
 (ROIs, Ratings and Tags) attached to all images contained in a Dataset with a
 specified name belonging to users user-1 through user-40
-and to "trainer-1".
+and to the specified administrator.
 The listing is done by each user on their own data.
 The information is collected and the final cleanup is done by an
-administrator e.g. "trainer-1", who makes sure that also objects linked to images
-by other users will get unlinked or deleted.
+administrator e.g. "trainer-1", who makes sure that also objects linked to
+images by other users will get unlinked or deleted.
 The cleanup of ROIs and Ratings means deletion of these.
 The cleanup of Tags just deletes the link between the Tag and the image,
 thus removing the Tag, but not deleting it.

@@ -49,7 +49,7 @@ def main(args):
     parser.add_argument('password')
     parser.add_argument('newpassword')
     parser.add_argument('--name', default="trainer-1",
-                        help="The username of the person cleaning up")
+                        help="The username of the person changing the passwords")
     parser.add_argument('--server', default="outreach.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
