@@ -35,7 +35,7 @@ def run(password, target, host, port):
 
     for user_number in range(1, 41):
         username = "user-%s" % user_number
-
+        print username
         conn = BlitzGateway(username, password, host=host, port=port)
         try:
             conn.connect()
