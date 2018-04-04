@@ -20,8 +20,8 @@
 # ------------------------------------------------------------------------------
 
 """
-This script creates a new dataset and link all images with a given name
-to it for users user-1 through user-40.
+This script sets the timestamps for all images within a specified dataset
+for users user-1 through user-40
 """
 
 import argparse

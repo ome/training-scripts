@@ -19,7 +19,7 @@
 # ------------------------------------------------------------------------------
 
 """
-This script creates a new project and link it to the specified Dataset
+This script creates a new project and links it to the specified Dataset
 for users user-1 through user-40.
 """
 

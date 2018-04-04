@@ -27,8 +27,8 @@ the features in the images in the list images_kvp_order.
 The script could be simplified by adding the Key-Value Pairs randomly to the
 images in the Dataset.
 """
-import argparse
 
+import argparse
 import omero
 from omero.gateway import BlitzGateway
 

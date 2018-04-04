@@ -21,7 +21,7 @@
 
 
 """
-This script creates a new dataset and link all images with a given name
+This script creates a new dataset and links all images with a given name
 to it for users user-1 through user-40.
 """
 
