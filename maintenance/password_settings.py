@@ -21,6 +21,7 @@
 
 """
 This script changes the password for users user-1 through user-40.
+The change must be done by an admin e.g. trainer-1
 """
 
 import argparse
@@ -28,10 +29,10 @@ import omero
 from omero.rtypes import rstring
 
 
-def run(password, new_password, host, port):
+def run(password, new_password, admin_name, host, port):
 
     client = omero.client(host, port)
-    session = client.createSession('trainer-1', password)
+    session = client.createSession(admin_name, password)
     client.sf.setSecurityPassword(password)
     admin = session.getAdminService()
 
@@ -47,11 +48,13 @@ def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('password')
     parser.add_argument('newpassword')
+    parser.add_argument('--name', default="trainer-1",
+                        help="The username of the person cleaning up")
     parser.add_argument('--server', default="outreach.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.password, args.newpassword, args.server, args.port)
+    run(args.password, args.newpassword, args.name, args.server, args.port)
 
 
 if __name__ == '__main__':
