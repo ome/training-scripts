@@ -46,6 +46,9 @@ obj_ids_rois = []
 
 
 def cut_link(conn, username, image):
+    if image is None:
+        print "No image to handle"
+        return
     params = omero.sys.ParametersI()
     params.addString('username', username)
     query = "from Image where name='%s' \
@@ -55,6 +58,7 @@ def cut_link(conn, username, image):
                                           conn.SERVICE_OPTS)
     if len(images) == 0:
         print "No image with name %s found" % image
+        return
     params = omero.sys.ParametersI()
     params.addLong('imageId', images[0].getId().getValue())
     query = "from DatasetImageLink where child.id=:imageId"
@@ -69,7 +73,9 @@ def cut_link(conn, username, image):
 
 
 def list_objs(conn, username, target):
-
+    if target is None:
+        print "No dataset to handle"
+        return
     params = omero.sys.ParametersI()
     params.addString('username', username)
     query = "from Dataset where name='%s' \
@@ -78,6 +84,7 @@ def list_objs(conn, username, target):
     datasets = query_service.findAllByQuery(query, params, conn.SERVICE_OPTS)
     if len(datasets) == 0:
         print "No dataset with name %s found" % target
+        return
 
     dataset_id = datasets[0].getId().getValue()
     dataset = conn.getObject("Dataset", dataset_id)
@@ -112,8 +119,8 @@ def list_objs(conn, username, target):
                     obj_ids_taglinks.append(linkId[0].getValue())
                     value = 'Will delete link %s on image \
                             %s of tag %s of %s' % (linkId[0].getValue(),
-                                                 image.getId(),
-                                                 ann.getId(), username)
+                                                   image.getId(),
+                                                   ann.getId(), username)
                     print value
 
 
@@ -132,26 +139,19 @@ def delete_objs(conn):
                            deleteChildren=False, wait=True)
 
 
-def run(password, target, image, host, port):
-   
-    for i in range(1, 41):
-        username = "user-%s" % i
-        try:
-            conn = BlitzGateway(username, password, host=host, port=port)
-            conn.connect()
+def run(password, admin_name, target, image, host, port):
+
+    try:
+        conn = BlitzGateway(admin_name, password, host=host, port=port)
+        conn.connect()
+        list_objs(conn, admin_name, target)
+        cut_link(conn, admin_name, image)
+        for i in range(1, 41):
+            username = "user-%s" % i
+            print username
             list_objs(conn, username, target)
             cut_link(conn, username, image)
-        except Exception as exc:
-            print "Error while cleaning the objects: %s" % str(exc)
-        finally:
-            conn.close()
 
-    trainer_name = "trainer-1"
-    try:
-        conn = BlitzGateway(trainer_name, password, host=host, port=port)
-        conn.connect()
-        list_objs(conn, trainer_name, target)
-        cut_link(conn, trainer_name, image)
         delete_objs(conn)
     except Exception as exc:
         print "Error while cleaning the objects: %s" % str(exc)
@@ -161,14 +161,22 @@ def run(password, target, image, host, port):
 
 def main(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('password')
-    parser.add_argument('dataset')
-    parser.add_argument('image')
+    parser.add_argument('password',
+                        help="The password of the person cleaning up")
+    parser.add_argument('--name', default="trainer-1",
+                        help="The username of the person cleaning up")
+    parser.add_argument('--dataset', default=None,
+                        help="Remove ROIs, Rating, Annotations \
+                        from the images contained in the dataset")
+    parser.add_argument('--image', default=None,
+                        help="Delete the links between the image \
+                        and the dataset(s) containing it.")
     parser.add_argument('--server', default="outreach.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.password, args.dataset, args.image, args.server, args.port)
+    run(args.password, args.name, args.dataset, args.image, args.server,
+        args.port)
 
 
 if __name__ == '__main__':
