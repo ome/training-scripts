@@ -45,7 +45,7 @@ def run(password, target, tag, host, port):
     for i in range(1, 40):
 
         username = "user-%s" % i
-        conn = BlitzGateway(username, password, host=host, port=4064)
+        conn = BlitzGateway(username, password, host=host, port=port)
         try:
             conn.connect()
             updateService = conn.getUpdateService()
