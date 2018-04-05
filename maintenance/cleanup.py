@@ -53,7 +53,6 @@ def cut_link(conn, username, image):
     query = "from Image where name='%s' \
             AND details.owner.omeName=:username" % image
     query_service = conn.getQueryService()
-    conn.SERVICE_OPTS.setOmeroGroup("-1")
     images = query_service.findAllByQuery(query, params,
                                           conn.SERVICE_OPTS)
     if len(images) == 0:
@@ -81,7 +80,6 @@ def list_objs(conn, username, target):
     query = "from Dataset where name='%s' \
              AND details.owner.omeName=:username" % target
     query_service = conn.getQueryService()
-    conn.SERVICE_OPTS.setOmeroGroup("-1")
     datasets = query_service.findAllByQuery(query, params,
                                             conn.SERVICE_OPTS)
     if len(datasets) == 0:
@@ -92,23 +90,23 @@ def list_objs(conn, username, target):
     dataset = conn.getObject("Dataset", dataset_id)
     roi_service = conn.getRoiService()
     for image in dataset.listChildren():
-        result = roi_service.findByImage(image.getId(), None)
+        print image.getId()
+        result = roi_service.findByImage(image.getId(), None,
+                                         conn.SERVICE_OPTS)
         if result is not None:
             for roi in result.rois:
                 roi_id = roi.getId().getValue()
                 obj_ids_rois.append(roi_id)
 
             if not len(result.rois) == 0:
-                value = 'Will delete %s ROIs on image %s of \
-                         %s' % (len(result.rois), image.getId(), username)
-                print value
+                print 'Will delete %s ROIs on image %s of \
+                       %s' % (len(result.rois), image.getId(), username)
 
         for ann in image.listAnnotations():
             if ann.OMERO_TYPE == omero.model.LongAnnotationI:
                 obj_ids_rating.append(ann.getId())
-                value = 'Will delete rating %s on image \
-                        %s of %s' % (ann.getId(), image.getId(), username)
-                print value
+                print 'Will delete rating %s on image \
+                       %s of %s' % (ann.getId(), image.getId(), username)
             elif ann.OMERO_TYPE == omero.model.TagAnnotationI:
                 params = omero.sys.ParametersI()
                 params.add('imageId', wrap(image.getId()))
@@ -119,11 +117,10 @@ def list_objs(conn, username, target):
                                                    conn.SERVICE_OPTS)
                 for linkId in linkIds:
                     obj_ids_taglinks.append(linkId[0].getValue())
-                    value = 'Will delete link %s on image \
-                            %s of tag %s of %s' % (linkId[0].getValue(),
-                                                   image.getId(),
-                                                   ann.getId(), username)
-                    print value
+                    print 'Will delete link %s on image \
+                           %s of tag %s of %s' % (linkId[0].getValue(),
+                                                  image.getId(),
+                                                  ann.getId(), username)
 
 
 def delete_objs(conn):
@@ -152,6 +149,7 @@ def run(password, admin_name, target, image, host, port):
     try:
         conn = BlitzGateway(admin_name, password, host=host, port=port)
         conn.connect()
+        conn.SERVICE_OPTS.setOmeroGroup("-1")
         list_objs(conn, admin_name, target)
         cut_link(conn, admin_name, image)
         for i in range(1, 41):
