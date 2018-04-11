@@ -132,8 +132,9 @@ def delete_objs(conn):
         print 'No tag links to delete'
     if len(obj_ids_rois) > 0:
         print 'deleting %s ROIs' % len(obj_ids_rois)
-        conn.deleteObjects("Roi", obj_ids_rois, deleteAnns=True,
-                           deleteChildren=True, wait=True)
+        handle = conn.deleteObjects("Roi", obj_ids_rois, deleteAnns=True,
+                             deleteChildren=True)
+        conn.c.waitOnCmd(handle, loops=500, ms=500, closehandle=True)
     else:
         print 'No ROIs to delete'
     if len(obj_ids_rating) > 0:
