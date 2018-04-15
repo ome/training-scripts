@@ -20,7 +20,7 @@
 # ------------------------------------------------------------------------------
 
 """
-This script adds Key-Value Pairs to images in a Dataset with the specified name 
+This script adds Key-Value Pairs to images in a Dataset with the specified name
 for 40 users (user-1 through user-40). The Key-Value Pairs are defined in the
 variables kvp_setx and are added to the images inside the dataset according to
 the features in the images in the list images_kvp_order.

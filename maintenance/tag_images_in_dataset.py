@@ -106,7 +106,8 @@ def main(args):
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.password, args.name, args.target, args.tag, args.server, args.port)
+    run(args.password, args.name, args.target, args.tag, args.server,
+        args.port)
 
 
 if __name__ == '__main__':

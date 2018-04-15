@@ -67,8 +67,6 @@ def run(password, target, host, port):
             for k in range(0, len(images)):
 
                 image_id = images[k][0].getValue()
-                delta_t = 300
-
                 image = conn.getObject("Image", image_id)
 
                 u = omero.model.LengthI(0.33, UnitsLength.MICROMETER)
