@@ -23,12 +23,15 @@
 # i.e. after import each of the 40 users has their own batch of data.
 
 echo Starting
-PATH=/opt/omero/server/OMERO.server/bin/omero
-PASSWORD="password"
-HOST=outreach.openmicroscopy.org
-for i in {1..40}
-do  $PATH login -u user-$i -s $HOST -w $PASSWORD
-    DatasetId=$($PATH obj new Dataset name=siRNAi-HeLa)
-    PATH import -d $DatasetId -- --transfer=ln_s "/OMERO/in-place-import/siRNAi-HeLa"
+OMEROPATH=${OMEROPATH:-/opt/omero/server/OMERO.server/bin/omero}
+PASSWORD=${PASSWORD:-ome}
+HOST=${HOST:-outreach.openmicroscopy.org}
+FOLDER=${FOLDER:-siRNAi-HeLa}
+NUMBER=${NUMBER:-40}
+USER=${USER:-user}
+for i in {1..$NUMBER}
+do  $OMEROPATH login -u $USER-$i -s $HOST -w $PASSWORD
+    DatasetId=$($OMEROPATH obj new Dataset name=$FOLDER)
+    $OMEROPATH import -d $DatasetId -- --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
 done
 echo Finishing
