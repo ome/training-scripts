@@ -17,10 +17,14 @@
 #
 # ------------------------------------------------------------------------------
 
-# This script imports in-place data for 40 different users, 
-# user-1 through user-40 into a target dataset. 
+# This script imports in-place data for 40 different users by default, 
+# user-1 through user-40 into a target dataset.
+# The script assumes that the users have the same password.
 # The data are being imported by the users themselves, 
 # i.e. after import each of the 40 users has their own batch of data.
+# Data can also be imported for trainers.
+# To import for trainers run for example
+# USER=trainer NUMBER=2 bash in_place_import.sh
 
 echo Starting
 OMEROPATH=${OMEROPATH:-/opt/omero/server/OMERO.server/bin/omero}
@@ -29,9 +33,10 @@ HOST=${HOST:-outreach.openmicroscopy.org}
 FOLDER=${FOLDER:-siRNAi-HeLa}
 NUMBER=${NUMBER:-40}
 USER=${USER:-user}
-for i in {1..$NUMBER}
+for ((i=1;i<=$NUMBER;i++));
 do  $OMEROPATH login -u $USER-$i -s $HOST -w $PASSWORD
     DatasetId=$($OMEROPATH obj new Dataset name=$FOLDER)
     $OMEROPATH import -d $DatasetId -- --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
+    $OMEROPATH logout
 done
 echo Finishing
