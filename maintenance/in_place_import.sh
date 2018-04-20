@@ -24,7 +24,7 @@
 # i.e. after import each of the 40 users has their own batch of data.
 # Data can also be imported for trainers.
 # To import for trainers run for example
-# USER=trainer NUMBER=2 bash in_place_import.sh
+# OMEUSER=trainer NUMBER=2 bash in_place_import.sh
 
 echo Starting
 OMEROPATH=${OMEROPATH:-/opt/omero/server/OMERO.server/bin/omero}
@@ -32,9 +32,9 @@ PASSWORD=${PASSWORD:-ome}
 HOST=${HOST:-outreach.openmicroscopy.org}
 FOLDER=${FOLDER:-siRNAi-HeLa}
 NUMBER=${NUMBER:-40}
-USER=${USER:-user}
+OMEUSER=${OMEUSER:-user}
 for ((i=1;i<=$NUMBER;i++));
-do  $OMEROPATH login -u $USER-$i -s $HOST -w $PASSWORD
+do  $OMEROPATH login -u $OMEUSER-$i -s $HOST -w $PASSWORD
     DatasetId=$($OMEROPATH obj new Dataset name=$FOLDER)
     $OMEROPATH import -d $DatasetId -- --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
     $OMEROPATH logout
