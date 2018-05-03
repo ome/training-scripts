@@ -24,7 +24,7 @@
 # i.e. after import each of the 40 users has their own batch of data.
 # Data can also be imported for trainers.
 # To import for trainers run for example
-# OMEUSER=trainer NUMBER=2 bash in_place_import.sh
+# OMEUSER=trainer NUMBER=2 bash in_place_import_as.sh
 
 echo Starting
 IMPORTER=${IMPORTER:-importer}
@@ -37,7 +37,7 @@ OMEUSER=${OMEUSER:-user}
 for ((i=1;i<=$NUMBER;i++));
 do  $OMEROPATH login --sudo ${IMPORTER} -u $OMEUSER-$i -s $HOST -w $PASSWORD
     DatasetId=$($OMEROPATH obj new Dataset name=$FOLDER)
-    $OMEROPATH import -T Dataset:$DatasetId -- --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
+    $OMEROPATH import -d $DatasetId -- --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
     $OMEROPATH logout
 done
 echo Finishing
