@@ -27,9 +27,9 @@
 import omero
 from omero.gateway import BlitzGateway
 
-USERNAME = "user-3"
-PASSWORD = "ome"
-conn = BlitzGateway(USERNAME, PASSWORD, host="eel.openmicroscopy.org", port=4064)
+USERNAME = "username"
+PASSWORD = "password"
+conn = BlitzGateway(USERNAME, PASSWORD, host="outreach.openmicroscopy.org", port=4064)
 conn.connect()
 
 import requests
