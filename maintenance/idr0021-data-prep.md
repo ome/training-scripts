@@ -1,20 +1,35 @@
 
-Download and import idr0021 data
-================================
+Workshop data preparation (idr0021)
+===================================
 
-To download IDR data and re-import elsewhere....
-(See gdoc https://docs.google.com/document/d/1TmBZ43_yhiO3AOua8oMk4mPWKWJtpeYNc2KLP17h-1I/edit# )
-
-	$ ssh idr0-slot3.openmicroscopy.org
-
-	# another terminal
-	$ rsync -rvP --progress wmoore@idr0-slot3.openmicroscopy.org:/uod/idr/filesets/idr0021-lawo-pericentriolarmaterial/Raw-files/ .
+This document details the steps to prepare data from IDR for a workshop demonstrating
+analysis with Fiji, usage of Map Annotations and OMERO.tables and filtering with OMERO.parade.
+We use IDR0021, which is a Project containing 10 Datasets with a total of ~400 Images.
 
 
-Edit ```idr-metadata/idr0021-lawo-pericentriolarmaterial/experimentA/idr0021-experimentA-filePaths.tsv```
-to point ALL paths at download location.
+Download IDR data
+=================
+
+External users
+--------------
+
+Please contact the OME team for access to download IDR data.
+
+Internal users
+--------------
+
+Follow instructions on the
+[IDR submission workflow](https://docs.google.com/document/d/1TmBZ43_yhiO3AOua8oMk4mPWKWJtpeYNc2KLP17h-1I/edit#) to download the data via ```ssh``` from ```idr0-slot3```.
+
+
+Prepare IDR-metadata and import
+===============================
+
+Clone https://github.com/IDR/idr-metadata and edit
+```idr-metadata/idr0021-lawo-pericentriolarmaterial/experimentA/idr0021-experimentA-filePaths.tsv```
+to point ALL paths at the location of the data downloaded above.
 e.g.
-```Dataset:name:CDK5RAP2-C	/Users/wmoore/Desktop/IDR/data/idr0021/CDK5RAP2-C/Centrin_PCNT_Cep215_20110506/Centrin_PCNT_Cep215_20110506_Fri-1545_0_SIR_PRJ.dv```
+```Dataset:name:CDK5RAP2-C	/full/path/to/data/idr0021/CDK5RAP2-C/Centrin_PCNT_Cep215_20110506/Centrin_PCNT_Cep215_20110506_Fri-1545_0_SIR_PRJ.dv```
 
 
 If you don't want to in-place import, comment out this line in idr-metadata/bulk.yml:
@@ -41,7 +56,7 @@ We can then use these map annotations to rename channels on all images.
 Edit the ```project_id``` and run the ```maintenance/channel_names_from_maps.py``` script on the local data.
 
 
-Analyse in Fiji/ImageJ and save ROIs in OMERO
+Analyse in Fiji and save ROIs in OMERO
 =============================================
 
 Run the ```jython/analyse_particles_for_another_user.jy``` in Fiji with the
@@ -49,8 +64,8 @@ appropriate credentials on a Dataset at a time, updating the dataset_id each tim
 
 This will Analyse Particles and create ROIs on all channels of each Image.
 
-NB: we may also have this script create Tables on Images or Datasets as an example
-of how to create Tables from ImageJ, but these won't be used in the workshop.
+N.B. we may also have this script create Tables on Images or Datasets as an example
+of how to create Tables from Fiji, but these won't be used in the workshop.
 
 
 Create Map Annotations and Table from ROIs
@@ -60,7 +75,7 @@ First we need to delete an outlier Image that causes
 [problems in OMERO.parade](https://github.com/ome/omero-parade/issues/26).
 
 Delete NEDD1ab_NEDD1141_I_012_SIR. This image is the only Z-stack and no blobs are found
-so the Polygon created covers the whole plane (possibly because Fiji analyses the first Z-section only?).
+so the Polygon created covers the whole plane.
 
 The ```python/server/batch_roi_export_to_table.py``` script needs to be installed on the
 server. Run this from the webclient, selecting the ```idr0021``` Project to create a
