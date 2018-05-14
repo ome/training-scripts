@@ -73,7 +73,7 @@ Create Map Annotations and Table from ROIs
 
 First we need to delete an outlier Image that causes
 [problems in OMERO.parade](https://github.com/ome/omero-parade/issues/26). Delete
-NEDD1ab_NEDD1141_I_012_SIR. This image is the only Z-stack and no blobs are found
+```NEDD1ab_NEDD1141_I_012_SIR```. This image is the only Z-stack and no blobs are found
 so the Polygon created covers the whole plane.
 
 The ```python/server/batch_roi_export_to_table.py``` script needs to be installed on the
