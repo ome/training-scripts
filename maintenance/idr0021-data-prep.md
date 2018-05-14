@@ -32,7 +32,7 @@ e.g.
 ```Dataset:name:CDK5RAP2-C	/full/path/to/data/idr0021/CDK5RAP2-C/Centrin_PCNT_Cep215_20110506/Centrin_PCNT_Cep215_20110506_Fri-1545_0_SIR_PRJ.dv```
 
 
-If you don't want to in-place import, comment out this line in idr-metadata/bulk.yml:
+If you don't want to use in-place import, comment out this line in idr-metadata/bulk.yml:
 
 	transfer: "ln_s"
 
@@ -72,9 +72,8 @@ Create Map Annotations and Table from ROIs
 ==========================================
 
 First we need to delete an outlier Image that causes
-[problems in OMERO.parade](https://github.com/ome/omero-parade/issues/26).
-
-Delete NEDD1ab_NEDD1141_I_012_SIR. This image is the only Z-stack and no blobs are found
+[problems in OMERO.parade](https://github.com/ome/omero-parade/issues/26). Delete
+NEDD1ab_NEDD1141_I_012_SIR. This image is the only Z-stack and no blobs are found
 so the Polygon created covers the whole plane.
 
 The ```python/server/batch_roi_export_to_table.py``` script needs to be installed on the
