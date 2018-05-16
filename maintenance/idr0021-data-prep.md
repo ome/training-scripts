@@ -19,7 +19,7 @@ Internal users
 --------------
 
 Follow instructions on the
-[IDR submission workflow](https://docs.google.com/document/d/1TmBZ43_yhiO3AOua8oMk4mPWKWJtpeYNc2KLP17h-1I/edit#) to download the data via ```ssh``` from ```idr0-slot3```.
+[IDR submission workflow](https://docs.google.com/document/d/1TmBZ43_yhiO3AOua8oMk4mPWKWJtpeYNc2KLP17h-1I/edit#) to download the ```/Raw-files/``` directory via ```ssh``` from ```idr0-slot3```.
 
 
 Prepare IDR-metadata and import
@@ -32,7 +32,7 @@ e.g.
 ```Dataset:name:CDK5RAP2-C	/full/path/to/data/idr0021/CDK5RAP2-C/Centrin_PCNT_Cep215_20110506/Centrin_PCNT_Cep215_20110506_Fri-1545_0_SIR_PRJ.dv```
 
 
-If you don't want to use in-place import, comment out this line in idr-metadata/bulk.yml:
+If you don't want to use in-place import, comment out this line in ```idr-metadata/bulk.yml```:
 
 	transfer: "ln_s"
 
