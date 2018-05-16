@@ -78,9 +78,6 @@ PASSWORD = "password"
 # specify their username
 target_user = ""
 
-# First 5 columns in results table
-COL_NAMES = ['ROI-id', 'Shape-id', 'Z', 'C', 'T']
-
 
 def connect_to_omero():
     "Connect to OMERO. Returns a reference to the gateway"
@@ -149,57 +146,36 @@ def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id):
     IJ.runPlugIn("loci.plugins.LociImporter", options)
 
 
-def add_table(data_arrays, colnames, ctx, dataset_id):
-    """Create OMERO table from data and attach it to Dataset."""
-
-    # Combine list of 2D arrays into single array
-    data = data_arrays[0]
-
-    for to_add in data_arrays[1:]:
-        for col, new_data in zip(data, to_add):
-            col.extend(new_data)
-
-    columns = []
-    print 'colnames', colnames
-    for c, colname in enumerate(colnames):
-        print colname, c
-        columns.append(TableDataColumn(colname, c, Double))
-
-    table_data = TableData(columns, data)
-    browse = gateway.getFacility(BrowseFacility)
-    ids = ArrayList(1)
-    ids.add(Long(dataset_id))
-    datasets = browse.getDatasets(ctx, ids)
-    dataset = datasets[0]
-    table_facility = gateway.getFacility(TablesFacility)
-    table_facility.addTable(ctx, dataset, "Test_Table", table_data)
-
-
-def get_table_column_names(rt):
-    rt_names = [rt.getColumnHeading(c) for c in range(0, rt.getLastColumn())]
-    return COL_NAMES + rt_names
-
-
-def get_table_data(rt, ctx, roivec):
-    length = len(COL_NAMES)
-    no_of_columns = length + rt.getLastColumn()
+def convert_to_omero_table(rt, ctx, image_id, roivec):
+    "Convert results into an OMERO table"
+    roivec_cols = ['ROI-id', 'Shape-id', 'Z', 'C', 'T']
+    length = len(roivec_cols)
+    no_of_columns = rt.getLastColumn() + length
     no_of_rows = rt.size()
 
-    # create empty 2D array
     data = [[Double(0) for x in range(no_of_rows)] for y in range(no_of_columns)]
+    columns = [TableDataColumn] * no_of_columns
 
     for c in range(0, no_of_columns):
         if c < length:
+            colname = roivec_cols[c]
             rows = [Double(i[c]) for i in roivec]
+            columns[c] = TableDataColumn(colname, c, Double)
         else:
+            colname = rt.getColumnHeading(c-length)
             rows = rt.getColumnAsDoubles(c-length)
+            columns[c] = TableDataColumn(colname, c, Double)
 
         if rows is None:
             continue
         for r in range(0, len(rows)):
             data[c][r] = rows[r]
 
-    return data
+    table_data = TableData(columns, data)
+    browse = gateway.getFacility(BrowseFacility)
+    image = browse.getImage(ctx, long(image_id))
+    table_facility = gateway.getFacility(TablesFacility)
+    table_facility.addTable(ctx, image, "Test_Table", table_data)
 
 
 def save_rois_to_omero(ctx, image_id, imp):
@@ -241,10 +217,6 @@ ids = get_image_ids(gateway, ctx, dataset_id)
 # Switch context to target user and open omeroImage as ImagePlus object
 ctx = switch_security_context(ctx, target_user)
 
-# List of 2D arrays of table data, one for each image
-data_arrays = []
-colnames = []
-
 for id1 in ids:
     # if target_user ~= None:
     # Switch context to target user and open omeroImage as ImagePlus object
@@ -255,16 +227,14 @@ for id1 in ids:
     IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
     IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack");
     IJ.run("Set Measurements...", "area mean standard modal min centroid center \
-            perimeter bounding fit shape feret's integrated median \
-            area_fraction stack display redirect=None decimal=3")
+            perimeter bounding fit shape feret's integrated median skewness \
+            kurtosis area_fraction stack display redirect=None decimal=3")
 
     rm = RoiManager.getInstance()
     rm.runCommand(imp, "Measure")
     rt = ResultsTable.getResultsTable()
-    colnames = get_table_column_names(rt)
     roivec = save_rois_to_omero(ctx, id1, imp)
-    # convert_to_omero_table(rt, ctx, id1, roivec)
-    data_arrays.append(get_table_data(rt, ctx, roivec))
+    convert_to_omero_table(rt, ctx, id1, roivec)
     # Close the various components
     IJ.selectWindow("Results")
     IJ.run("Close")
@@ -272,7 +242,5 @@ for id1 in ids:
     IJ.run("Close")
     imp.changes = False     # Prevent "Save Changes?" dialog
     imp.close()
-
-add_table(data_arrays, colnames, ctx, dataset_id)
 
 print "processing done"
