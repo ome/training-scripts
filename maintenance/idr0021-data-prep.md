@@ -57,7 +57,7 @@ Edit the ```project_id``` and run the ```maintenance/channel_names_from_maps.py`
 
 
 Analyse in Fiji and save ROIs in OMERO
-=============================================
+======================================
 
 Run the ```jython/analyse_particles_for_another_user.jy``` in Fiji with the
 appropriate credentials on a Dataset at a time, updating the dataset_id each time.

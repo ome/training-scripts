@@ -46,10 +46,10 @@ for dataset in project.listChildren():
         channels_value = [kv[1] for kv in key_values if kv[0] == MAP_KEY]
         if len(channels_value) == 0:
             print " No Key-Value found for key:", MAP_KEY
-        channels = channels_value[0].split("; ");
+        channels = channels_value[0].split("; ")
         print "Channels", channels
-        nameDict = {}
+        name_dict = {}
         for c, ch_name in enumerate(channels):
-            nameDict[c + 1] = ch_name.split(":")[1]
-        conn.setChannelNames("Image", [image.id], nameDict, channelCount=None)
+            name_dict[c + 1] = ch_name.split(":")[1]
+        conn.setChannelNames("Image", [image.id], name_dict, channelCount=None)
 
