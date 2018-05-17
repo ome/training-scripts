@@ -96,10 +96,11 @@ Options for these are handled by checkboxes at the bottom of the script dialog.
 Delete ROIs and Map annotations for 1 Dataset
 =============================================
 
-Edit and run the ```maintenance/idr_get_map_annotations.py``` on the first Dataset
-to remove Map Annotations from all Images in that Dataset so we can show them being
+Edit and run the following scripts on the first Dataset
+to remove Map Annotations and ROIs from all Images in that Dataset so we can show them being
 created in the workshop.
 
-TODO: Need ROI-deletion script for Dataset.
+ - ```maintenance/scripts/delete_annotations.py```
+ - ```maintenance/scripts/delete_ROIs.py```
 
 The data is now ready to be presented in a workshop and analysed with ```OMERO.parade```.
