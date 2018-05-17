@@ -52,8 +52,13 @@ Add Map Annotations from IDR
 Edit the ```maintenance/idr_get_map_annotations.py``` with the ID of the 'idr0021' Project created
 above. This will get map annotations from all images in the [idr0021](http://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
 
-We can then use these map annotations to rename channels on all images.
-Edit the ```project_id``` and run the ```maintenance/channel_names_from_maps.py``` script on the local data.
+
+Rename Channels from Map Annotations
+====================================
+
+We can now use the map annotations to rename channels on all images.
+Edit the ```project_id``` and run the ```maintenance/scripts/channel_names_from_maps.py```
+script on the local data.
 
 
 Analyse in Fiji and save ROIs in OMERO
@@ -86,5 +91,15 @@ by Fiji.
 
 This script also creates Map annotations and can create a CSV (could be shown in workshop).
 Options for these are handled by checkboxes at the bottom of the script dialog.
+
+
+Delete ROIs and Map annotations for 1 Dataset
+=============================================
+
+Edit and run the ```maintenance/idr_get_map_annotations.py``` on the first Dataset
+to remove Map Annotations from all Images in that Dataset so we can show them being
+created in the workshop.
+
+TODO: Need ROI-deletion script for Dataset.
 
 The data is now ready to be presented in a workshop and analysed with ```OMERO.parade```.
