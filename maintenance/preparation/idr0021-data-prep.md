@@ -29,7 +29,7 @@ Clone https://github.com/IDR/idr-metadata and edit
 ```idr-metadata/idr0021-lawo-pericentriolarmaterial/experimentA/idr0021-experimentA-filePaths.tsv```
 to point ALL paths at the location of the data downloaded above.
 e.g.
-```Dataset:name:CDK5RAP2-C	/full/path/to/data/idr0021/CDK5RAP2-C/Centrin_PCNT_Cep215_20110506/Centrin_PCNT_Cep215_20110506_Fri-1545_0_SIR_PRJ.dv```
+```Dataset:name:CDK5RAP2-C	/full/path/to/data/CDK5RAP2-C/Centrin_PCNT_Cep215_20110506/Centrin_PCNT_Cep215_20110506_Fri-1545_0_SIR_PRJ.dv```
 
 
 If you don't want to use in-place import, comment out this line in ```idr-metadata/bulk.yml```:
@@ -40,7 +40,7 @@ If you don't want to use in-place import, comment out this line in ```idr-metada
 Do the bulk import:
 
 	$ cd idr-metadata/idr0021-lawo-pericentriolarmaterial/experimentA/
-	$ omero import --bulk idr0021-experimentA-bulk.yml
+	$ path/to/omero import --bulk idr0021-experimentA-bulk.yml
 
 
 In the webclient, create a Project 'idr0021' and add the 10 new Datasets created above.
