@@ -29,6 +29,7 @@ conn.connect()
 NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 MAP_KEY = "Channels"
 
+# TO BE MODIFIED
 project_id = 4501
 
 project = conn.getObject("Project", project_id)
