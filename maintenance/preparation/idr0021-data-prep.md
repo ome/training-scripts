@@ -10,16 +10,9 @@ We use IDR0021, which is a Project containing 10 Datasets with a total of ~400 I
 Download IDR data
 =================
 
-External users
---------------
+You will need to have docker installed. This container uses Aspera to download the data from EBI:
 
-Please contact the OME team for access to download IDR data.
-
-Internal users
---------------
-
-Follow instructions on the
-[IDR submission workflow](https://docs.google.com/document/d/1TmBZ43_yhiO3AOua8oMk4mPWKWJtpeYNc2KLP17h-1I/edit#) to download the ```/Raw-files/``` directory via ```ssh``` from ```idr0-slot3```.
+	$ docker run --rm -v /tmp:/data imagedata/download idr0021 . /data/
 
 
 Prepare IDR-metadata and import
