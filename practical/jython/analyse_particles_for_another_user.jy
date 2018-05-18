@@ -169,7 +169,7 @@ def convert_to_omero_table(rt, ctx, image_id, roivec):
     browse = gateway.getFacility(BrowseFacility)
     image = browse.getImage(ctx, long(image_id))
     table_facility = gateway.getFacility(TablesFacility)
-    table_facility.addTable(ctx, image, "Test_Table", table_data)
+    table_facility.addTable(ctx, image, "ROIs_from_Fiji", table_data)
 
 
 def save_rois_to_omero(ctx, image_id, imp):
