@@ -125,56 +125,19 @@ def switch_security_context(ctx, target_user):
     return ctx
 
 
-def open_omero_image(ctx, image_id):
-    "Convert omero Image object as ImageJ ImagePlus object."
-    browse = gateway.getFacility(BrowseFacility)
-    image = browse.getImage(ctx, long(image_id))
-    pixels = image.getDefaultPixels()
-    sizeZ = pixels.getSizeZ()
-    sizeT = pixels.getSizeT()
-    sizeC = pixels.getSizeC()
-    sizeX = pixels.getSizeX()
-    sizeY = pixels.getSizeY()
-    pixtype = pixels.getPixelType()
-    pixType = FormatTools.pixelTypeFromString(pixtype)
-    bpp = FormatTools.getBytesPerPixel(pixType)
-    isSigned = FormatTools.isSigned(pixType)
-    isFloat = FormatTools.isFloatingPoint(pixType)
-    isLittle = False
-    interleave = False
+def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id):
+    "Open the image using the Bio-Formats Importer"
 
-    store = gateway.getPixelsStore(ctx)
-    pixelsId = pixels.getId()
-    store.setPixelsId(pixelsId, False)
-    stack = ImageStack(sizeX, sizeY)
-    for t in range(0, sizeT):
-        for z in range(0, sizeZ):
-            for c in range(0, sizeC):
-                plane = store.getPlane(z, c, t)
 
-                ImageTools.splitChannels(plane, 0, 1, bpp, False, interleave)
-                pixels = DataTools.makeDataArray(plane, bpp, isFloat, isLittle)
-
-                q = pixels
-                if (len(plane) != sizeX*sizeY):
-                    tmp = q
-                    q = zeros(sizeX*sizeY, 'h')
-                    System.arraycopy(tmp, 0, q, 0, Math.min(len(q), len(tmp)))
-                    if isSigned:
-                        q = DataTools.makeSigned(q)
-
-                if q.typecode == 'b':
-                    ip = ByteProcessor(sizeX, sizeY, q, None)
-                elif q.typecode == 'h':
-                    ip = ShortProcessor(sizeX, sizeY, q, None)
-                stack.addSlice('', ip)
-    # Do something
-    image_name = image.getName() + '--OMERO ID:' + str(image.getId())
-    imp = ImagePlus(image_name, stack)
-    imp.setDimensions(sizeC, sizeZ, sizeT)
-    imp.setOpenAsHyperStack(True)
-    imp.show()
-    return imp
+    options = """location=[OMERO]
+open=[omero:server=%s
+user=%s
+port=%s
+pass=%s
+groupID=%s
+iid=%s]
+ windowless=true """ % (HOST, USERNAME, PORT, PASSWORD, group_id, image_id)
+    IJ.runPlugIn("loci.plugins.LociImporter", options)
 
 
 def convert_to_omero_table(rt, ctx, image_id, roivec):
@@ -206,7 +169,7 @@ def convert_to_omero_table(rt, ctx, image_id, roivec):
     browse = gateway.getFacility(BrowseFacility)
     image = browse.getImage(ctx, long(image_id))
     table_facility = gateway.getFacility(TablesFacility)
-    table_facility.addTable(ctx, image, "Test_Table", table_data)
+    table_facility.addTable(ctx, image, "ROIs_from_Fiji", table_data)
 
 
 def save_rois_to_omero(ctx, image_id, imp):
@@ -251,11 +214,12 @@ ctx = switch_security_context(ctx, target_user)
 for id1 in ids:
     # if target_user ~= None:
     # Switch context to target user and open omeroImage as ImagePlus object
-    imp = open_omero_image(ctx, String.valueOf(id1))
+    open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id1)
+    imp = IJ.getImage()
     # Some analysis which creates ROI's and Results Table
-    IJ.setAutoThreshold(imp, "Default dark")
-    IJ.run(imp, "Analyze Particles...",
-           "size=50-Infinity display clear add stack")
+    IJ.run("8-bit");
+    IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
+    IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack");
     IJ.run("Set Measurements...", "area mean standard modal min centroid center \
             perimeter bounding fit shape feret's integrated median skewness \
             kurtosis area_fraction stack display redirect=None decimal=3")
@@ -270,6 +234,7 @@ for id1 in ids:
     IJ.run("Close")
     IJ.selectWindow("ROI Manager")
     IJ.run("Close")
+    imp.changes = False     # Prevent "Save Changes?" dialog
     imp.close()
 
 print "processing done"

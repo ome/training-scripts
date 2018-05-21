@@ -70,21 +70,15 @@ PASSWORD = "password"
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id):
     "Open the image using the Bio-Formats Importer"
 
-    options = ""
-    options += "location=[OMERO] open=[omero:server="
-    options += HOST
-    options += "\nuser="
-    options += USERNAME
-    options += "\nport="
-    options += str(PORT)
-    options += "\npass="
-    options += PASSWORD
-    options += "\ngroupID="
-    options += group_id
-    options += "\niid="
-    options += image_id
-    options += "]"
-    options += " windowless=true "
+
+    options = """location=[OMERO]
+open=[omero:server=%s
+user=%s
+port=%s
+pass=%s
+groupID=%s
+iid=%s]
+ windowless=true """ % (HOST, USERNAME, PORT, PASSWORD, group_id, image_id)
     IJ.runPlugIn("loci.plugins.LociImporter", options)
 
 
