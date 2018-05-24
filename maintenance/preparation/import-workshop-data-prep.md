@@ -22,7 +22,8 @@ Perform the rendering steps on first two datasets of the data imported in the bu
 
 The files used for the rendering settings are renderingdef.yml [add-link-to-file] and renderingdef2.yml [add-link-to-file]. These files contain the rendering defititions of color, min, max and channel names. See the workshop walkthrough [link-to-walkthrough] for how these files are used in the omero-cli-render plugin [https://pypi.org/project/omero-cli-render/].
 
-For the rendering settings changes in batch manner use bash script [link-to-bash-script-of-jm]. The renderingMapping.tsv file [link-to-file] lists all the images in the idr0021 study with the appropriate rendering definition file for such study. renderingMapping.tsv is consumed by the bash script [link-to-bash-script-of-jm]. You also need the renderingdef.yml [add-link-to-file] and renderingdef2.yml [add-link-to-file] for this step, which are referred to in the renderingMapping.tsv.
+For the rendering settings changes in batch manner use bash script [link-to-bash-script-of-jm]. The renderingMapping.tsv file [link-to-file] lists all the datasets in the idr0021 study with the appropriate rendering definition file for that dataset. renderingMapping.tsv is consumed by the bash script [link-to-bash-script-of-jm]. You also need the renderingdef.yml [add-link-to-file] and renderingdef2.yml [add-link-to-file] for this step, which are referred to in the renderingMapping.tsv. Either put the renderingdef.yml [add-link-to-file] and renderingdef2.yml [add-link-to-file] to the same folder as renderingMapping.tsv or edit the renderingMapping.tsv for the full path to renderingdef.yml [add-link-to-file] and renderingdef2.yml [add-link-to-file].
+Also, prior to running the batch script, you have to login to OMERO.
 
 The rendering and channel names achieved by the manual steps above or the script is not intended to be optimal or accurate for the images. The goal is to achieve an optically striking change on the image thumbnails in the user interface after the single command using the omero-cli-render plugin or the batch script was applied to demonstrate the possibilities of the plugin.
 
@@ -30,4 +31,4 @@ The rendering and channel names achieved by the manual steps above or the script
 Metadata Import CLI
 ===================
 
-Images used for this step are from idr0021 (see above). Files used fot the metadata import are idr0021-...-annotation.csv [link-to-file-in-idr] and idr0021-...-config.yml [link-to-file-in-idr].
+Images used for this step are from idr0021 (see above). Files used fot the metadata import are idr0021-experimentA-annotation.csv [https://github.com/IDR/idr0021-lawo-pericentriolarmaterial/blob/master/experimentA/idr0021-experimentA-annotation.csv] and idr0021-bulkmap-config.yml [https://github.com/IDR/idr0021-lawo-pericentriolarmaterial/blob/master/experimentA/idr0021-experimentA-bulkmap-config.yml].
