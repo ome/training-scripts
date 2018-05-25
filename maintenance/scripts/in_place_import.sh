@@ -1,6 +1,6 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------
-#   Copyright (C) 2018 University of Dundee. All rights reserved.
+#   Copyright (C) 2017 University of Dundee. All rights reserved.
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -17,27 +17,25 @@
 #
 # ------------------------------------------------------------------------------
 
-# This script imports in-place data for 40 different users by default, 
-# user-1 through user-40 into a target dataset.
-# The data is imported by a dedicated user with restricted admin
-# privileges on behalf of other users 
-# i.e. after import each of the 40 users has their own batch of data.
-# Data can also be imported for trainers.
-# To import for trainers run for example
-# OMEUSER=trainer NUMBER=2 bash in_place_import_as.sh
+## This script is DEPRECATED use in_place_import_as.sh instead
+
 
 echo Starting
-IMPORTER=${IMPORTER:-importer}
 OMEROPATH=${OMEROPATH:-/opt/omero/server/OMERO.server/bin/omero}
 PASSWORD=${PASSWORD:-ome}
 HOST=${HOST:-outreach.openmicroscopy.org}
 FOLDER=${FOLDER:-siRNAi-HeLa}
 NUMBER=${NUMBER:-40}
 OMEUSER=${OMEUSER:-user}
+DATATYPE=${DATATYPE:-dataset}
 for ((i=1;i<=$NUMBER;i++));
-do  $OMEROPATH login --sudo ${IMPORTER} -u $OMEUSER-$i -s $HOST -w $PASSWORD
-    DatasetId=$($OMEROPATH obj new Dataset name=$FOLDER)
-    $OMEROPATH import -d $DatasetId -- --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
+do  $OMEROPATH login -u $OMEUSER-$i -s $HOST -w $PASSWORD
+    if [ "$DATATYPE" = "dataset" ]; then
+        DatasetId=$($OMEROPATH obj new Dataset name=$FOLDER)
+        $OMEROPATH import -d $DatasetId --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
+    elif [ "$DATATYPE" = "plate" ]; then
+        $OMEROPATH import --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
+    fi
     $OMEROPATH logout
 done
 echo Finishing
