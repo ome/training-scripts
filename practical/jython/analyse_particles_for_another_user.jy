@@ -237,4 +237,6 @@ for id1 in ids:
     imp.changes = False     # Prevent "Save Changes?" dialog
     imp.close()
 
+# Close the connection
+gateway.disconnect()
 print "processing done"
