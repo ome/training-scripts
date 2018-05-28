@@ -32,7 +32,7 @@ from omero.constants.namespaces import NSBULKANNOTATIONS
 
 from collections import defaultdict
 
-DEFAULT_FILE_NAME = "roi_intensities.csv"
+DEFAULT_FILE_NAME = "roi_intensities_filtered_by_channel.csv"
 BATCH_ROI_EXPORT_NS = "omero.batch_roi_export.map_ann"
 
 
@@ -48,7 +48,7 @@ def get_export_data(conn, script_params, image):
     all_planes = script_params["Export_All_Planes"]
     size_c = image.getSizeC()
     # Channels index
-    channels = script_params.get("Channels", [1])
+    channels = script_params.get("Intensity_For_Channels", [1])
     ch_indexes = []
     for ch in channels:
         if ch < 1 or ch > size_c:
@@ -57,10 +57,7 @@ def get_export_data(conn, script_params, image):
             # User input is 1-based
             ch_indexes.append(ch - 1)
 
-    filter_ch = script_params.get("Filter_Shapes_By_Channel")
-    if filter_ch is not None:
-        # convert to zero-based index
-        filter_ch = filter_ch - 1
+    filter_ch = 0
 
     # For idr0021 use-case, we want to pick filter_channel dynamically...
     # First channel where channel name matches Dataset name.
@@ -97,6 +94,9 @@ def get_export_data(conn, script_params, image):
             t_indexes = [the_t]
             if the_t is None and all_planes:
                 t_indexes = range(image.getSizeT())
+            # Get the C shape is on.
+            # This is independent of ch_indexes we're getting intensities for
+            the_c = unwrap(shape.theC)
 
             # get pixel intensities
             for z in z_indexes:
@@ -116,8 +116,9 @@ def get_export_data(conn, script_params, image):
                             "text": label,
                             "z": z + 1 if z is not None else "",
                             "t": t + 1 if t is not None else "",
-                            "channel": ch_names[ch_index],
+                            "c": the_c + 1 if the_c is not None else "",
                             "points": stats[0].pointsCount[c] if stats else "",
+                            "intensity_for_channel": ch_names[ch_index],
                             "min": stats[0].min[c] if stats else "",
                             "max": stats[0].max[c] if stats else "",
                             "sum": stats[0].sum[c] if stats else "",
@@ -135,8 +136,9 @@ COLUMN_NAMES = ["image_id",
                 "text",
                 "z",
                 "t",
-                "channel",
+                "c",
                 "points",
+                "intensity_for_channel",
                 "min",
                 "max",
                 "sum",
@@ -342,13 +344,8 @@ def run_script():
             "IDs", optional=False, grouping="2",
             description="List of Dataset IDs or Image IDs.").ofType(rlong(0)),
 
-        scripts.Int(
-            "Filter_Shapes_By_Channel", grouping="3", optional=True,
-            description=("Optional: only use shapes saved to this channel"
-                         "(1-based index)")),
-
         scripts.List(
-            "Channels", grouping="4", default=[1L, 2L, 3L, 4L],
+            "Intensity_For_Channels", grouping="4", default=[1L, 2L, 3L, 4L],
             description="Indices of Channels to measure intensity."
             ).ofType(rlong(0)),
 
