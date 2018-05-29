@@ -103,7 +103,12 @@ The data is now ready to be presented in a workshop and analysed with ```OMERO.p
 Plate data
 ==========
 
-Download Plate ``INMAC384-DAPI-CM-eGFP_59223_1`` from the OME [HCS sample images](http://downloads.openmicroscopy.org/images/HCS/INCELL2000/) and import.
+Download Plate ``INMAC384-DAPI-CM-eGFP_59223_1`` from the OME [HCS sample images](http://downloads.openmicroscopy.org/images/HCS/INCELL2000/), using ``wget`` to download all the files (9.8 GB, 1158 items) into a new directory
+and import this:
+
+	$ wget -r --no-parent --execute robots=off --no-directories --directory-prefix=INMAC384-DAPI-CM-eGFP_59223_1 https://downloads.openmicroscopy.org/images/HCS/INCELL2000/INMAC384-DAPI-CM-eGFP_59223_1/
+
+	$ path/to/omero import INMAC384-DAPI-CM-eGFP_59223_1
 
 We need to populate an OMERO.table on the Plate to demonstrate filtering with
 OMERO.parade. Run the command line script with the Plate ID:
