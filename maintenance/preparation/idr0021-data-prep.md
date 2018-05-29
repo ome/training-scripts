@@ -10,7 +10,7 @@ We use IDR0021, which is a Project containing 10 Datasets with a total of ~400 I
 Download IDR data
 =================
 
-You will need to have Docker installed. This container uses Aspera to download the data from EBI:
+You will need to have Docker installed. This container uses Aspera to download the data from EBI (244 MB):
 
 	$ docker run --rm -v /tmp:/data imagedata/download idr0021 . /data/
 
