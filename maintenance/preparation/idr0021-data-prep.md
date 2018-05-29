@@ -2,7 +2,7 @@
 Workshop data preparation (idr0021)
 ===================================
 
-This document details the steps to prepare data from IDR for a workshop demonstrating
+This document details the steps to prepare data from IDR and elsewhere for a workshop demonstrating
 analysis with Fiji, usage of Map Annotations and OMERO.tables and filtering with OMERO.parade.
 We use IDR0021, which is a Project containing 10 Datasets with a total of ~400 Images.
 
@@ -98,3 +98,16 @@ created in the workshop.
  - ```maintenance/scripts/delete_ROIs.py```
 
 The data is now ready to be presented in a workshop and analysed with ```OMERO.parade```.
+
+
+Plate data
+==========
+
+Download Plate ``INMAC384-DAPI-CM-eGFP_59223_1`` from the OME [HCS sample images](http://downloads.openmicroscopy.org/images/HCS/INCELL2000/) and import.
+
+We need to populate an OMERO.table on the Plate to demonstrate filtering with
+OMERO.parade. Run the command line script with the Plate ID:
+
+	$ python maintenance/scripts/channel_minmax_to_table.py username password --server server.address plate_id
+
+This should create an Annotation on the Plate called ``Channels_Min_Max_Intensity``.
