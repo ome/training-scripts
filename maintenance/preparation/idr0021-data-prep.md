@@ -44,7 +44,7 @@ Add Map Annotations from IDR
 ============================
 
 Edit the ```maintenance/scripts/idr_get_map_annotations.py``` with the ID of the 'idr0021' Project created
-above. This will get map annotations from all images in the [idr0021](http://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
+above. This will get map annotations from all images in the [idr0021](https://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
 
 
 Rename Channels from Map Annotations
@@ -103,15 +103,15 @@ The data is now ready to be presented in a workshop and analysed with ```OMERO.p
 Plate data
 ==========
 
-Download Plate ``INMAC384-DAPI-CM-eGFP_59223_1`` from the OME [HCS sample images](http://downloads.openmicroscopy.org/images/HCS/INCELL2000/), using ``wget`` to download all the files (9.8 GB, 1158 items) into a new directory
+Download Plate ``INMAC384-DAPI-CM-eGFP_59223_1`` from the OME [HCS sample images](https://downloads.openmicroscopy.org/images/HCS/INCELL2000/), using ``wget`` to download all the files (9.8 GB, 1158 items) into a new directory
 and import this:
 
-	$ wget -r --no-parent --execute robots=off --no-directories --directory-prefix=INMAC384-DAPI-CM-eGFP_59223_1 https://downloads.openmicroscopy.org/images/HCS/INCELL2000/INMAC384-DAPI-CM-eGFP_59223_1/
+	$ wget -r --no-parent --execute robots=off --no-directories --directory-prefix=INCELL2000/INMAC384-DAPI-CM-eGFP_59223_1 https://downloads.openmicroscopy.org/images/HCS/INCELL2000/INMAC384-DAPI-CM-eGFP_59223_1/
 
 	$ path/to/omero import INMAC384-DAPI-CM-eGFP_59223_1
 
 We need to populate an OMERO.table on the Plate to demonstrate filtering with
-OMERO.parade. Run the command line script with the Plate ID:
+OMERO.parade. For that we will use the [channel_minmax_to_table.py](../scripts/channel_minmax_to_table.py). Run the command line script with the Plate ID:
 
 	$ python maintenance/scripts/channel_minmax_to_table.py username password --server server.address plate_id
 
