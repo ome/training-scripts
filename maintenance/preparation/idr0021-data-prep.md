@@ -2,7 +2,7 @@
 Workshop data preparation (idr0021)
 ===================================
 
-This document details the steps to prepare data from IDR for a workshop demonstrating
+This document details the steps to prepare data from IDR and elsewhere for a workshop demonstrating
 analysis with Fiji, usage of Map Annotations and OMERO.tables and filtering with OMERO.parade.
 We use IDR0021, which is a Project containing 10 Datasets with a total of ~400 Images.
 
@@ -10,7 +10,7 @@ We use IDR0021, which is a Project containing 10 Datasets with a total of ~400 I
 Download IDR data
 =================
 
-You will need to have Docker installed. This container uses Aspera to download the data from EBI:
+You will need to have Docker installed. This container uses Aspera to download the data from EBI (244 MB):
 
 	$ docker run --rm -v /tmp:/data imagedata/download idr0021 . /data/
 
@@ -43,22 +43,22 @@ In the webclient, create a Project 'idr0021' and add the 10 new Datasets created
 Add Map Annotations from IDR
 ============================
 
-Edit the ```maintenance/scripts/idr_get_map_annotations.py``` with the ID of the 'idr0021' Project created
-above. This will get map annotations from all images in the [idr0021](http://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
+Edit the script [idr_get_map_annotations.py](../scripts/idr_get_map_annotations.py) with the ID of the 'idr0021' Project created
+above. This will get map annotations from all images in the [idr0021](https://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
 
 
 Rename Channels from Map Annotations
 ====================================
 
 We can now use the map annotations to rename channels on all images.
-Edit the ```project_id``` and run the ```maintenance/scripts/channel_names_from_maps.py```
+Edit the ```project_id``` and run the [channel_names_from_maps.py](../scripts/channel_names_from_maps.py)
 script on the local data.
 
 
 Analyse in Fiji and save ROIs in OMERO
 ======================================
 
-Run the ```jython/analyse_particles_for_another_user.jy``` in Fiji with the
+Run [analyse_particles_for_another_user.jy](../../practical/jython/analyse_particles_for_another_user.jy) in Fiji with the
 appropriate credentials on a Dataset at a time, updating the dataset_id each time.
 
 This will Analyse Particles and create ROIs on all channels of each Image.
@@ -75,9 +75,7 @@ First we need to delete an outlier Image that causes
 ```NEDD1ab_NEDD1141_I_012_SIR```. This image is the only Z-stack and no blobs are found
 so the Polygon created covers the whole plane.
 
-The ```python/server/batch_roi_export_to_table.py``` script needs to be installed on the
-server. Run this from the webclient, selecting the ```idr0021``` Project to create a
-single Table on this Project, that has rows for all Images in the Project.
+The [batch_roi_export_to_table.py](../../practical/python/server/batch_roi_export_to_table.py) script needs to be installed on the server. Run this from the webclient, selecting the ```idr0021``` Project to create a single Table on this Project, that has rows for all Images in the Project.
 
 This script uses the Channel Names to pick a Channel that matches the Dataset name
 for each Image. This is the Channel that needs to be analysed and is used to filter Shapes created
@@ -92,9 +90,27 @@ Delete ROIs and Map annotations for 1 Dataset
 
 Edit and run the following scripts on the first Dataset
 to remove Map Annotations and ROIs from all Images in that Dataset so we can show them being
-created in the workshop.
+created in the workshop:
 
- - ```maintenance/scripts/delete_annotations.py```
- - ```maintenance/scripts/delete_ROIs.py```
+ - [delete_annotations.py](../scripts/delete_annotations.py)
+ - [delete_ROIs.py](../scripts/delete_ROIs.py)
 
 The data is now ready to be presented in a workshop and analysed with ```OMERO.parade```.
+
+
+Plate data
+==========
+
+Download Plate ``INMAC384-DAPI-CM-eGFP_59223_1`` from the OME [HCS sample images](https://downloads.openmicroscopy.org/images/HCS/INCELL2000/), using ``wget`` to download all the files (9.8 GB, 1158 items) into a new directory
+and import this:
+
+	$ wget -r --no-parent --execute robots=off --no-directories --directory-prefix=INCELL2000/INMAC384-DAPI-CM-eGFP_59223_1 https://downloads.openmicroscopy.org/images/HCS/INCELL2000/INMAC384-DAPI-CM-eGFP_59223_1/
+
+	$ path/to/omero import INMAC384-DAPI-CM-eGFP_59223_1
+
+We need to populate an OMERO.table on the Plate to demonstrate filtering with
+OMERO.parade. For that we will use the [channel_minmax_to_table.py](../scripts/channel_minmax_to_table.py). Run the command line script with the Plate ID:
+
+	$ python maintenance/scripts/channel_minmax_to_table.py username password --server server.address plate_id
+
+This should create an Annotation on the Plate called ``Channels_Min_Max_Intensity``.
