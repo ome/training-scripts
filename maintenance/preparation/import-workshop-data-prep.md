@@ -20,7 +20,7 @@ Rendering files
 
 Perform the rendering steps on the first two datasets of the data imported in the bulk import (see above), CDK5RAP2-C and CENT2. These two datasets will import within the first 3 minutes of the import.
 
-The files used for the rendering settings are [renderingdef.yml](renderingdef.yml) and [renderingdef2.yml](renderingdef2.yml). These files contain the rendering definitions of color, min, max and channel names. See the workshop walkthrough [link-to-walkthrough] for how these files are used in the [omero-cli-render](https://pypi.org/project/omero-cli-render/) plugin.
+The files used for the rendering settings are [renderingdef.yml](renderingdef.yml) and [renderingdef2.yml](renderingdef2.yml). These files contain the rendering definitions of color, min, max and channel names. See the workshop [walkthrough](https://downloads.openmicroscopy.org/presentations/2018/Users-Meeting/Workshops/Metadata-Import/import.pdf) for how these files are used in the [omero-cli-render](https://pypi.org/project/omero-cli-render/) plugin.
 
 To change the rendering settings in a batch manner, use the bash script [apply_rnd_settings_as.sh](../scripts/apply_rnd_settings_as.sh). The [renderingMapping.tsv](renderingMapping.tsv) file lists all the datasets in the idr0021 study with the appropriate rendering definition file for that dataset. The file renderingMapping.tsv is consumed by the bash script mentioned above. You also need the files [renderingdef.yml](renderingdef.yml) and [renderingdef2.yml](renderingdef2.yml) for this step. They are referred to in the renderingMapping.tsv. Either put the renderingdef.yml and renderingdef2.yml in the same folder as renderingMapping.tsv or edit the renderingMapping.tsv and add the full path to the files.
 
