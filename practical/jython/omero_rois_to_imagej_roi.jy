@@ -118,7 +118,15 @@ def format_shape(data, ij_shape):
     ij_shape.setFillColor(settings.getFill())
     stroke = settings.getStrokeWidth(None)
     if stroke is not None:
-        ij_shape.setStrokeWidth(settings.getStrokeWidth(None).getValue())
+        value = settings.getStrokeWidth(None).getValue()
+        if value > 1:
+            ij_shape.setStrokeWidth(value)
+        else:
+            ij_shape.setStrokeWidth(2)
+    else:  
+        ij_shape.setStrokeWidth(2)
+    # attach the shape to the select z
+    ij_shape.setPosition(data.getZ())
 
 
 def convert_rectangle(data):
