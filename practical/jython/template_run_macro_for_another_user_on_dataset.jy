@@ -121,7 +121,7 @@ def switch_security_context(ctx, target_user):
 
 # Convert omero Image object as ImageJ ImagePlus object
 # (An alternative to OmeroReader)
-def open_omero_image(ctx, image_id):
+def open_omero_image(ctx, image_id, t):
     browse = gateway.getFacility(BrowseFacility)
     print image_id
     image = browse.getImage(ctx, long(image_id))
@@ -142,27 +142,25 @@ def open_omero_image(ctx, image_id):
     pixels_id = pixels.getId()
     store.setPixelsId(pixels_id, False)
     stack = ImageStack(size_x, size_y)
-    for t in range(0, size_t):
-        for z in range(0, size_z):
-            for c in range(0, size_c):
-                plane = store.getPlane(z, c, t)
+    for z in range(0, size_z):
+        for c in range(0, size_c):
+            plane = store.getPlane(z, c, t)
 
-                ImageTools.splitChannels(plane, 0, 1, bpp, False, interleave)
-                pixels = DataTools.makeDataArray(plane, bpp,
-                                                 is_float, is_little)
+            ImageTools.splitChannels(plane, 0, 1, bpp, False, interleave)
+            pixels = DataTools.makeDataArray(plane, bpp, is_float, is_little)
 
-                q = pixels
-                if len(plane) != size_x*size_y:
-                    tmp = q
-                    q = zeros(size_x*size_y, 'h')
-                    System.arraycopy(tmp, 0, q, 0, Math.min(len(q), len(tmp)))
-                    if is_signed:
-                        q = DataTools.makeSigned(q)
-                if q.typecode == 'b':
-                    ip = ByteProcessor(size_x, size_y, q, None)
-                elif q.typecode == 'h':
-                    ip = ShortProcessor(size_x, size_y, q, None)
-                stack.addSlice('', ip)
+            q = pixels
+            if len(plane) != size_x*size_y:
+                tmp = q
+                q = zeros(size_x*size_y, 'h')
+                System.arraycopy(tmp, 0, q, 0, Math.min(len(q), len(tmp)))
+                if is_signed:
+                    q = DataTools.makeSigned(q)
+            if q.typecode == 'b':
+                ip = ByteProcessor(size_x, size_y, q, None)
+            elif q.typecode == 'h':
+                ip = ShortProcessor(size_x, size_y, q, None)
+            stack.addSlice('', ip)
     store.close()
     # Do something
     image_name = image.getName() + '--OMERO ID:' + str(image.getId())
@@ -189,7 +187,15 @@ def format_shape(data, ij_shape):
     ij_shape.setFillColor(settings.getFill())
     stroke = settings.getStrokeWidth(None)
     if stroke is not None:
-        ij_shape.setStrokeWidth(settings.getStrokeWidth(None).getValue())
+        value = settings.getStrokeWidth(None).getValue()
+        if value > 1:
+            ij_shape.setStrokeWidth(value)
+        else:
+            ij_shape.setStrokeWidth(2)
+    else:  
+        ij_shape.setStrokeWidth(2)
+    # attach the shape to the select z
+    ij_shape.setPosition(data.getZ())
 
 
 def convert_rectangle(data):
@@ -235,7 +241,7 @@ def convert_polygon_polyline(data, type):
     return shape
 
 
-def convert_omero_rois_to_ij_rois(rois_results):
+def convert_omero_rois_to_ij_rois(rois_results, t):
     "Convert the omero ROI into imageJ ROI"
 
     output = []
@@ -245,20 +251,21 @@ def convert_omero_rois_to_ij_rois(rois_results):
             iterator = roi.getIterator()
             for s in iterator:
                 for shape in s:
-                    if isinstance(shape, RectangleData):
-                        output.append(convert_rectangle(shape))
-                    elif isinstance(shape, EllipseData):
-                        output.append(convert_ellipse(shape))
-                    elif isinstance(shape, PointData):
-                        output.append(convert_point(shape))
-                    elif isinstance(shape, LineData):
-                        output.append(convert_line(shape))
-                    elif isinstance(shape, PolylineData):
-                        shape = convert_polygon_polyline(shape, Roi.POLYLINE)
-                        output.append(shape)
-                    elif isinstance(shape, PolygonData):
-                        shape = convert_polygon_polyline(shape, Roi.POLYGON)
-                        output.append(shape)
+                    if shape.getT() == t:
+                        if isinstance(shape, RectangleData):
+                            output.append(convert_rectangle(shape))
+                        elif isinstance(shape, EllipseData):
+                            output.append(convert_ellipse(shape))
+                        elif isinstance(shape, PointData):
+                            output.append(convert_point(shape))
+                        elif isinstance(shape, LineData):
+                            output.append(convert_line(shape))
+                        elif isinstance(shape, PolylineData):
+                            shape = convert_polygon_polyline(shape, Roi.POLYLINE)
+                            output.append(shape)
+                        elif isinstance(shape, PolygonData):
+                            shape = convert_polygon_polyline(shape, Roi.POLYGON)
+                            output.append(shape)
     return output
 
 
@@ -274,18 +281,19 @@ images = get_images(gateway, ctx, dataset_id)
 # if target_user ~= None:
 # Switch context to target user and open omeroImage as ImagePlus object
 ctx = switch_security_context(ctx, target_user)
-
+# Select first timepoint only
+t = 0
 for img in images:
     # if target_user ~= None:
     # Switch context to target user and open omeroImage as ImagePlus object
     img_id = img.getId()
-    imp = open_omero_image(ctx, img_id)
+    imp = open_omero_image(ctx, img_id, t)
     imp = IJ.getImage()
     # Initialize the ROI manager
-    rm = RoiManager.getInstance()
+    rm = RoiManager()
     # load the OMERO ROIs linked to a given image and add them to the manager
     rois = get_rois(gateway, img_id)
-    output = convert_omero_rois_to_ij_rois(rois)
+    output = convert_omero_rois_to_ij_rois(rois, t)
     count = 0
     for i in output:
         rm.add(imp, i, count)
