@@ -208,7 +208,7 @@ def format_shape(data, ij_shape):
     elif img.isHyperStack():
         if z > 0 and (t < 0 or c < 0):
             ij_shape.setPosition(z)
-        elif t > 0 and (z < 0 or c <0):
+        elif t > 0 and (z < 0 or c < 0):
             ij_shape.setPosition(t)
         elif z > 0 and t > 0 and c > 0:
             ij_shape.setPosition(c, z, t)
