@@ -191,7 +191,7 @@ def format_shape(data, ij_shape):
         if value > 1:
             ij_shape.setStrokeWidth(value)
         else:
-            ij_shape.setStrokeWidth(2)
+            ij_shape.setStrokeWidth(1.1)
     else:  
         ij_shape.setStrokeWidth(2)
     # attach the shape to the plane
