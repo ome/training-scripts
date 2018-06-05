@@ -32,11 +32,13 @@
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
 
+from java.lang import Float
 from java.lang import Long
 from java.lang import System
 from java.lang import Math
 from java.util import ArrayList
 from jarray import zeros
+
 
 # OMERO Dependencies
 from omero.gateway import Gateway
@@ -184,34 +186,30 @@ def format_shape(data, ij_shape):
     "Convert settings e.g. color"
     settings = data.getShapeSettings()
     ij_shape.setStrokeColor(settings.getStroke())
-    ij_shape.setFillColor(settings.getFill())
     stroke = settings.getStrokeWidth(None)
     if stroke is not None:
         value = settings.getStrokeWidth(None).getValue()
-        if value > 1:
-            ij_shape.setStrokeWidth(value)
-        else:
-            ij_shape.setStrokeWidth(1.1)
-    else:  
-        ij_shape.setStrokeWidth(2)
+        ij_shape.setStrokeWidth(Float(value))
+    else:
+        ij_shape.setStrokeWidth(Float(1))
     # attach the shape to the plane
     img = IJ.getImage()
     z = data.getZ()
     c = data.getC()
     t = data.getT()
     if img.getNChannels() == 1 and img.getNSlices() == 1 and t > 0:
-        ij_shape.setPosition(t)
+        ij_shape.setPosition(t+1)
     elif img.getNChannels() == 1 and img.getNFrames() == 1 and z > 0:
-        ij_shape.setPosition(z)
+        ij_shape.setPosition(z+1)
     elif img.getNSlices() == 1 and img.getNFrames() == 1 and c > 0:
-        ij_shape.setPosition(c)
+        ij_shape.setPosition(c+1)
     elif img.isHyperStack():
         if z > 0 and (t < 0 or c < 0):
-            ij_shape.setPosition(z)
+            ij_shape.setPosition(z+1)
         elif t > 0 and (z < 0 or c < 0):
-            ij_shape.setPosition(t)
+            ij_shape.setPosition(t+1)
         elif z > 0 and t > 0 and c > 0:
-            ij_shape.setPosition(c, z, t)
+            ij_shape.setPosition(c+1, z+1, t+1)
 
 
 def convert_rectangle(data):
