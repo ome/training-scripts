@@ -21,6 +21,7 @@
 # load OMERO rois and add them to the manager and run a ImageJ macro.
 # In that script, the analysis is done on behalf of another user by a person
 # with more privileges e.g. analyst.
+# All planes can be retrieved or only the planes corresponding to a specific timepoint
 # More details about restricted privileges can be found at
 # https://docs.openmicroscopy.org/latest/omero/sysadmins/restricted-admins.html
 # Use this script in the Scripting Dialog of Fiji (File > New > Script).
@@ -80,7 +81,7 @@ PASSWORD = "password"
 # If you want to do analysis for someone else,
 # specify their username
 target_user = ""
-
+selected_t = -1
 
 def connect_to_omero():
     "Connect to OMERO. Returns a reference to the gateway"
@@ -123,7 +124,7 @@ def switch_security_context(ctx, target_user):
 
 # Convert omero Image object as ImageJ ImagePlus object
 # (An alternative to OmeroReader)
-def open_omero_image(ctx, image_id, t):
+def open_omero_image(ctx, image_id, value):
     browse = gateway.getFacility(BrowseFacility)
     print image_id
     image = browse.getImage(ctx, long(image_id))
@@ -144,30 +145,43 @@ def open_omero_image(ctx, image_id, t):
     pixels_id = pixels.getId()
     store.setPixelsId(pixels_id, False)
     stack = ImageStack(size_x, size_y)
-    for z in range(0, size_z):
-        for c in range(0, size_c):
-            plane = store.getPlane(z, c, t)
+    start = 0
+    end = size_t
+    dimension = size_t
+    if value >= 0:
+        start = value
+        end = value + 1
+        dimension = 1
+    elif value >= size_t:
+        start = value - 1
+        end = value
+        dimension = 1
 
-            ImageTools.splitChannels(plane, 0, 1, bpp, False, interleave)
-            pixels = DataTools.makeDataArray(plane, bpp, is_float, is_little)
+    for t in range(start, end):
+        for z in range(0, size_z):
+            for c in range(0, size_c):
+                plane = store.getPlane(z, c, t)
 
-            q = pixels
-            if len(plane) != size_x*size_y:
-                tmp = q
-                q = zeros(size_x*size_y, 'h')
-                System.arraycopy(tmp, 0, q, 0, Math.min(len(q), len(tmp)))
-                if is_signed:
-                    q = DataTools.makeSigned(q)
-            if q.typecode == 'b':
-                ip = ByteProcessor(size_x, size_y, q, None)
-            elif q.typecode == 'h':
-                ip = ShortProcessor(size_x, size_y, q, None)
-            stack.addSlice('', ip)
+                ImageTools.splitChannels(plane, 0, 1, bpp, False, interleave)
+                pixels = DataTools.makeDataArray(plane, bpp, is_float, is_little)
+
+                q = pixels
+                if len(plane) != size_x*size_y:
+                    tmp = q
+                    q = zeros(size_x*size_y, 'h')
+                    System.arraycopy(tmp, 0, q, 0, Math.min(len(q), len(tmp)))
+                    if is_signed:
+                        q = DataTools.makeSigned(q)
+                if q.typecode == 'b':
+                    ip = ByteProcessor(size_x, size_y, q, None)
+                elif q.typecode == 'h':
+                    ip = ShortProcessor(size_x, size_y, q, None)
+                stack.addSlice('', ip)
     store.close()
     # Do something
     image_name = image.getName() + '--OMERO ID:' + str(image.getId())
     imp = ImagePlus(image_name, stack)
-    imp.setDimensions(size_c, size_z, size_t)
+    imp.setDimensions(size_c, size_z, dimension)
     imp.setOpenAsHyperStack(True)
     imp.show()
     return imp
@@ -197,19 +211,20 @@ def format_shape(data, ij_shape):
     z = data.getZ()
     c = data.getC()
     t = data.getT()
+    if z >= 0:
+        z = z+1
+    if t >= 0:
+        t = t+1
+    if c >= 0:
+        c = c+1
     if img.getNChannels() == 1 and img.getNSlices() == 1 and t > 0:
-        ij_shape.setPosition(t+1)
+        ij_shape.setPosition(t)
     elif img.getNChannels() == 1 and img.getNFrames() == 1 and z > 0:
-        ij_shape.setPosition(z+1)
+        ij_shape.setPosition(z)
     elif img.getNSlices() == 1 and img.getNFrames() == 1 and c > 0:
-        ij_shape.setPosition(c+1)
+        ij_shape.setPosition(c)
     elif img.isHyperStack():
-        if z > 0 and (t < 0 or c < 0):
-            ij_shape.setPosition(z+1)
-        elif t > 0 and (z < 0 or c < 0):
-            ij_shape.setPosition(t+1)
-        elif z > 0 and t > 0 and c > 0:
-            ij_shape.setPosition(c+1, z+1, t+1)
+        ij_shape.setPosition(c, z, t)
 
 
 def convert_rectangle(data):
@@ -265,7 +280,7 @@ def convert_omero_rois_to_ij_rois(rois_results, t):
             iterator = roi.getIterator()
             for s in iterator:
                 for shape in s:
-                    if shape.getT() == t:
+                    if (shape.getT() < 0 or t < 0 or shape.getT() == t):
                         if isinstance(shape, RectangleData):
                             output.append(convert_rectangle(shape))
                         elif isinstance(shape, EllipseData):
@@ -295,19 +310,18 @@ images = get_images(gateway, ctx, dataset_id)
 # if target_user ~= None:
 # Switch context to target user and open omeroImage as ImagePlus object
 ctx = switch_security_context(ctx, target_user)
-# Select first timepoint only
-t = 0
+
 for img in images:
     # if target_user ~= None:
     # Switch context to target user and open omeroImage as ImagePlus object
     img_id = img.getId()
-    imp = open_omero_image(ctx, img_id, t)
+    imp = open_omero_image(ctx, img_id, selected_t)
     imp = IJ.getImage()
     # Initialize the ROI manager
     rm = RoiManager()
     # load the OMERO ROIs linked to a given image and add them to the manager
     rois = get_rois(gateway, img_id)
-    output = convert_omero_rois_to_ij_rois(rois, t)
+    output = convert_omero_rois_to_ij_rois(rois, selected_t)
     count = 0
     for i in output:
         rm.add(imp, i, count)
