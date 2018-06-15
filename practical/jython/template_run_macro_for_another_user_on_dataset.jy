@@ -148,14 +148,16 @@ def open_omero_image(ctx, image_id, value):
     start = 0
     end = size_t
     dimension = size_t
-    if value >= 0:
+    if value >= 0 and value < size_t:
         start = value
         end = value + 1
         dimension = 1
     elif value >= size_t:
-        start = value - 1
-        end = value
+        start = size_t - 1
+        end = size_t
         dimension = 1
+        # reset the selected_t for the ROI
+        selected_t = size_t-1
 
     for t in range(start, end):
         for z in range(0, size_z):
