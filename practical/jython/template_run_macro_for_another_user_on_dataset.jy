@@ -33,6 +33,7 @@
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
 
+from exceptions import Exception as PythonException
 from java.lang import Float
 from java.lang import Long
 from java.lang import System
@@ -81,6 +82,7 @@ PASSWORD = "password"
 # If you want to do analysis for someone else,
 # specify their username
 target_user = ""
+# The index of the select timepoint. Range from 0 to sizeT-1
 selected_t = -1
 
 def connect_to_omero():
@@ -153,11 +155,7 @@ def open_omero_image(ctx, image_id, value):
         end = value + 1
         dimension = 1
     elif value >= size_t:
-        start = size_t - 1
-        end = size_t
-        dimension = 1
-        # reset the selected_t for the ROI
-        selected_t = size_t-1
+        raise Exception("The selected timepoint cannot be greater than or equal to %s" %size_t )
 
     for t in range(start, end):
         for z in range(0, size_z):
