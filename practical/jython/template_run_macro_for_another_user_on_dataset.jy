@@ -18,10 +18,10 @@
 # ------------------------------------------------------------------------------
 
 # This Jython script shows how to load a given plane from OMERO,
-# load OMERO rois and add them to the manager and run a ImageJ macro.
-# In that script, the analysis is done on behalf of another user by a person
+# load OMERO rois and add them to the manager and run an ImageJ macro.
+# All planes can be retrieved or only the planes corresponding to a specific timepoint.
+# In this script, the analysis can be done on behalf of another user by a person
 # with more privileges e.g. analyst.
-# All planes can be retrieved or only the planes corresponding to a specific timepoint
 # More details about restricted privileges can be found at
 # https://docs.openmicroscopy.org/latest/omero/sysadmins/restricted-admins.html
 # Use this script in the Scripting Dialog of Fiji (File > New > Script).
