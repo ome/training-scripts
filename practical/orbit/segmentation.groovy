@@ -16,6 +16,11 @@ import static omero.rtypes.rstring;
 import static omero.rtypes.rint;
 import omero.gateway.facility.BrowseFacility
 
+// Edit these parameters
+String USERNAME = "username"
+String PASSWORD = "password"
+String modelPath = "/Full/path/to/orbit-model.omo"
+
 // Use the currently opened image...
 final OrbitImageAnalysis OIA = OrbitImageAnalysis.getInstance();
 ImageFrame iFrame = OIA.getIFrame();
@@ -28,11 +33,10 @@ println("ID:" + omeroImageId)
 
 // Login to create a new connection with OMERO
 ImageProviderOmero imageProvider = new ImageProviderOmero()
-imageProvider.authenticateUser("username", "password");
-
+imageProvider.authenticateUser(USERNAME, PASSWORD)
 
 // Load the model from file and classify the image
-OrbitModel model = OrbitModel.LoadFromFile("/Full/path/to/orbit-model.omo")
+OrbitModel model = OrbitModel.LoadFromFile(modelPath)
 println("Loaded Model")
 println(model)
 SegmentationResult res = OrbitHelper.Segmentation(rdf.rawDataFileId, model, null, 1)
