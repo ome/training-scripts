@@ -27,6 +27,7 @@
 # Information can be found at
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
+from java.lang import Float
 from java.lang import Long
 
 
@@ -115,10 +116,32 @@ def format_shape(data, ij_shape):
     "Convert settings e.g. color"
     settings = data.getShapeSettings()
     ij_shape.setStrokeColor(settings.getStroke())
-    ij_shape.setFillColor(settings.getFill())
     stroke = settings.getStrokeWidth(None)
     if stroke is not None:
-        ij_shape.setStrokeWidth(settings.getStrokeWidth(None).getValue())
+        value = settings.getStrokeWidth(None).getValue()
+        ij_shape.setStrokeWidth(Float(value))
+    else:
+        ij_shape.setStrokeWidth(Float(1))
+    # attach the shape to correct plane
+    # omero indexing starts at 0, imageJ at 1
+    img = IJ.getImage()
+    z = data.getZ()
+    c = data.getC()
+    t = data.getT()
+    if z >= 0:
+        z = z+1
+    if t >= 0:
+        t = t+1
+    if c >= 0:
+        c = c+1
+    if img.getNChannels() == 1 and img.getNSlices() == 1 and t > 0:
+        ij_shape.setPosition(t)
+    elif img.getNChannels() == 1 and img.getNFrames() == 1 and z > 0:
+        ij_shape.setPosition(z)
+    elif img.getNSlices() == 1 and img.getNFrames() == 1 and c > 0:
+        ij_shape.setPosition(c)
+    elif img.isHyperStack():
+        ij_shape.setPosition(c, z, t)
 
 
 def convert_rectangle(data):
