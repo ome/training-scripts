@@ -1,4 +1,5 @@
 import com.actelion.research.orbit.beans.RawDataFile
+import com.actelion.research.orbit.beans.RawAnnotation
 import com.actelion.research.orbit.imageAnalysis.dal.DALConfig
 import com.actelion.research.orbit.imageAnalysis.models.OrbitModel
 import com.actelion.research.orbit.imageAnalysis.models.SegmentationResult
@@ -12,20 +13,21 @@ import com.actelion.research.orbit.imageprovider.ImageProviderOmero
 
 import omero.gateway.model.*
 import omero.model.*
-import static omero.rtypes.rstring;
-import static omero.rtypes.rint;
+import omero.gateway.Gateway
+import omero.gateway.SecurityContext
+import static omero.rtypes.rstring
+import static omero.rtypes.rint
 import omero.gateway.facility.BrowseFacility
 
 // Edit these parameters
 String USERNAME = "username"
 String PASSWORD = "password"
-String modelPath = "/Full/path/to/orbit-model.omo"
 
 // Use the currently opened image...
-final OrbitImageAnalysis OIA = OrbitImageAnalysis.getInstance();
-ImageFrame iFrame = OIA.getIFrame();
-println("selected image: "+iFrame);
-RawDataFile rdf = iFrame.rdf;
+final OrbitImageAnalysis OIA = OrbitImageAnalysis.getInstance()
+ImageFrame iFrame = OIA.getIFrame()
+println("selected image: " + iFrame)
+RawDataFile rdf = iFrame.rdf
 
 // Get the OMERO Image ID
 long omeroImageId = rdf.getRawDataFileId()
@@ -34,15 +36,21 @@ println("ID:" + omeroImageId)
 // Login to create a new connection with OMERO
 ImageProviderOmero imageProvider = new ImageProviderOmero()
 imageProvider.authenticateUser(USERNAME, PASSWORD)
+Gateway gateway = imageProvider.getGatewayAndCtx().getGateway()
+SecurityContext ctx = imageProvider.getGatewayAndCtx().getCtx()
 
-// Load the model from file and classify the image
-OrbitModel model = OrbitModel.LoadFromFile(modelPath)
+List<RawAnnotation> annotations = imageProvider.LoadRawAnnotationsByType(RawAnnotation.ANNOTATION_TYPE_MODEL)
+println("Found " + annotations.size() + " files")
+
+// Load the model from first FileAnnotation and segment the image
+int fileAnnId = annotations[0].getRawAnnotationId()
+OrbitModel model = OrbitModel.LoadFromOrbit(fileAnnId)
 println("Loaded Model")
 println(model)
 SegmentationResult res = OrbitHelper.Segmentation(rdf.rawDataFileId, model, null, 1)
 
 // handle the segmented objects
-println("SegmentationResult")
+println("SegmentationResult: " + res.shapeList.size() + " shapes")
 for (Shape shape: res.shapeList) {
     // can cast shape to Polygon or simply listPoints
     String points = shape.listPoints()
@@ -63,8 +71,8 @@ for (Shape shape: res.shapeList) {
     roi.addShape(p)
 
     // Save
-    imageProvider.getGatewayAndCtx().getGateway().getUpdateService(imageProvider.getGatewayAndCtx().getCtx()).saveAndReturnObject(roi)
+    gateway.getUpdateService(ctx).saveAndReturnObject(roi)
 }
 
-// 
+println("Close...")
 imageProvider.close()
