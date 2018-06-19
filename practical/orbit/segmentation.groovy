@@ -45,8 +45,7 @@ println("Found " + annotations.size() + " files")
 // Load the model from first FileAnnotation and segment the image
 int fileAnnId = annotations[0].getRawAnnotationId()
 OrbitModel model = OrbitModel.LoadFromOrbit(fileAnnId)
-println("Loaded Model")
-println(model)
+println("Loaded Model: " + model.getName())
 SegmentationResult res = OrbitHelper.Segmentation(rdf.rawDataFileId, model, null, 1)
 
 // handle the segmented objects
