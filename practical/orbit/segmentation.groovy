@@ -39,13 +39,16 @@ imageProvider.authenticateUser(USERNAME, PASSWORD)
 Gateway gateway = imageProvider.getGatewayAndCtx().getGateway()
 SecurityContext ctx = imageProvider.getGatewayAndCtx().getCtx()
 
+// Load Models that I own. OMERO annotations of type: Model
+imageProvider.setOnlyOwnerObjects(true)
 List<RawAnnotation> annotations = imageProvider.LoadRawAnnotationsByType(RawAnnotation.ANNOTATION_TYPE_MODEL)
 println("Found " + annotations.size() + " files")
-
-// Load the model from first FileAnnotation and segment the image
+// Use the first annotation
 int fileAnnId = annotations[0].getRawAnnotationId()
 OrbitModel model = OrbitModel.LoadFromOrbit(fileAnnId)
 println("Loaded Model: " + model.getName())
+
+// Perform the segmentation
 SegmentationResult res = OrbitHelper.Segmentation(rdf.rawDataFileId, model, null, 1)
 
 // handle the segmented objects
