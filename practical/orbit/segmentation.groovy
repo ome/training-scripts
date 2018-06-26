@@ -18,6 +18,7 @@ import omero.gateway.SecurityContext
 import static omero.rtypes.rstring
 import static omero.rtypes.rint
 import omero.gateway.facility.BrowseFacility
+import omero.gateway.facility.DataManagerFacility
 
 // Edit these parameters
 String USERNAME = "username"
