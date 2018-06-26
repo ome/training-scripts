@@ -26,6 +26,9 @@ import static omero.rtypes.rint
 import static omero.rtypes.rlong
 import omero.gateway.facility.BrowseFacility
 
+// Example script to show how to load Orbit ROI annotations from OMERO
+// and convert them to Polygons on the Image.
+
 // Edit these parameters
 String USERNAME = "username"
 String PASSWORD = "password"
