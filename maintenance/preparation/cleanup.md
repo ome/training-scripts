@@ -2,6 +2,26 @@
 Workshop prep:
 
 
+Cell Profiler
+=============
+
+ - Check that pre-calculated OMERO.table is attached to plate
+ - Run the analysis against a different plate so incomplete tables don't confuse Parade
+
+Cleanup
+-------
+
+ - Delete any tables from previous run-throughs (but not the complete table)
+
+
+Orbit segmentation
+==================
+
+ - Delete any Orbit model annotation(s) (not linked to Images)
+ - Delete Orbit ROI annotation on Image
+ - Delete ROIs on Image
+
+
 Raw data analysis
 =================
 
