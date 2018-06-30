@@ -36,6 +36,6 @@ Metadata Handling
 Cleanup
 -------
 
- - Delete manually-added client map annotations on images
- - Delete "Interesting" Tag
- - Delete "Figure 1" figure
+ - Delete any Map Annotations added during the workshop
+ - Delete any Tags added during workshop
+ - Delete any figures created during workshop
