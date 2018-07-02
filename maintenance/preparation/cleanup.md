@@ -67,8 +67,8 @@ Metadata Handling
 
  - idr0021 Project has Bulk annotations Table
  - OMERO.mapr config set for Gene and Key-Value
- - Figure 2 Aurora-B figure created
- - Only 1 Project idr0021
+ - Figure 2 Aurora-B figure created, belonging to trainer-2
+ - Only 1 Project named 'idr0021' (owned by trainer-1)
 
 
 Cleanup
