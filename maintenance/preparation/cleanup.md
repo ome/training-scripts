@@ -1,6 +1,26 @@
 
 Workshop prep:
 
+General prep
+============
+
+ - Open gdoc or PDF walkthrough (with link to script)
+ - Turn off e-mail & slack notifications!
+
+
+OMERO intro - webclient
+=======================
+
+ - Add Prometaphase & Anaphase tags to siRNAi images
+ - Create Metaphase tag to be added in workshop
+ - Create rendering settings for some users on trainer-1's images
+
+Cleanup
+-------
+
+ - Remove metaphase tag
+ - Remove any ROIs added
+
 
 Cell Profiler
 =============
@@ -32,8 +52,6 @@ Raw data analysis
  - ROIS on ALL Datasets previously analysed -> Table on Project
  - Ratings added to at least one image in every Dataset
  - batch_roi_export_to_table script is installed on server
- - Open gdoc or PDF walkthrough (with link to script)
- - Turn off e-mail & slack notifications!
  - Check Jupyter notebook is available: https://idr-analysis.openmicroscopy.org/training/hub/tmplogin
 
 Cleanup
