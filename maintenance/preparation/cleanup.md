@@ -14,12 +14,13 @@ OMERO intro - webclient
  - Add Prometaphase & Anaphase tags to siRNAi images
  - Create Metaphase tag to be added in workshop
  - Add Rating of 5 to at least 1 Prometaphase, Metaphase & Anaphase images
+ - Add Key-Value pairs for some images including key: mitomycin-A, value: 0mM
  - Create rendering settings for some users on trainer-1's images
+ - Create rendering settings for trainer-1 on images of all users
 
 Cleanup
 -------
 
- - Remove metaphase tag
  - Remove any ROIs added
 
 
