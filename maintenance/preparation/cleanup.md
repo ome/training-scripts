@@ -15,6 +15,7 @@ OMERO intro - webclient
  - Create Metaphase tag to be added in workshop
  - Add Rating of 5 to at least 1 Prometaphase, Metaphase & Anaphase images
  - Create rendering settings for some users on trainer-1's images
+ - Create rendering settings for trainer-1 on images of all users
 
 Cleanup
 -------
