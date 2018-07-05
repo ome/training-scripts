@@ -4,7 +4,7 @@ Workshop prep:
 General prep
 ============
 
- - Open gdoc or PDF walkthrough (with link to script)
+ - Open gdoc or PDF walkthrough (with links to scripts, notebooks etc.)
  - Turn off e-mail & slack notifications!
 
 
