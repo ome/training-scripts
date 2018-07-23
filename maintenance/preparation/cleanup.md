@@ -4,8 +4,8 @@ Workshop prep:
 General prep
 ============
 
- - Open gdoc or PDF walkthrough (with links to scripts, notebooks etc.)
- - Turn off e-mail & slack notifications!
+ - Open gdoc or PDF walkthrough (with links to scripts, notebooks, etc.)
+ - Turn off e-mail and slack notifications!
 
 
 OMERO intro - webclient
@@ -13,7 +13,7 @@ OMERO intro - webclient
 
  - Add Prometaphase & Anaphase tags to siRNAi-HeLa DV images
  - Create Metaphase tag to be added in workshop
- - Add Rating of 5 to at least 1 Prometaphase, Metaphase & Anaphase images
+ - Add Rating of 5 to at least 1 Prometaphase, Metaphase and Anaphase images
  - Add Key-Value pairs for some images including key: mitomycin-A, value: 0mM
  - Create rendering settings for some users on trainer-1's images
  - Create rendering settings for trainer-1 on images of all users
@@ -61,7 +61,7 @@ Cleanup
 -------
 
  - Delete ROIs from 1st Dataset
- - Delete summpary ROI Map annotations from 1st Dataset
+ - Delete summary ROI Map annotations from 1st Dataset
  - Delete Plots attachments on Project
 
 
