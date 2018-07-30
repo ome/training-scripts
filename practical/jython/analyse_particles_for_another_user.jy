@@ -74,6 +74,7 @@ group_id = -1
 dataset_id = 51
 USERNAME = "username"
 PASSWORD = "password"
+save_locally = "false"
 # If you want to do analysis for someone else,
 # specify their username
 target_user = ""
@@ -211,6 +212,10 @@ ids = get_image_ids(gateway, ctx, dataset_id)
 # Switch context to target user and open omeroImage as ImagePlus object
 ctx = switch_security_context(ctx, target_user)
 
+if save_locally == "true":
+    import tempfile
+    tmp_dir = tempfile.tempdir
+
 for id1 in ids:
     # if target_user ~= None:
     # Switch context to target user and open omeroImage as ImagePlus object
@@ -227,8 +232,16 @@ for id1 in ids:
     rm = RoiManager.getInstance()
     rm.runCommand(imp, "Measure")
     rt = ResultsTable.getResultsTable()
-    roivec = save_rois_to_omero(ctx, id1, imp)
-    convert_to_omero_table(rt, ctx, id1, roivec)
+    if save_locally == "true":
+        print "saving locally"
+        # Create a tmp file and save the result
+        file = tempfile.NamedTemporaryFile(mode='wb', prefix=str(id1), suffix='.csv', dir=tmp_dir, delete=True)
+        rt.updateResults()
+        rt.saveAs(file.name)
+
+    else:
+        roivec = save_rois_to_omero(ctx, id1, imp)
+        convert_to_omero_table(rt, ctx, id1, roivec)
     # Close the various components
     IJ.selectWindow("Results")
     IJ.run("Close")
@@ -239,4 +252,28 @@ for id1 in ids:
 
 # Close the connection
 gateway.disconnect()
+
+# Aggregate the CVS files
+if save_locally == "true":
+    delimiter = ","
+    import csv
+    import os
+    import fnmatch
+    csv_files = fnmatch.filter(os.listdir(tmp_dir), '*.csv')
+    file = tempfile.TemporaryFile(mode='wb', prefix='merged_data_', suffix='.csv', dir=tmp_dir)
+    with open(file.name, 'wb') as master:
+        master_csv = csv.writer(master)
+        path = os.path.join(tmp_dir, csv_files[0])
+        with open(path, 'rb') as csv_file:
+            headers = csv_file.readline().strip().split(delimiter)
+            master_csv.writerow(headers)
+            for line in csv_file:
+                master_csv.writerow(line.strip().split(delimiter))
+        for f in csv_files[1:]:
+            path = os.path.join(tmp_dir, f)
+            with open(path, 'rb') as csv_file:
+                for line_num, line in enumerate(csv_file):
+                    if line_num > 0:
+                        master_csv.writerow(line.strip().split(delimiter))
+
 print "processing done"
