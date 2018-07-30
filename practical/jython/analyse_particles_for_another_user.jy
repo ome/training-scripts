@@ -71,7 +71,8 @@ HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 group_id = -1
 #  parameters to edit
-dataset_id = 51
+type = "dataset"
+object_id = 51
 USERNAME = "username"
 PASSWORD = "password"
 save_locally = "false"
@@ -96,16 +97,20 @@ def connect_to_omero():
     return gateway
 
 
-def get_image_ids(gateway, ctx, dataset_id):
-    "List all image's ids contained in a Dataset"
+def get_image_ids(gateway, ctx, object_id, type):
+    "List all image's ids contained in a Project or dataset"
 
     browse = gateway.getFacility(BrowseFacility)
     ctx = switch_security_context(ctx, target_user)
 
     ids = ArrayList(1)
-    val = Long(dataset_id)
+    val = Long(object_id)
     ids.add(val)
-    images = browse.getImagesForDatasets(ctx, ids)
+    if type == "project":
+        images = browse.getImagesForProjects(ctx, ids)
+    elif type == "dataset":
+        images = browse.getImagesForDatasets(ctx, ids)
+
 
     j = images.iterator()
     image_ids = []
@@ -205,8 +210,8 @@ ctx = SecurityContext(group_id)
 exp = gateway.getLoggedInUser()
 exp_id = exp.getId()
 
-# get all images_ids in an omero dataset
-ids = get_image_ids(gateway, ctx, dataset_id)
+# get all images_ids in an omero project or dataset
+ids = get_image_ids(gateway, ctx, object_id, type)
 
 # if target_user ~= None:
 # Switch context to target user and open omeroImage as ImagePlus object
