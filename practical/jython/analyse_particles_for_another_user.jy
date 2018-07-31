@@ -204,6 +204,16 @@ def save_rois_to_omero(ctx, image_id, imp):
     return roivec
 
 
+def save_as_csv(rt, image_id, tmp_dir):
+    # insert the image ID for each row
+    for i in range(0, rt.size()):
+        rt.setValue("Label", i, str(image_id))
+    # Create a tmp file and save the result
+    file = tempfile.NamedTemporaryFile(mode='wb', prefix=str(image_id), suffix='.csv', dir=tmp_dir, delete=False)
+    rt.updateResults()
+    rt.saveAs(file.name)
+
+
 # Prototype analysis example
 gateway = connect_to_omero()
 ctx = SecurityContext(group_id)
@@ -238,12 +248,8 @@ for id1 in ids:
     rm.runCommand(imp, "Measure")
     rt = ResultsTable.getResultsTable()
     if save_locally == "true":
-        print "saving locally"
-        # Create a tmp file and save the result
-        file = tempfile.NamedTemporaryFile(mode='wb', prefix=str(id1), suffix='.csv', dir=tmp_dir, delete=True)
-        rt.updateResults()
-        rt.saveAs(file.name)
-
+        print "saving locally results for image with ID" + str(id1)
+        save_as_csv(rt, id1, tmp_dir)
     else:
         roivec = save_rois_to_omero(ctx, id1, imp)
         convert_to_omero_table(rt, ctx, id1, roivec)
