@@ -81,9 +81,9 @@ HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 group_id = -1
 //  parameters to edit
-dataset_id = 51
-USERNAME = "username"
-PASSWORD = "password"
+dataset_id = 2331
+USERNAME = "trainer-1"
+PASSWORD = "topim2018"
 // If you want to do analysis for someone else,
 // specify their username
 target_user = ""
@@ -112,14 +112,14 @@ def get_images(gateway, ctx, dataset_id) {
     ctx = switch_security_context(ctx, target_user)
 
     ids = new ArrayList(1)
-    ids.add(dataset_id)
+    ids.add(new Long(dataset_id))
     return browse.getImagesForDatasets(ctx, ids)
 
 }
 
 def switch_security_context(ctx, target_user) {
     "Switch security context"
-    if (target_user == null || target.trim().isEmpty()) {
+    if (!target_user?.trim()) {
         target_user = USERNAME
     }
     service = gateway.getFacility(AdminFacility)
@@ -150,7 +150,7 @@ def open_omero_image(ctx, image_id, value) {
     interleave = false
     store = gateway.getPixelsStore(ctx)
     pixels_id = pixels.getId()
-    store.setPixelsId(pixels_id, False)
+    store.setPixelsId(pixels_id, false)
     stack = new ImageStack(size_x, size_y)
     start = 0
     end = size_t
@@ -163,29 +163,29 @@ def open_omero_image(ctx, image_id, value) {
         throw new Exception("The selected timepoint cannot be greater than or equal to " + size_t)
     }
     t = start
-    while (t <= end) {
-    	z = 0
-        while (z <= size_z) {
-        	c = 0
-            while (c <= size_c) {
+    while (t < end) {
+        z = 0
+        while (z < size_z) {
+            c = 0
+            while (c < size_c) {
                 plane = store.getPlane(z, c, t)
 
                 ImageTools.splitChannels(plane, 0, 1, bpp, false, interleave)
                 pixels = DataTools.makeDataArray(plane, bpp, is_float, is_little)
 
                 q = pixels
-                if (len(plane) != size_x*size_y) {
+                if (plane.size() != size_x*size_y) {
                     tmp = q
                     q = zeros(size_x*size_y, 'h')
-                    System.arraycopy(tmp, 0, q, 0, Math.min(len(q), len(tmp)))
+                    System.arraycopy(tmp, 0, q, 0, Math.min(q.size(), tmp.size()))
                     if (is_signed) {
                         q = DataTools.makeSigned(q)
                     }
                 }
-                if (q.typecode == 'b') {
-                    ip = ByteProcessor(size_x, size_y, q, None)
-                } else if (q.typecode == 'h') {
-                    ip = ShortProcessor(size_x, size_y, q, None)
+                if (q[0] instanceof Byte) {
+                    ip = new ByteProcessor(size_x, size_y, q, null)
+                } else {
+                    ip = new ShortProcessor(size_x, size_y, q, null)
                 }
                 stack.addSlice('', ip)
                 c += 1
@@ -199,7 +199,7 @@ def open_omero_image(ctx, image_id, value) {
     image_name = image.getName() + '--OMERO ID:' + image.getId()
     imp = new ImagePlus(image_name, stack)
     imp.setDimensions(size_c, size_z, dimension)
-    imp.setOpenAsHyperStack(True)
+    imp.setOpenAsHyperStack(true)
     imp.show()
     return imp
 
@@ -218,9 +218,9 @@ def format_shape(data, ij_shape) {
     "Convert settings e.g. color"
     settings = data.getShapeSettings()
     ij_shape.setStrokeColor(settings.getStroke())
-    stroke = settings.getStrokeWidth(None)
+    stroke = settings.getStrokeWidth(null)
     if (stroke != null) {
-        value = settings.getStrokeWidth(None).getValue()
+        value = settings.getStrokeWidth(null).getValue()
         ij_shape.setStrokeWidth(new Float(value))
     } else {
         ij_shape.setStrokeWidth(new Float(1))
@@ -298,7 +298,7 @@ def convert_polygon_polyline(data, type) {
 def convert_omero_rois_to_ij_rois(rois_results, t) {
     "Convert the omero ROI into imageJ ROI"
 
-    output = []
+    output = new ArrayList()
     rois_results.each() { roi_result ->
         rois = roi_result.getROIs()
         rois.each() { roi ->
@@ -307,19 +307,19 @@ def convert_omero_rois_to_ij_rois(rois_results, t) {
                 s.each() { shape ->
                     if (shape.getT() < 0 || t < 0 || shape.getT() == t) {
                         if (shape instanceof RectangleData) {
-                            output.append(convert_rectangle(shape))
+                            output.add(convert_rectangle(shape))
                         } else if (shape instanceof EllipseData) {
-                            output.append(convert_ellipse(shape))
+                            output.add(convert_ellipse(shape))
                         } else if (shape instanceof PointData) {
-                            output.append(convert_point(shape))
+                            output.add(convert_point(shape))
                         } else if (shape instanceof LineData) {
-                            output.append(convert_line(shape))
+                            output.add(convert_line(shape))
                         } else if (shape instanceof PolylineData) {
                             shape = convert_polygon_polyline(shape, Roi.POLYLINE)
-                            output.append(shape)
+                            output.add(shape)
                         } else if (shape instanceof PolygonData) {
                             shape = convert_polygon_polyline(shape, Roi.POLYGON)
-                            output.append(shape)
+                            output.add(shape)
                         }
                     }
                 }
@@ -332,8 +332,9 @@ def convert_omero_rois_to_ij_rois(rois_results, t) {
 
 // Prototype analysis example
 gateway = connect_to_omero()
-ctx = new SecurityContext(group_id)
 exp = gateway.getLoggedInUser()
+group_id = exp.getGroupId()
+ctx = new SecurityContext(group_id)
 exp_id = exp.getId()
 
 // get all images in an omero dataset
@@ -355,7 +356,7 @@ images.each { img ->
     rois = get_rois(gateway, img_id)
     output = convert_omero_rois_to_ij_rois(rois, selected_t)
     count = 0
-    output.each { i ->
+    output.each() { i ->
         rm.add(imp, i, count)
         count = count+1
     }
