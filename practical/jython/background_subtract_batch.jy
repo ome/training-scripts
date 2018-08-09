@@ -131,10 +131,7 @@ def upload_image(path, gateway, id):
     config.debug.set('false')
     config.hostname.set(HOST)
     config.sessionKey.set(sessionKey)
-    value = "omero.model.Dataset:"
-    value += str(id)
-    config.target.set(value)
-    dataset = find_dataset(gateway, dataset_id)
+    dataset = find_dataset(gateway, id)
 
     store = config.createStore()
     reader = OMEROWrapper(config)
