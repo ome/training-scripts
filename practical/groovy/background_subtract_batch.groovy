@@ -123,6 +123,14 @@ def get_image_ids(gateway, dataset_id) {
     return image_ids
 }
 
+def find_dataset(gateway, dataset_id) {
+    "Load the Dataset"
+    browse = gateway.getFacility(BrowseFacility)
+    user = gateway.getLoggedInUser()
+    ctx = new SecurityContext(user.getGroupId())
+    return browse.findIObject(ctx, "omero.model.Dataset", dataset_id)
+}
+
 def upload_image(path, gateway, id) {
     "Upload an image to omero"
 
@@ -133,7 +141,9 @@ def upload_image(path, gateway, id) {
     config.debug.set('false')
     config.hostname.set(HOST)
     config.sessionKey.set(sessionKey)
-    config.savedDataset.set(id)
+    config.targetClass.set("DatasetI")
+    config.targetId.set(id)
+    dataset = find_dataset(gateway, dataset_id)
 
     store = config.createStore()
     reader = new OMEROWrapper(config)
@@ -143,6 +153,10 @@ def upload_image(path, gateway, id) {
 
     library.addObserver(new LoggingImportMonitor())
     candidates = new ImportCandidates(reader, path, error_handler)
+    containers = candidates.getContainers()
+    containers.each() { c ->
+        c.setTarget(dataset)
+    }
     reader.setMetadataOptions(new DefaultMetadataOptions(MetadataLevel.ALL))
     return library.importCandidates(config, candidates)
 
