@@ -82,8 +82,9 @@ PORT = 4064
 group_id = -1
 //  parameters to edit
 dataset_id = 2331
-USERNAME = "trainer-1"
-PASSWORD = "topim2018"
+USERNAME = "username"
+PASSWORD = "password"
+
 // If you want to do analysis for someone else,
 // specify their username
 target_user = ""
