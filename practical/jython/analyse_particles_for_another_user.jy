@@ -25,7 +25,6 @@
 # https://docs.openmicroscopy.org/latest/omero/sysadmins/restricted-admins.html
 # Use this script in the Scripting Dialog of Fiji (File > New > Script).
 # Select Python as language in the Scripting Dialog.
-# Select Python as language in the Scripting Dialog.
 # Error handling is omitted to ease the reading of the script but
 # this should be added
 # if used in production to make sure the services are closed
