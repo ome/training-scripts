@@ -62,7 +62,7 @@ HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 group_id = "-1"
 // parameters to edit
-dataset_id = "1001"
+dataset_id = 1001
 USERNAME = "username"
 PASSWORD = "password"
 
