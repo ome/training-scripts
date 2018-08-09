@@ -62,7 +62,7 @@ HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 group_id = "-1"
 #  parameters to edit
-dataset_id = "1022"
+dataset_id = 1022
 USERNAME = "username"
 PASSWORD = "password"
 
@@ -96,6 +96,13 @@ def connect_to_omero():
     return gateway
 
 
+def find_dataset(gateway, dataset_id):
+    browse = gateway.getFacility(BrowseFacility)
+    user = gateway.getLoggedInUser()
+    ctx = SecurityContext(user.getGroupId())
+    return browse.findIObject(ctx, "omero.model.Dataset", dataset_id)
+
+
 def get_image_ids(gateway, dataset_id):
     "List all image's ids contained in a Dataset"
 
@@ -127,6 +134,7 @@ def upload_image(path, gateway, id):
     value = "omero.model.Dataset:"
     value += str(id)
     config.target.set(value)
+    dataset = find_dataset(gateway, dataset_id)
 
     store = config.createStore()
     reader = OMEROWrapper(config)
@@ -136,6 +144,9 @@ def upload_image(path, gateway, id):
 
     library.addObserver(LoggingImportMonitor())
     candidates = ImportCandidates(reader, path, error_handler)
+    containers = candidates.getContainers()
+    for c in containers:
+        c.setTarget(dataset)
     reader.setMetadataOptions(DefaultMetadataOptions(MetadataLevel.ALL))
     return library.importCandidates(config, candidates)
 
@@ -147,7 +158,7 @@ gateway = connect_to_omero()
 image_ids = get_image_ids(gateway, dataset_id)
 
 # Create a dataset to store the newly created images will be added
-name = "script_editor_output_from_dataset_" + dataset_id
+name = "script_editor_output_from_dataset_" + str(dataset_id)
 d = DatasetData()
 d.setName(name)
 dm = gateway.getFacility(DataManagerFacility)
