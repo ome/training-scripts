@@ -141,9 +141,7 @@ def upload_image(path, gateway, id) {
     config.debug.set('false')
     config.hostname.set(HOST)
     config.sessionKey.set(sessionKey)
-    config.targetClass.set("DatasetI")
-    config.targetId.set(id)
-    dataset = find_dataset(gateway, dataset_id)
+    dataset = find_dataset(gateway, id)
 
     store = config.createStore()
     reader = new OMEROWrapper(config)
