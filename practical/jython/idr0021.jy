@@ -29,7 +29,10 @@
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
 
+from java.lang import Double
 from java.lang import Long
+from java.lang import Object
+from java.lang import String
 from java.util import ArrayList
 
 # OMERO Dependencies
@@ -37,9 +40,13 @@ from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
 from omero.gateway.facility import BrowseFacility, DataManagerFacility, MetadataFacility
+from omero.gateway.facility import ROIFacility
+from omero.gateway.facility import TablesFacility
 from omero.gateway.model import FileAnnotationData
 from omero.gateway.model import MapAnnotationData
 from omero.gateway.model import DatasetData, ImageData, ProjectData
+from omero.gateway.model import TableData, TableDataColumn
+
 
 from omero.model import DatasetI, ImageI, ProjectI
 from omero.log import SimpleLogger
@@ -47,6 +54,7 @@ from omero.rtypes import rlong, rstring
 from omero.model import ChecksumAlgorithmI, FileAnnotationI, OriginalFileI
 from omero.model.enums import ChecksumAlgorithmSHA1160
 
+from org.openmicroscopy.shoola.util.roi.io import ROIReader
 
 from ij import IJ
 from ij.plugin.frame import RoiManager
@@ -74,7 +82,7 @@ MAP_KEY = "Channels"
 save_data = True
 
 if HOST.startswith("idr"):
-    save_data = FALSE
+    save_data = False
 
 
 def connect_to_omero():
@@ -263,13 +271,12 @@ def upload_csv_to_omero(ctx, file, type, object_id):
                 stream.seek(pos)
                 block = stream.read(block_size)
                 store.write(block, pos, block_size)
-        
+
         original_file = store.save()
     finally:
         store.close()
 
-
-    # create the original file and file annotation (uploads the file etc.)
+    # create the file annotation
     namespace = "training.demo"
     fa = FileAnnotationI()
     fa.setFile(original_file)
@@ -283,6 +290,48 @@ def upload_csv_to_omero(ctx, file, type, object_id):
     svc.attachAnnotation(ctx, FileAnnotationData(fa), data_object)
 
 
+def save_summary_as_omero_table(ctx, file, type, object_id, delimiter):
+    "Convert the CSV file into an OMERO table and attach it to the specified object"
+    data = None
+    with open(file.name, 'r') as f:
+        headers = f.readline().strip().split(delimiter)
+        # convert headers into columns
+        columns = [TableDataColumn] * (len(headers))
+        string_indexes = []
+        rows = []
+        for i, c in enumerate(headers):
+            if c == "Slice" or c == "Dataset":
+                columns[i] = TableDataColumn(c, i, String)
+                string_indexes.append(i)
+            else:
+                columns[i] = TableDataColumn(c, i, Double)
+        # Read the rest of the file
+        for line in f:
+            values = line.strip().split(delimiter)
+            row = []
+            for i, c in enumerate(values):
+                if i in string_indexes:
+                    row.append(String(c))
+                else:
+                    row.append(Double(c))
+            rows.append(row)
+        data = [[Object() for x in range(len(rows))] for y in range(len(columns))]
+        for r in range(0, len(rows)):
+            row = rows[r]
+            for i in range(0, len(row)):
+                data[i][r] = row[i]
+    # Create the table
+    table_data = TableData(columns, data)
+    table_facility = gateway.getFacility(TablesFacility)
+    data_object = None
+    if type == "Project":
+        data_object = ProjectData(ProjectI(object_id, False))
+    elif type == "Dataset":
+        data_object = DatasetData(DatasetI(object_id, False))
+
+    table_facility.addTable(ctx, data_object, "Summary_from_Fiji", table_data)
+
+
 # Connect
 gateway, user = connect_to_omero()
 group_id = user.getGroupId()
@@ -290,7 +339,7 @@ ctx = SecurityContext(group_id)
 exp = gateway.getLoggedInUser()
 exp_id = exp.getId()
 
-tmp_dir = tempfile.tempdir
+tmp_dir = tempfile.gettempdir()
 
 # get all the dataset_ids in an project
 datasets = get_datasets(gateway, ctx, project_id)
@@ -329,8 +378,8 @@ while j.hasNext():
         rm.runCommand(imp, "Measure")
         rt = ResultsTable.getResultsTable()
         # Save the ROIs
-        # if save_data:
-        #    roivec = save_rois_to_omero(ctx, id, imp)
+        if save_data:
+            roivec = save_rois_to_omero(ctx, id, imp)
 
         print "saving locally results for image with ID " + str(id)
         save_as_csv(rt, id, tmp_dir, channel_index, name)
@@ -369,7 +418,8 @@ with open(file.name, 'wb') as master:
 # Attach the summary csv file to the Project
 if save_data:
     upload_csv_to_omero(ctx, file, "Project", project_id)
+    save_summary_as_omero_table(ctx, file, "Project", project_id, delimiter)
     # delete local copy of the file
     os.remove(file.name)
-    
+
 print "processing done"
