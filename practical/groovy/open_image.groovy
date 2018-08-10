@@ -21,7 +21,7 @@
 
 /*
  * This Groovy script downloads a file and opens it in ImageJ using Bio-Formats
- * exporter.
+ * importer.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
  * Select Groovy as language in the Scripting Dialog.
  * Error handling is omitted to ease the reading of the script but this
