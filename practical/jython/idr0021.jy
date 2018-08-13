@@ -208,7 +208,7 @@ def save_as_csv(rt, image_id, tmp_dir, channel_index, dataset_name):
     # Create a tmp file and save the result
     file = tempfile.NamedTemporaryFile(mode='wb', prefix=str(image_id), suffix='.csv', dir=tmp_dir, delete=False)
     rt.updateResults()
-    rt.saveAs(file.name)
+    rt.save(file.name)
 
 
 def save_rois_to_omero(ctx, image_id, imp):
@@ -243,7 +243,7 @@ def upload_csv_to_omero(ctx, file, type, object_id):
     file_size = os.path.getsize(file.name)
     original_file = OriginalFileI()
     original_file.setName(rstring(file.name))
-    original_file.setPath(rstring(path))
+    original_file.setPath(rstring(file.name))
     original_file.setSize(rlong(file_size))
 
     checksum_algorithm = ChecksumAlgorithmI()
