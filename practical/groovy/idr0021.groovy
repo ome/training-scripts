@@ -336,22 +336,23 @@ def save_summary_as_omero_table(ctx, file, type, object_id, delimiter) {
     "Convert the CSV file into an OMERO table and attach it to the specified object"
     data = null
     stream = null
+    rows = new ArrayList()
+    columns_list = new ArrayList()
     try {
         stream = new BufferedReader(new FileReader(file))
-        headers = stream.readLine()
-        if (headers == null || headers.length == 0) {
+        line = stream.readLine()
+        if (line == null) {
             return
         }
-        headers.split(delimiter)
-        columns = [TableDataColumn] * headers.size()
+        headers = line.split(delimiter)
         index = 0
         string_indexes = new ArrayList()
         headers.each() { c ->
             if (c.equals("Slice") || c.equals("Dataset")) {
-                columns[i] = new TableDataColumn(c, i, String)
-                string_indexes.append(i)
+                columns_list.add(new TableDataColumn(c, index, String))
+                string_indexes.add(index)
             } else {
-                columns[i] = new TableDataColumn(c, i, Double)
+                columns_list.add(new TableDataColumn(c, index, Double))
             }
             index++
         }
@@ -361,24 +362,32 @@ def save_summary_as_omero_table(ctx, file, type, object_id, delimiter) {
             i = 0
             row = new ArrayList()
             values.each() { c ->
-                if (string_indexes(i)) {
+                if (string_indexes.contains(i)) {
                     row.add(new String(c))
                 } else {
-                    row.append(new Double(c))
+                    row.add(new Double(c))
                 }
                 i++
             }
-            data = new Object[columns.size()][rows.size()]
-            for (r = 0; r < rows.size(); r++) {
-                row = rows.get(r)
-                for (i = 0; i < row.size(); i++) {
-                    data[i][e] = row.get(i)
-                }
-            }
+            rows.add(row)
         }
     } finally {
         if (stream != null) {
             stream.close()
+        }
+    }
+    // create columns
+    columns = new TableDataColumn[columns_list.size()]
+    i = 0
+    columns_list.each() { c ->
+        columns[i] = c
+        i++
+    }
+    data = new Object[columns.length][rows.size()]
+    for (r = 0; r < rows.size(); r++) {
+        row = rows.get(r)
+        for (i = 0; i < row.size(); i++) {
+            data[i][r] = row.get(i)
         }
     }
     // Create the table
@@ -482,6 +491,7 @@ try {
     streams.add(s)
     while ((line = s.readLine()) != null) {
         sb.append(line)
+        sb.append("\n")
     }
     //Do not read header
     for (i = 1; i < csv_files.length - 1; i++) {
@@ -491,6 +501,7 @@ try {
         f.nextLine
         while ((line = s.readLine()) != null) {
             sb.append(line)
+            sb.append("\n")
        }
     }
     stream.write(sb.toString())
@@ -505,3 +516,4 @@ if (save_data) {
     save_summary_as_omero_table(ctx, file, "Project", project_id, delimiter)
 }
 println "processing done"
+
