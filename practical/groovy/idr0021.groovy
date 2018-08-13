@@ -247,7 +247,7 @@ def save_as_csv(rt, tmp_dir, image_id, channel_index, dataset_name) {
     path = tmp_dir.resolve("result_for_" + image_id + ".csv")
     file_path = Files.createFile(path)
     rt.updateResults()
-    rt.saveAs(file_path.toString())
+    rt.save(file_path.toString())
 }
 
 def save_rois_to_omero(ctx, image_id, imp) {
@@ -329,7 +329,6 @@ def upload_csv_to_omero(ctx, file, type, object_id) {
         data_object = new DatasetData(new DatasetI(object_id, false))
     }  
     svc.attachAnnotation(ctx, new FileAnnotationData(fa), data_object)
-    println "Saved"
 }
 
 
@@ -470,6 +469,7 @@ csv_files = dir.listFiles(new FilenameFilter() {
 
 //Create the result file
 path = tmp_dir.resolve("idr0021_merged_results.csv")
+file_path = Files.createFile(path)
 file = new File(file_path.toString())
 data = null
 streams = new ArrayList()
