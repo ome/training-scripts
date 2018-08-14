@@ -511,6 +511,12 @@ try {
 if (save_data) {
     upload_csv_to_omero(ctx, file, "Project", project_id)
     save_summary_as_omero_table(ctx, file, "Project", project_id, delimiter)
+    // delete the directory. First need to remove the files
+    entries = dir.listFiles()
+    for (i =0; i < entries.length; i++) {
+        entries[i].delete()
+    }
+    dir.delete()
 }
 
 // Close the connection
