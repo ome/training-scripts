@@ -465,9 +465,6 @@ datasets.each() { d ->
     }
 }
 
-// Close the connection
-gateway.disconnect()
-
 // Aggregate the CVS files
 delimiter = ","
 dir = new File(tmp_dir.toString())
@@ -515,5 +512,9 @@ if (save_data) {
     upload_csv_to_omero(ctx, file, "Project", project_id)
     save_summary_as_omero_table(ctx, file, "Project", project_id, delimiter)
 }
+
+// Close the connection
+gateway.disconnect()
+
 println "processing done"
 
