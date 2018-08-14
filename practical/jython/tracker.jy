@@ -1,0 +1,212 @@
+# -----------------------------------------------------------------------------
+#  Copyright (C) 2018 University of Dundee. All rights reserved.
+#
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
+# This Jython script uses TrackMate
+# Use this script in the Scripting Dialog of Fiji (File > New > Script).
+# Select Python as language in the Scripting Dialog.
+# Error handling is omitted to ease the reading of the script but
+# this should be added
+# if used in production to make sure the services are closed
+# Information can be found at
+# https://docs.openmicroscopy.org/latest/omero/developers/Java.html
+
+from java.util import ArrayList
+from java.lang import Long
+
+# OMERO Dependencies
+from omero.gateway import Gateway
+from omero.gateway import LoginCredentials
+from omero.gateway import SecurityContext
+from omero.gateway.facility import BrowseFacility
+from omero.gateway.facility import AdminFacility
+from omero.gateway.facility import ROIFacility, TablesFacility
+from omero.log import SimpleLogger
+
+from ij import IJ, ImagePlus, ImageStack
+import fiji.plugin.trackmate.Settings as Settings
+import fiji.plugin.trackmate.Model as Model
+import fiji.plugin.trackmate.SelectionModel as SelectionModel
+import fiji.plugin.trackmate.TrackMate as TrackMate
+import fiji.plugin.trackmate.Logger as Logger
+import fiji.plugin.trackmate.detection.DetectorKeys as DetectorKeys
+import fiji.plugin.trackmate.detection.DogDetectorFactory as DogDetectorFactory
+import fiji.plugin.trackmate.tracking.sparselap.SparseLAPTrackerFactory as SparseLAPTrackerFactory
+import fiji.plugin.trackmate.tracking.LAPUtils as LAPUtils
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer as HyperStackDisplayer
+import fiji.plugin.trackmate.features.FeatureFilter as FeatureFilter
+import fiji.plugin.trackmate.features.FeatureAnalyzer as FeatureAnalyzer
+import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory as SpotContrastAndSNRAnalyzerFactory
+import fiji.plugin.trackmate.action.ExportStatsToIJAction as ExportStatsToIJAction
+import fiji.plugin.trackmate.io.TmXmlReader as TmXmlReader
+import fiji.plugin.trackmate.action.ExportTracksToXML as ExportTracksToXML
+import fiji.plugin.trackmate.io.TmXmlWriter as TmXmlWriter
+import fiji.plugin.trackmate.features.ModelFeatureUpdater as ModelFeatureUpdater
+import fiji.plugin.trackmate.features.SpotFeatureCalculator as SpotFeatureCalculator
+import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzer as SpotContrastAndSNRAnalyzer
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory as SpotIntensityAnalyzerFactory
+import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer as TrackSpeedStatisticsAnalyzer
+import fiji.plugin.trackmate.util.TMUtils as TMUtils
+
+# Setup
+# =====
+
+# OMERO Server details
+HOST = "outreach.openmicroscopy.org"
+PORT = 4064
+group_id = -1
+#  parameters to edit
+dataset_id = 51
+USERNAME = "username"
+PASSWORD = "password"
+# If you want to do analysis for someone else,
+# specify their username
+target_user = ""
+
+
+def connect_to_omero():
+    "Connect to OMERO. Returns a reference to the gateway"
+
+    credentials = LoginCredentials()
+    credentials.getServer().setHostname(HOST)
+    credentials.getServer().setPort(PORT)
+    credentials.getUser().setUsername(USERNAME.strip())
+    credentials.getUser().setPassword(PASSWORD.strip())
+    simpleLogger = SimpleLogger()
+    gateway = Gateway(simpleLogger)
+
+    user = gateway.connect(credentials)
+    print user.getGroupId()
+    return gateway
+
+
+def get_image_ids(gateway, ctx, dataset_id):
+    "List all image's ids contained in a Dataset"
+
+    browse = gateway.getFacility(BrowseFacility)
+
+    ids = ArrayList(1)
+    ids.add(Long(dataset_id))
+    images = browse.getImagesForDatasets(ctx, ids)
+
+    j = images.iterator()
+    image_ids = []
+    while j.hasNext():
+        image = j.next()
+        image_ids.append(image.getId())
+    return image_ids
+
+
+def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id):
+    "Open the image using the Bio-Formats Importer"
+
+    options = """location=[OMERO]
+open=[omero:server=%s
+user=%s
+port=%s
+pass=%s
+groupID=%s
+iid=%s]
+ windowless=true """ % (HOST, USERNAME, PORT, PASSWORD, group_id, image_id)
+    IJ.runPlugIn("loci.plugins.LociImporter", options)
+
+
+gateway = connect_to_omero()
+exp = gateway.getLoggedInUser()
+group_id = exp.getGroupId()
+ctx = SecurityContext(group_id)
+
+exp_id = exp.getId()
+
+# get all images_ids in an omero dataset
+ids = get_image_ids(gateway, ctx, dataset_id)
+
+for id in ids:
+    # Open the image
+    open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id)
+    imp = IJ.getImage()
+
+    # Instantiate model object
+    model = Model()
+
+    # Prepare settings object
+    settings = Settings()
+    settings.setFrom(imp)
+    # Configure detector
+    settings.detectorFactory = DogDetectorFactory()
+    settings.detectorSettings = {
+        DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION : True,
+        DetectorKeys.KEY_RADIUS : 2.5,
+        DetectorKeys.KEY_TARGET_CHANNEL : 1,
+        DetectorKeys.KEY_THRESHOLD : 5.,
+        DetectorKeys.KEY_DO_MEDIAN_FILTERING : False,
+    }
+
+    # Configure tracker
+    settings.trackerFactory = SparseLAPTrackerFactory()
+    settings.trackerSettings = LAPUtils.getDefaultLAPSettingsMap()
+    settings.trackerSettings['LINKING_MAX_DISTANCE'] = 10.0
+    settings.trackerSettings['GAP_CLOSING_MAX_DISTANCE']=10.0
+    settings.trackerSettings['MAX_FRAME_GAP']= 3
+
+    # Add the analyzers for some spot features
+    settings.addSpotAnalyzerFactory(SpotIntensityAnalyzerFactory())
+    settings.addSpotAnalyzerFactory(SpotContrastAndSNRAnalyzerFactory())
+
+    # Add an analyzer for some track features, such as the track mean speed.
+    settings.addTrackAnalyzer(TrackSpeedStatisticsAnalyzer())
+   
+    settings.initialSpotFilterValue = 1
+    print(str(settings))
+
+    # Instantiate trackmate
+    trackmate = TrackMate(model, settings)
+    ok = trackmate.checkInput()
+    if not ok:
+        print(str(trackmate.getErrorMessage()))
+        continue
+
+    ok = trackmate.process()
+    if not ok:
+        print(str(trackmate.getErrorMessage()))
+        continue
+
+    # Display Results
+    selectionModel = SelectionModel(model)
+    displayer =  HyperStackDisplayer(model, selectionModel, imp)
+    displayer.render()
+    displayer.refresh()
+    # The feature model, that stores edge and track features.
+    fm = model.getFeatureModel()
+    for track_id in model.getTrackModel().trackIDs(True):
+   
+        # Fetch the track feature from the feature model.
+        v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
+        print('Track ' + str(track_id) + ': mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits())
+       
+        track = model.getTrackModel().trackSpots(track_id)
+        for spot in track:
+            sid = spot.ID()
+            # Fetch spot features directly from spot. 
+            x = spot.getFeature('POSITION_X')
+            y = spot.getFeature('POSITION_Y')
+            t = spot.getFeature('FRAME')
+            q = spot.getFeature('QUALITY')
+            snr = spot.getFeature('SNR') 
+            mean = spot.getFeature('MEAN_INTENSITY')
+            print('\tspot ID = ' + str(sid) + ': x='+str(x)+', y='+str(y)+', t='+str(t)+', q='+str(q) + ', snr='+str(snr) + ', mean = ' + str(mean))
