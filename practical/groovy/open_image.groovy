@@ -31,7 +31,7 @@
  */
 
 
-import com.google.common.io.Files
+import java.nio.file.Files
 
 // OMERO Dependencies
 import omero.gateway.Gateway
@@ -83,7 +83,8 @@ def download_image(gateway, image_id, path) {
 // Connect to OMERO
 gateway = connect_to_omero()
 // Download the image. This could be composed of several files
-tmp_dir = Files.createTempDir()
+tmp_dir = Files.createTempDirectory("OMERO_download")
+
 files = download_image(gateway, image_id, tmp_dir.getAbsolutePath())
 
 files.each() { f ->
