@@ -164,9 +164,9 @@ exp_id = exp.getId()
 // get all images_ids in an omero dataset
 ids = get_image_ids(gateway, ctx, dataset_id)
 
-ids.each() { id1 ->
+ids.each() { id ->
     // Open the image
-    open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, String.valueOf(id1))
+    open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, String.valueOf(id))
     imp = IJ.getImage()
     // Analyse the images. This section could be replaced by any other macro
     IJ.run("8-bit");
@@ -180,7 +180,7 @@ ids.each() { id1 ->
     rm.runCommand(imp, "Measure")
     rt = ResultsTable.getResultsTable()
     // Save the ROIs back to OMERO
-    roivec = save_rois_to_omero(ctx, id1, imp)
+    roivec = save_rois_to_omero(ctx, id, imp)
     // Close the various components
     IJ.selectWindow("Results")
     IJ.run("Close")
