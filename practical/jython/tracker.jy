@@ -26,10 +26,14 @@
 # Information can be found at
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
+from java.awt import Color
 from java.util import ArrayList
 from java.util import Collections
+from java.lang import Double
 from java.lang import Long
-from java.awt import Color
+from java.lang import Object
+from java.lang import String
+
 
 # OMERO Dependencies
 from omero.gateway import Gateway
@@ -37,14 +41,19 @@ from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
 from omero.gateway.facility import BrowseFacility
 from omero.gateway.facility import AdminFacility
-from omero.gateway.facility import ROIFacility, TablesFacility
+from omero.gateway.facility import ROIFacility
+from omero.gateway.facility import TablesFacility
+from omero.gateway.model import DatasetData
 from omero.gateway.model import EllipseData
+from omero.gateway.model import ImageData
 from omero.gateway.model import PolylineData
 from omero.gateway.model import ROIData
+from omero.gateway.model import TableData
+from omero.gateway.model import TableDataColumn
 from omero.log import SimpleLogger
+from omero.model import DatasetI
 from omero.model import PolylineI
 from omero.rtypes import rstring
-
 
 from ij import IJ, ImagePlus, ImageStack
 import fiji.plugin.trackmate.Spot as Spot
@@ -83,7 +92,6 @@ dataset_id = 452
 USERNAME = "username"
 PASSWORD = "password"
 
-
 def connect_to_omero():
     "Connect to OMERO. Returns a reference to the gateway"
 
@@ -107,13 +115,13 @@ def get_image_ids(gateway, ctx, dataset_id):
 
     ids = ArrayList(1)
     ids.add(Long(dataset_id))
-    images = browse.getImagesForDatasets(ctx, ids)
+    return browse.getImagesForDatasets(ctx, ids)
 
     j = images.iterator()
     image_ids = []
     while j.hasNext():
         image = j.next()
-        image_ids.append(image.getId())
+        image_ids.append(image)
     return image_ids
 
 
@@ -131,6 +139,25 @@ iid=%s]
     IJ.runPlugIn("loci.plugins.LociImporter", options)
 
 
+def create_omero_table_columns():
+    columns = [TableDataColumn] * 7
+    columns[0] = TableDataColumn("Image ID", 0, ImageData)
+    columns[1] = TableDataColumn("ROI ID", 1, Double)
+    columns[2] = TableDataColumn("Shape ID", 2, Double)
+    columns[3] = TableDataColumn("Track Mean Velocity", 3, String)
+    columns[4] = TableDataColumn("Spot Quality", 4, Double)
+    columns[5] = TableDataColumn("Spot SNR", 5, Double)
+    columns[6] = TableDataColumn("Spot Mean Intensity", 6, Double)
+    return columns
+
+      
+def get_spot(track_id, spot_id):
+    track = model.getTrackModel().trackSpots(track_id)
+    for spot in track:
+        if spot.ID() == spot_id:
+            return spot
+
+
 gateway = connect_to_omero()
 exp = gateway.getLoggedInUser()
 group_id = exp.getGroupId()
@@ -139,10 +166,16 @@ ctx = SecurityContext(group_id)
 exp_id = exp.getId()
 
 # get all images_ids in an omero dataset
-ids = get_image_ids(gateway, ctx, dataset_id)
-print ids
-for id in ids:
+images = get_image_ids(gateway, ctx, dataset_id)
+print images
+# columns for the omero table
+columns = create_omero_table_columns()
+table_rows = []
+j = images.iterator()
+while j.hasNext():
     # Open the image
+    image = j.next()
+    id = image.getId()
     print id
     open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id)
     imp = IJ.getImage()
@@ -199,10 +232,11 @@ for id in ids:
     displayer.refresh()
     # The feature model, that stores edge and track features.
     fm = model.getFeatureModel()
-    rois = []
+    
     # Save the roi spot to omero
+    rois = []
     for track_id in model.getTrackModel().trackIDs(True):
-   
+        
         # Fetch the track feature from the feature model.
         v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
         print('Track ' + str(track_id) + ': mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits())
@@ -211,7 +245,6 @@ for id in ids:
         sorted_track = list(track)
         Collections.sort(sorted_track, Spot.frameComparator)
         roi = ROIData()
-        roi.setUuid(str(track_id))
         rois.append(roi)
         points = ""
         for spot in sorted_track:
@@ -230,7 +263,8 @@ for id in ids:
             # Save spot as Point in OMERO
             ellipse = EllipseData(x, y, r, r)
             ellipse.setZ(int(z))
-            ellipse.setT(int(t))
+            ellipse.setT(int(t)) 
+            ellipse.setText(str(track_id)+':'+str(sid)) # track ID and spot ID
             # default color
             settings = ellipse.getShapeSettings()
             settings.setStroke(Color.RED)
@@ -246,9 +280,52 @@ for id in ids:
         settings.setStroke(Color.YELLOW)
         roi.addShapeData(pl)
 
-    # Save the rois back to OMERO
+    # Save the tracks back to OMERO
     roi_facility = gateway.getFacility(ROIFacility)
-    print len(rois)
     results = roi_facility.saveROIs(ctx, id, exp_id, rois)
+    # Create a table row for each image
+    j = results.iterator()
+    while j.hasNext():
+        roi = j.next()
+        shapes = roi.getIterator()
+        while shapes.hasNext():
+            values = shapes.next()
+            k = values.iterator()
+            while k.hasNext():
+                shape = k.next()
+                print shape.getClass().getName()
+                if shape.getClass().getName() == "omero.gateway.model.EllipseData": 
+                    shape_id = shape.getId()
+                    ids = shape.getText().split(":")
+                    track_id = int(ids[0])
+                    spot_id = int(ids[1])
+                    v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
+                    velocity = 'mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits()
+                    spot = get_spot(track_id, spot_id)
+                    print spot.getFeature('QUALITY')
+                    # create a table row
+                    row = []
+                    row.append(image)
+                    row.append(Double(roi.getId()))
+                    row.append(Double(shape_id))
+                    row.append(String(velocity))
+                    row.append(Double(spot.getFeature('QUALITY')))
+                    row.append(Double(spot.getFeature('SNR')))
+                    row.append(Double(spot.getFeature('MEAN_INTENSITY')))
+                    table_rows.append(row)
+        
+# Now create the table
+
+data = [[Object() for x in range(len(table_rows))] for y in range(len(columns))]
+for r in range(0, len(table_rows)):
+    row = table_rows[r]
+    for i in range(0, len(row)):
+        data[i][r] = row[i]
+# Create the table
+table_data = TableData(columns, data)
+table_facility = gateway.getFacility(TablesFacility)
+data_object = DatasetData(DatasetI(dataset_id, False))
+table_facility.addTable(ctx, data_object, "Results_from_TrackMate", table_data)    
+    
 
 print "done"
