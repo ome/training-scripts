@@ -29,6 +29,7 @@
 from java.awt import Color
 from java.util import ArrayList
 from java.util import Collections
+from java.util import HashMap
 from java.lang import Double
 from java.lang import Long
 from java.lang import Object
@@ -39,12 +40,14 @@ from java.lang import String
 from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
-from omero.gateway.facility import BrowseFacility
 from omero.gateway.facility import AdminFacility
+from omero.gateway.facility import BrowseFacility
+from omero.gateway.facility import MetadataFacility
 from omero.gateway.facility import ROIFacility
 from omero.gateway.facility import TablesFacility
 from omero.gateway.model import DatasetData
 from omero.gateway.model import EllipseData
+from omero.gateway.model import FileAnnotationData
 from omero.gateway.model import ImageData
 from omero.gateway.model import PolylineData
 from omero.gateway.model import ROIData
@@ -54,6 +57,7 @@ from omero.log import SimpleLogger
 from omero.model import DatasetI
 from omero.model import PolylineI
 from omero.rtypes import rstring
+
 
 from ij import IJ, ImagePlus, ImageStack
 import fiji.plugin.trackmate.Spot as Spot
@@ -88,7 +92,7 @@ import fiji.plugin.trackmate.util.TMUtils as TMUtils
 HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 #  parameters to edit
-dataset_id = 452
+dataset_id = 2383
 USERNAME = "username"
 PASSWORD = "password"
 
@@ -175,6 +179,7 @@ j = images.iterator()
 while j.hasNext():
     # Open the image
     image = j.next()
+    size_t = image.getDefaultPixels().getSizeT()
     id = image.getId()
     print id
     open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id)
@@ -247,6 +252,8 @@ while j.hasNext():
         roi = ROIData()
         rois.append(roi)
         points = ""
+        min_value = size_t
+        max_value = 0
         for spot in sorted_track:
             sid = spot.ID()
             # Fetch spot features directly from spot. 
@@ -270,15 +277,21 @@ while j.hasNext():
             settings.setStroke(Color.RED)
             roi.addShapeData(ellipse)
             points = points + str(x) + ',' + str(y) +' '
+            min_value = min(min_value, t)
+            max_value = max(max_value, t)
+            print str(min_value)+' '+str(max_value)
+            
         # Save the track
         points = points.strip()
-        polyline = PolylineI()
-        polyline.setPoints(rstring(points))
-        pl = PolylineData(polyline)
-        # default color
-        settings = pl.getShapeSettings()
-        settings.setStroke(Color.YELLOW)
-        roi.addShapeData(pl)
+        for i in range(int(min_value), int(max_value)):
+            polyline = PolylineI()
+            polyline.setPoints(rstring(points))
+            pl = PolylineData(polyline)
+            pl.setT(int(i))
+            # default color
+            settings = pl.getShapeSettings()
+            settings.setStroke(Color.YELLOW)
+            roi.addShapeData(pl)
 
     # Save the tracks back to OMERO
     roi_facility = gateway.getFacility(ROIFacility)
@@ -293,7 +306,6 @@ while j.hasNext():
             k = values.iterator()
             while k.hasNext():
                 shape = k.next()
-                print shape.getClass().getName()
                 if shape.getClass().getName() == "omero.gateway.model.EllipseData": 
                     shape_id = shape.getId()
                     ids = shape.getText().split(":")
@@ -302,7 +314,6 @@ while j.hasNext():
                     v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
                     velocity = 'mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits()
                     spot = get_spot(track_id, spot_id)
-                    print spot.getFeature('QUALITY')
                     # create a table row
                     row = []
                     row.append(image)
@@ -325,7 +336,19 @@ for r in range(0, len(table_rows)):
 table_data = TableData(columns, data)
 table_facility = gateway.getFacility(TablesFacility)
 data_object = DatasetData(DatasetI(dataset_id, False))
-table_facility.addTable(ctx, data_object, "Results_from_TrackMate", table_data)    
-    
+data = table_facility.addTable(ctx, data_object, "Results_from_TrackMate", table_data)
+oid = data.getOriginalFileId()
+# Retrieve the annotation and set the namespace (due to a limitation of JavaGateway)
+facility = gateway.getFacility(MetadataFacility)
+annotations = facility.getAnnotations(ctx, data_object)
+it = annotations.iterator()
+while it.hasNext():
+    ann = it.next()
+    if ann.getClass().getName() == "omero.gateway.model.FileAnnotationData":
+       if ann.getFileID() == oid:
+           ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
+           gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
+           break
+
 
 print "done"
