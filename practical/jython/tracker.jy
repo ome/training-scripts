@@ -27,7 +27,9 @@
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
 from java.util import ArrayList
+from java.util import Collections
 from java.lang import Long
+from java.awt import Color
 
 # OMERO Dependencies
 from omero.gateway import Gateway
@@ -36,9 +38,16 @@ from omero.gateway import SecurityContext
 from omero.gateway.facility import BrowseFacility
 from omero.gateway.facility import AdminFacility
 from omero.gateway.facility import ROIFacility, TablesFacility
+from omero.gateway.model import EllipseData
+from omero.gateway.model import PolylineData
+from omero.gateway.model import ROIData
 from omero.log import SimpleLogger
+from omero.model import PolylineI
+from omero.rtypes import rstring
+
 
 from ij import IJ, ImagePlus, ImageStack
+import fiji.plugin.trackmate.Spot as Spot
 import fiji.plugin.trackmate.Settings as Settings
 import fiji.plugin.trackmate.Model as Model
 import fiji.plugin.trackmate.SelectionModel as SelectionModel
@@ -69,14 +78,10 @@ import fiji.plugin.trackmate.util.TMUtils as TMUtils
 # OMERO Server details
 HOST = "outreach.openmicroscopy.org"
 PORT = 4064
-group_id = -1
 #  parameters to edit
-dataset_id = 51
+dataset_id = 452
 USERNAME = "username"
 PASSWORD = "password"
-# If you want to do analysis for someone else,
-# specify their username
-target_user = ""
 
 
 def connect_to_omero():
@@ -135,9 +140,10 @@ exp_id = exp.getId()
 
 # get all images_ids in an omero dataset
 ids = get_image_ids(gateway, ctx, dataset_id)
-
+print ids
 for id in ids:
     # Open the image
+    print id
     open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id)
     imp = IJ.getImage()
 
@@ -193,6 +199,8 @@ for id in ids:
     displayer.refresh()
     # The feature model, that stores edge and track features.
     fm = model.getFeatureModel()
+    rois = []
+    # Save the roi spot to omero
     for track_id in model.getTrackModel().trackIDs(True):
    
         # Fetch the track feature from the feature model.
@@ -200,13 +208,47 @@ for id in ids:
         print('Track ' + str(track_id) + ': mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits())
        
         track = model.getTrackModel().trackSpots(track_id)
-        for spot in track:
+        sorted_track = list(track)
+        Collections.sort(sorted_track, Spot.frameComparator)
+        roi = ROIData()
+        roi.setUuid(str(track_id))
+        rois.append(roi)
+        points = ""
+        for spot in sorted_track:
             sid = spot.ID()
             # Fetch spot features directly from spot. 
             x = spot.getFeature('POSITION_X')
             y = spot.getFeature('POSITION_Y')
             t = spot.getFeature('FRAME')
             q = spot.getFeature('QUALITY')
+            r = spot.getFeature('RADIUS')
+            z = spot.getFeature('POSITION_Z')
+            t = spot.getFeature('POSITION_T')
             snr = spot.getFeature('SNR') 
             mean = spot.getFeature('MEAN_INTENSITY')
-            print('\tspot ID = ' + str(sid) + ': x='+str(x)+', y='+str(y)+', t='+str(t)+', q='+str(q) + ', snr='+str(snr) + ', mean = ' + str(mean))
+            print('\tspot ID = ' + str(sid) + ': x='+str(x)+', y='+str(y)+', t='+str(t)+', q='+str(q) + ', snr='+str(snr) + ', mean = ' + str(mean) + ', r= '+str(r))
+            # Save spot as Point in OMERO
+            ellipse = EllipseData(x, y, r, r)
+            ellipse.setZ(int(z))
+            ellipse.setT(int(t))
+            # default color
+            settings = ellipse.getShapeSettings()
+            settings.setStroke(Color.RED)
+            roi.addShapeData(ellipse)
+            points = points + str(x) + ',' + str(y) +' '
+        # Save the track
+        points = points.strip()
+        polyline = PolylineI()
+        polyline.setPoints(rstring(points))
+        pl = PolylineData(polyline)
+        # default color
+        settings = pl.getShapeSettings()
+        settings.setStroke(Color.YELLOW)
+        roi.addShapeData(pl)
+
+    # Save the rois back to OMERO
+    roi_facility = gateway.getFacility(ROIFacility)
+    print len(rois)
+    results = roi_facility.saveROIs(ctx, id, exp_id, rois)
+
+print "done"
