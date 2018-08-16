@@ -89,14 +89,12 @@ def connect_to_omero() {
     gateway = new Gateway(simpleLogger)
     gateway.connect(credentials)
     return gateway
-
 }
 
 def get_images(gateway, ctx, dataset_id) {
     "List all images contained in a Dataset"
 
     browse = gateway.getFacility(BrowseFacility)
-
     ids = new ArrayList(1)
     ids.add(new Long(dataset_id))
     return browse.getImagesForDatasets(ctx, ids)
@@ -122,7 +120,6 @@ def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     options.append("]")
     options.append("windowless=true")
     IJ.runPlugIn("loci.plugins.LociImporter", options.toString())
-
 }
 
 
@@ -134,7 +131,6 @@ def save_rois_to_omero(ctx, image_id, imp) {
     result = roi_facility.saveROIs(ctx, image_id, exp_id, roi_list)
 
     roivec = new ArrayList()
-
     j = result.iterator()
     while (j.hasNext()) {
         roidata = j.next()
