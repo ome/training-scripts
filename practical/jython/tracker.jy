@@ -32,7 +32,6 @@ from java.util import Collections
 from java.lang import Double
 from java.lang import Long
 from java.lang import Object
-from java.lang import String
 
 
 # OMERO Dependencies
@@ -40,7 +39,6 @@ from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
 from omero.gateway.facility import BrowseFacility
-from omero.gateway.facility import MetadataFacility
 from omero.gateway.facility import ROIFacility
 from omero.gateway.facility import TablesFacility
 from omero.gateway.model import EllipseData
@@ -80,8 +78,8 @@ HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 #  parameters to edit
 project_id = 1102
-USERNAME = "username"
-PASSWORD = "password"
+USERNAME = "trainer-1"
+PASSWORD = "testing"
 
 
 def connect_to_omero():
@@ -124,15 +122,25 @@ iid=%s]
     IJ.runPlugIn("loci.plugins.LociImporter", options)
 
 
-def create_omero_table_columns():
+def create_omero_results_table_columns(units):
     columns = [TableDataColumn] * 7
     columns[0] = TableDataColumn("Image ID", 0, ImageData)
     columns[1] = TableDataColumn("ROI ID", 1, Double)
     columns[2] = TableDataColumn("Shape ID", 2, Double)
-    columns[3] = TableDataColumn("Track Mean Velocity", 3, String)
+    columns[3] = TableDataColumn("Track Mean Velocity (" + units + ")", 3, Double)
     columns[4] = TableDataColumn("Spot Quality", 4, Double)
     columns[5] = TableDataColumn("Spot SNR", 5, Double)
     columns[6] = TableDataColumn("Spot Mean Intensity", 6, Double)
+    return columns
+
+
+def create_omero_summary_table_columns(units):
+    columns = [TableDataColumn] * 5
+    columns[0] = TableDataColumn("Image ID", 0, ImageData)
+    columns[1] = TableDataColumn("Average Track Mean Velocity (" + units + ")", 3, Double)
+    columns[2] = TableDataColumn("Average Spot Quality", 4, Double)
+    columns[3] = TableDataColumn("Average Spot SNR", 5, Double)
+    columns[4] = TableDataColumn("Average Spot Mean Intensity", 6, Double)
     return columns
 
 
@@ -153,9 +161,10 @@ exp_id = exp.getId()
 # get all images_ids in an omero project
 images = get_image_ids(gateway, ctx, project_id)
 print images
-# columns for the omero table
-columns = create_omero_table_columns()
+
 table_rows = []
+summary_table_rows = []
+
 j = images.iterator()
 while j.hasNext():
     # Open the image
@@ -219,11 +228,18 @@ while j.hasNext():
 
     # Save the roi spot to omero
     rois = []
+    total_track_mean = 0
+    total_spot_quality = 0
+    total_spot_snr = 0
+    total_spot_mean = 0
+    track_count = 0
+    spot_count = 0
     for track_id in model.getTrackModel().trackIDs(True):
+        track_count += 1
 
         # Fetch the track feature from the feature model.
         v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
-
+        total_track_mean += v
         track = model.getTrackModel().trackSpots(track_id)
         sorted_track = list(track)
         Collections.sort(sorted_track, Spot.frameComparator)
@@ -231,6 +247,7 @@ while j.hasNext():
         rois.append(roi)
         points = ""
         for spot in sorted_track:
+            spot_count += 1
             sid = spot.ID()
             # Fetch spot features directly from spot.
             x = spot.getFeature('POSITION_X')
@@ -249,6 +266,9 @@ while j.hasNext():
             settings.setStroke(Color.RED)
             roi.addShapeData(ellipse)
             points = points + str(x) + ',' + str(y) + ' '
+            total_spot_quality += spot.getFeature('QUALITY')
+            total_spot_snr += spot.getFeature('SNR')
+            total_spot_mean += spot.getFeature('MEAN_INTENSITY')
 
         # Save the track
         points = points.strip()
@@ -265,6 +285,8 @@ while j.hasNext():
     results = roi_facility.saveROIs(ctx, id, exp_id, rois)
     # Create a table row for each image
     j = results.iterator()
+    space_units = ''
+    time_units = ''
     while j.hasNext():
         roi = j.next()
         shapes = roi.getIterator()
@@ -279,42 +301,66 @@ while j.hasNext():
                     track_id = int(ids[0])
                     spot_id = int(ids[1])
                     v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
-                    velocity = 'mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits()
+                    space_units = model.getSpaceUnits()
+                    time_units = model.getTimeUnits()
                     spot = get_spot(track_id, spot_id)
                     # create a row
                     row = []
                     row.append(image)
                     row.append(Double(roi.getId()))
                     row.append(Double(shape_id))
-                    row.append(String(velocity))
+                    row.append(Double(v))
                     row.append(Double(spot.getFeature('QUALITY')))
                     row.append(Double(spot.getFeature('SNR')))
                     row.append(Double(spot.getFeature('MEAN_INTENSITY')))
                     table_rows.append(row)
 
-# Now create the table
+    # Create the summary table
+    row = []
+    row.append(image)
+    row.append(Double(total_track_mean/track_count))
+    row.append(Double(total_spot_quality/spot_count))
+    row.append(Double(total_spot_snr/spot_count))
+    row.append(Double(total_spot_mean/spot_count))
+    summary_table_rows.append(row)
+
+# Adjust the name of the Velocity now that the unit is set
+# columns for the omero table
+columns = create_omero_results_table_columns(space_units + ' per ' + time_units)
+average_columns = create_omero_summary_table_columns(space_units + ' per ' + time_units)
+
+# Now create the results table
 data = [[Object() for tr in range(len(table_rows))] for c in range(len(columns))]
 for r in range(0, len(table_rows)):
     row = table_rows[r]
     for i in range(0, len(row)):
         data[i][r] = row[i]
 
-table_data = TableData(columns, data)
 table_facility = gateway.getFacility(TablesFacility)
+
+table_data = TableData(columns, data)
 data_object = ProjectData(ProjectI(project_id, False))
 data = table_facility.addTable(ctx, data_object, "Results_from_TrackMate", table_data)
-oid = data.getOriginalFileId()
+
+# Now create the summary table
+summary_data = [[Object() for tr in range(len(summary_table_rows))] for c in range(len(average_columns))]
+for r in range(0, len(summary_table_rows)):
+    row = summary_table_rows[r]
+    for i in range(0, len(row)):
+        summary_data[i][r] = row[i]
+
+summary_table = TableData(average_columns, summary_data)
+summary_data = table_facility.addTable(ctx, data_object, "Summary_from_TrackMate", summary_table)
+
+oid = summary_data.getOriginalFileId()
 # Retrieve the annotation and set the namespace (due to a limitation of JavaGateway)
-facility = gateway.getFacility(MetadataFacility)
-annotations = facility.getAnnotations(ctx, data_object)
+annotations = table_facility.getAvailableTables(ctx, data_object)
 it = annotations.iterator()
 while it.hasNext():
     ann = it.next()
-    if ann.getClass().getName() == "omero.gateway.model.FileAnnotationData":
-        if ann.getFileID() == oid:
-            ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
-            gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
-            break
-
+    if ann.getFileID() == oid:
+        ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
+        gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
+        break
 
 print "done"
