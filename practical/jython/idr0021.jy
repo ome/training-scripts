@@ -38,19 +38,26 @@ from java.util import ArrayList
 from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
-from omero.gateway.facility import BrowseFacility, DataManagerFacility, MetadataFacility
+from omero.gateway.facility import BrowseFacility
+from omero.gateway.facility import DataManagerFacility
+from omero.gateway.facility import MetadataFacility
 from omero.gateway.facility import ROIFacility
 from omero.gateway.facility import TablesFacility
 from omero.gateway.model import FileAnnotationData
 from omero.gateway.model import MapAnnotationData
-from omero.gateway.model import DatasetData, ImageData, ProjectData
-from omero.gateway.model import TableData, TableDataColumn
+from omero.gateway.model import ImageData
+from omero.gateway.model import ProjectData
+from omero.gateway.model import TableData
+from omero.gateway.model import TableDataColumn
 
-
-from omero.model import DatasetI, ImageI, ProjectI
+from omero.model import ImageI
+from omero.model import ProjectI
 from omero.log import SimpleLogger
-from omero.rtypes import rlong, rstring
-from omero.model import ChecksumAlgorithmI, FileAnnotationI, OriginalFileI
+from omero.rtypes import rlong
+from omero.rtypes import rstring
+from omero.model import ChecksumAlgorithmI
+from omero.model import FileAnnotationI
+from omero.model import OriginalFileI
 from omero.model.enums import ChecksumAlgorithmSHA1160
 
 from org.openmicroscopy.shoola.util.roi.io import ROIReader
@@ -62,7 +69,6 @@ from ij.measure import ResultsTable
 # Import required to save the results as CSV
 import csv
 import os
-import fnmatch
 import tempfile
 
 # Setup
@@ -328,7 +334,7 @@ def create_table_columns(headings):
     return table_columns
 
 
-def save_summary_as_csv(file, rows, columns): 
+def save_summary_as_csv(file, rows, columns):
     "Save the summary locally as a CSV"
     with open(file.name, 'wb') as master:
         master_csv = csv.writer(master)
