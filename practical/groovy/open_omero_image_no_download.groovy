@@ -21,7 +21,8 @@
 
 /*
  * This Groovy script shows how to open an OMERO Image in ImageJ
- * using Bio-Formats importer.
+ * using Bio-Formats importer. In this case the image is not downloaded
+ * before opening. Bi0-Formats requests directly the planes from OMERO.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
  * Select Groovy as language in the Scripting Dialog.
  * Error handling is omitted to ease the reading of the script but this
