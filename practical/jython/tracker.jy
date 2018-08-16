@@ -77,9 +77,9 @@ import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer as Trac
 HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 #  parameters to edit
-project_id = 1102
-USERNAME = "trainer-1"
-PASSWORD = "testing"
+project_id = 1103
+USERNAME = "username"
+PASSWORD = "password"
 
 
 def connect_to_omero():
@@ -164,15 +164,19 @@ print images
 
 table_rows = []
 summary_table_rows = []
-
-j = images.iterator()
-while j.hasNext():
+space_units = ''
+time_units = ''
+img = images.iterator()
+while img.hasNext():
     # Open the image
-    image = j.next()
+    image = img.next()
     id = image.getId()
+    size_t = image.getDefaultPixels().getSizeT()
     print id
     open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id)
     imp = IJ.getImage()
+    dx = imp.getCalibration().pixelWidth
+    dy = imp.getCalibration().pixelHeight
 
     # Instantiate model object
     model = Model()
@@ -225,7 +229,8 @@ while j.hasNext():
     displayer.refresh()
     # The feature model, that stores edge and track features.
     fm = model.getFeatureModel()
-
+    space_units = model.getSpaceUnits()
+    time_units = model.getTimeUnits()
     # Save the roi spot to omero
     rois = []
     total_track_mean = 0
@@ -246,12 +251,14 @@ while j.hasNext():
         roi = ROIData()
         rois.append(roi)
         points = ""
+        min_value = size_t
+        max_value = 0
         for spot in sorted_track:
             spot_count += 1
             sid = spot.ID()
             # Fetch spot features directly from spot.
-            x = spot.getFeature('POSITION_X')
-            y = spot.getFeature('POSITION_Y')
+            x = spot.getFeature('POSITION_X')/dx
+            y = spot.getFeature('POSITION_Y')/dy
             r = spot.getFeature('RADIUS')
             z = spot.getFeature('POSITION_Z')
             t = spot.getFeature('POSITION_T')
@@ -269,12 +276,16 @@ while j.hasNext():
             total_spot_quality += spot.getFeature('QUALITY')
             total_spot_snr += spot.getFeature('SNR')
             total_spot_mean += spot.getFeature('MEAN_INTENSITY')
+            max_value = max(max_value, int(t))
+            min_value = min(min_value, int(t))
 
         # Save the track
         points = points.strip()
+        # for i in range(int(min_value), int(max_value)):
         polyline = PolylineI()
         polyline.setPoints(rstring(points))
         pl = PolylineData(polyline)
+        # pl.setT(i)
         # set a default color
         settings = pl.getShapeSettings()
         settings.setStroke(Color.YELLOW)
@@ -285,8 +296,6 @@ while j.hasNext():
     results = roi_facility.saveROIs(ctx, id, exp_id, rois)
     # Create a table row for each image
     j = results.iterator()
-    space_units = ''
-    time_units = ''
     while j.hasNext():
         roi = j.next()
         shapes = roi.getIterator()
@@ -301,8 +310,6 @@ while j.hasNext():
                     track_id = int(ids[0])
                     spot_id = int(ids[1])
                     v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
-                    space_units = model.getSpaceUnits()
-                    time_units = model.getTimeUnits()
                     spot = get_spot(track_id, spot_id)
                     # create a row
                     row = []
@@ -314,7 +321,10 @@ while j.hasNext():
                     row.append(Double(spot.getFeature('SNR')))
                     row.append(Double(spot.getFeature('MEAN_INTENSITY')))
                     table_rows.append(row)
-
+    # Close
+    imp.changes = False
+    imp.close()
+    
     # Create the summary table
     row = []
     row.append(image)
