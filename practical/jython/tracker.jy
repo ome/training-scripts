@@ -45,17 +45,17 @@ from omero.gateway.facility import BrowseFacility
 from omero.gateway.facility import MetadataFacility
 from omero.gateway.facility import ROIFacility
 from omero.gateway.facility import TablesFacility
-from omero.gateway.model import DatasetData
 from omero.gateway.model import EllipseData
 from omero.gateway.model import FileAnnotationData
 from omero.gateway.model import ImageData
 from omero.gateway.model import PolylineData
+from omero.gateway.model import ProjectData
 from omero.gateway.model import ROIData
 from omero.gateway.model import TableData
 from omero.gateway.model import TableDataColumn
 from omero.log import SimpleLogger
-from omero.model import DatasetI
 from omero.model import PolylineI
+from omero.model import ProjectI
 from omero.rtypes import rstring
 
 
@@ -92,7 +92,7 @@ import fiji.plugin.trackmate.util.TMUtils as TMUtils
 HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 #  parameters to edit
-dataset_id = 2383
+project_id = 1102
 USERNAME = "username"
 PASSWORD = "password"
 
@@ -112,21 +112,14 @@ def connect_to_omero():
     return gateway
 
 
-def get_image_ids(gateway, ctx, dataset_id):
-    "List all image's ids contained in a Dataset"
+def get_image_ids(gateway, ctx, project_id):
+    "List all image's ids contained in a Project"
 
     browse = gateway.getFacility(BrowseFacility)
 
     ids = ArrayList(1)
-    ids.add(Long(dataset_id))
-    return browse.getImagesForDatasets(ctx, ids)
-
-    j = images.iterator()
-    image_ids = []
-    while j.hasNext():
-        image = j.next()
-        image_ids.append(image)
-    return image_ids
+    ids.add(Long(project_id))
+    return browse.getImagesForProjects(ctx, ids)
 
 
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id):
@@ -169,8 +162,8 @@ ctx = SecurityContext(group_id)
 
 exp_id = exp.getId()
 
-# get all images_ids in an omero dataset
-images = get_image_ids(gateway, ctx, dataset_id)
+# get all images_ids in an omero project
+images = get_image_ids(gateway, ctx, project_id)
 print images
 # columns for the omero table
 columns = create_omero_table_columns()
@@ -335,7 +328,7 @@ for r in range(0, len(table_rows)):
 # Create the table
 table_data = TableData(columns, data)
 table_facility = gateway.getFacility(TablesFacility)
-data_object = DatasetData(DatasetI(dataset_id, False))
+data_object = ProjectData(ProjectI(project_id, False))
 data = table_facility.addTable(ctx, data_object, "Results_from_TrackMate", table_data)
 oid = data.getOriginalFileId()
 # Retrieve the annotation and set the namespace (due to a limitation of JavaGateway)
