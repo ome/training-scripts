@@ -28,7 +28,6 @@
 # Information can be found at
 # https://docs.openmicroscopy.org/latest/omero/developers/Java.html
 
-
 from java.lang import Double
 from java.lang import Long
 from java.lang import Object
@@ -112,7 +111,7 @@ def get_datasets(gateway, ctx, project_id):
     return projects[0].getDatasets()
 
 
-def get_image_ids(gateway, ctx, dataset_id):
+def get_images(gateway, ctx, dataset_id):
     "List all image's ids contained in a Dataset"
 
     browse = gateway.getFacility(BrowseFacility)
@@ -120,14 +119,7 @@ def get_image_ids(gateway, ctx, dataset_id):
     ids = ArrayList(1)
     val = Long(dataset_id)
     ids.add(val)
-    images = browse.getImagesForDatasets(ctx, ids)
-
-    j = images.iterator()
-    image_ids = []
-    while j.hasNext():
-        image = j.next()
-        image_ids.append(image.getId())
-    return image_ids
+    return browse.getImagesForDatasets(ctx, ids)
 
 
 def get_channels_data(gateway, ctx, image_id):
@@ -175,7 +167,7 @@ iid=%s]
     IJ.runPlugIn("loci.plugins.LociImporter", options)
 
 
-def save_as_csv(rt, image_id, tmp_dir, channel_index, dataset_name):
+def save_row(rt, table_rows, channel_index, dataset_name, image):
     "Create a summary table from the original table"
     # Remove the rows not corresponding to the specified channel
     to_delete = []
@@ -206,9 +198,18 @@ def save_as_csv(rt, image_id, tmp_dir, channel_index, dataset_name):
         rt.setValue("Dataset", i, dataset_name)
         rt.setValue("Bounding_Box", i, max_bounding_box)
     # Create a tmp file and save the result
-    file = tempfile.NamedTemporaryFile(mode='wb', prefix=str(image_id), suffix='.csv', dir=tmp_dir, delete=False)
-    rt.updateResults()
-    rt.save(file.name)
+    headings = rt.getHeadings()
+    row = []
+    for j in range(0, rt.size()):
+        for i in range(0, len(headings)):
+            heading = rt.getColumnHeading(i)
+            if heading == "Slice" or heading == "Dataset":
+                row.append(rt.getStringValue(i, j))
+            else:
+                row.append(Double(rt.getValue(i, j)))
+    row.append(image)
+    table_rows.append(row)
+    return headings
 
 
 def save_rois_to_omero(ctx, image_id, imp):
@@ -237,12 +238,13 @@ def save_rois_to_omero(ctx, image_id, imp):
     return roivec
 
 
-def upload_csv_to_omero(ctx, file, type, object_id):
+def upload_csv_to_omero(ctx, file, project_id):
     "Upload the CSV file and attach it to the specified object"
     svc = gateway.getFacility(DataManagerFacility)
     file_size = os.path.getsize(file.name)
     original_file = OriginalFileI()
-    original_file.setName(rstring(file.name))
+    name = os.path.split(file.name)[1]
+    original_file.setName(rstring(name))
     original_file.setPath(rstring(file.name))
     original_file.setSize(rlong(file_size))
 
@@ -280,54 +282,72 @@ def upload_csv_to_omero(ctx, file, type, object_id):
     fa.setFile(original_file)
     fa.setNs(rstring(namespace))
 
-    data_object = None
-    if type == "Project":
-        data_object = ProjectData(ProjectI(object_id, False))
-    elif type == "Dataset":
-        data_object = DatasetData(DatasetI(object_id, False))
+    data_object = ProjectData(ProjectI(project_id, False))
     svc.attachAnnotation(ctx, FileAnnotationData(fa), data_object)
 
 
-def save_summary_as_omero_table(ctx, file, type, object_id, delimiter):
-    "Convert the CSV file into an OMERO table and attach it to the specified object"
-    data = None
-    with open(file.name, 'r') as f:
-        headers = f.readline().strip().split(delimiter)
-        # convert headers into columns
-        columns = [TableDataColumn] * len(headers)
-        string_indexes = []
-        rows = []
-        for i, c in enumerate(headers):
-            if c == "Slice" or c == "Dataset":
-                columns[i] = TableDataColumn(c, i, String)
-                string_indexes.append(i)
-            else:
-                columns[i] = TableDataColumn(c, i, Double)
-        # Read the rest of the file
-        for line in f:
-            values = line.strip().split(delimiter)
-            row = []
-            for i, c in enumerate(values):
-                if i in string_indexes:
-                    row.append(String(c))
-                else:
-                    row.append(Double(c))
-            rows.append(row)
-        data = [[Object() for x in range(len(rows))] for y in range(len(columns))]
-        for r in range(0, len(rows)):
-            row = rows[r]
-            for i in range(0, len(row)):
-                data[i][r] = row[i]
+def save_summary_as_omero_table(ctx, rows, columns, project_id):
+    "Create an OMERO table with the summary result and attach it to the specified project"
+
+    data = [[Object() for x in range(len(rows))] for y in range(len(columns))]
+    for r in range(0, len(rows)):
+        row = rows[r]
+        for i in range(0, len(row)):
+            data[i][r] = row[i]
     # Create the table
     table_data = TableData(columns, data)
     table_facility = gateway.getFacility(TablesFacility)
-    data_object = None
-    if type == "Project":
-        data_object = ProjectData(ProjectI(object_id, False))
-    elif type == "Dataset":
-        data_object = DatasetData(DatasetI(object_id, False))
+    data_object = ProjectData(ProjectI(project_id, False))
+    result = table_facility.addTable(ctx, data_object, "Summary_from_Fiji", table_data)
 
-    table_facility.addTable(ctx, data_object, "Summary_from_Fiji", table_data)
+    oid = result.getOriginalFileId()
+    # Retrieve the annotation and set the namespace (due to a limitation of JavaGateway)
+    annotations = table_facility.getAvailableTables(ctx, data_object)
+    it = annotations.iterator()
+    while it.hasNext():
+        ann = it.next()
+        if ann.getFileID() == oid:
+            ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
+            gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
+            break
+
+
+def create_table_columns(headings):
+    "Create the table headings from the ImageJ results table"
+    size = len(headings)
+    table_columns = [TableDataColumn]*(size+1)
+    # populate the headings
+    for h in range(0, size):
+        heading = headings[h]
+        if heading == "Slice" or heading == "Dataset":
+            table_columns[h] = TableDataColumn(heading, h, String)
+        else:
+            table_columns[h] = TableDataColumn(heading, h, Double)
+
+    table_columns[size] = TableDataColumn("Image", size, ImageData)
+    return table_columns
+
+
+def save_summary_as_csv(file, rows, columns): 
+    "Save the summary locally as a CSV"
+    with open(file.name, 'wb') as master:
+        master_csv = csv.writer(master)
+        headers = []
+        for i in range(0, len(table_columns)):
+            headers.append(table_columns[i].getName())
+        master_csv.writerow(headers)
+
+        for i in range(0, len(table_rows)):
+            row = table_rows[i]
+            line = []
+            size = len(row)
+            for j in range(0, size):
+                value = row[j]
+                if j == (size-1):
+                    line.append(value.getId())
+                else:
+                    line.append(value)
+            master_csv.writerow(line)
 
 
 # Connect
@@ -337,7 +357,8 @@ ctx = SecurityContext(group_id)
 exp = gateway.getLoggedInUser()
 exp_id = exp.getId()
 
-tmp_dir = tempfile.gettempdir()
+table_rows = []
+table_columns = None
 
 # get all the dataset_ids in an project
 datasets = get_datasets(gateway, ctx, project_id)
@@ -347,8 +368,9 @@ while j.hasNext():
     name = d.getName()
     # for each dataset load the images
     # get all images_ids in the dataset
-    image_ids = get_image_ids(gateway, ctx, d.getId())
-    for id in image_ids:
+    images = get_images(gateway, ctx, d.getId())
+    for image in images:
+        id = image.getId()
         channel_index = 1
         # Find the index of the channel matching the dataset name as a string
         channel_wavelength = get_channel_wavelength(gateway, ctx, id, name)
@@ -379,8 +401,11 @@ while j.hasNext():
         if save_data:
             roivec = save_rois_to_omero(ctx, id, imp)
 
-        print "saving locally results for image with ID " + str(id)
-        save_as_csv(rt, id, tmp_dir, channel_index, name)
+        print "creating summary results for image ID " + str(id)
+        headings = save_row(rt, table_rows, channel_index, name, image)
+        if (table_columns is None):
+            table_columns = create_table_columns(headings)
+
         # Close the various components
         IJ.selectWindow("Results")
         IJ.run("Close")
@@ -389,35 +414,20 @@ while j.hasNext():
         imp.changes = False     # Prevent "Save Changes?" dialog
         imp.close()
 
-# Close the connection
-gateway.disconnect()
-
-# Aggregate the CVS files
-delimiter = ","
-csv_files = fnmatch.filter(os.listdir(tmp_dir), '*.csv')
+# Create the Summary CSV
+tmp_dir = tempfile.gettempdir()
 file = tempfile.TemporaryFile(mode='wb', prefix='idr0021_merged_results_', suffix='.csv', dir=tmp_dir)
-with open(file.name, 'wb') as master:
-    master_csv = csv.writer(master)
-    path = os.path.join(tmp_dir, csv_files[0])
-    with open(path, 'rb') as csv_file:
-        headers = csv_file.readline().strip().split(delimiter)
-        master_csv.writerow(headers)
-        for line in csv_file:
-            master_csv.writerow(line.strip().split(delimiter))
-    os.remove(path)
-    for f in csv_files[1:]:
-        path = os.path.join(tmp_dir, f)
-        with open(path, 'rb') as csv_file:
-            for line_num, line in enumerate(csv_file):
-                if line_num > 0:
-                    master_csv.writerow(line.strip().split(delimiter))
-        os.remove(path)
+
+save_summary_as_csv(file, table_rows, table_columns)
 
 # Attach the summary csv file to the Project
 if save_data:
-    upload_csv_to_omero(ctx, file, "Project", project_id)
-    save_summary_as_omero_table(ctx, file, "Project", project_id, delimiter)
+    upload_csv_to_omero(ctx, file, project_id)
+    save_summary_as_omero_table(ctx, table_rows, table_columns, project_id)
     # delete local copy of the file
     os.remove(file.name)
+
+# Close the connection
+gateway.disconnect()
 
 print "processing done"
