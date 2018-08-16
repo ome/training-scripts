@@ -29,7 +29,6 @@
 from java.awt import Color
 from java.util import ArrayList
 from java.util import Collections
-from java.util import HashMap
 from java.lang import Double
 from java.lang import Long
 from java.lang import Object
@@ -40,7 +39,6 @@ from java.lang import String
 from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
-from omero.gateway.facility import AdminFacility
 from omero.gateway.facility import BrowseFacility
 from omero.gateway.facility import MetadataFacility
 from omero.gateway.facility import ROIFacility
@@ -59,31 +57,20 @@ from omero.model import ProjectI
 from omero.rtypes import rstring
 
 
-from ij import IJ, ImagePlus, ImageStack
+from ij import IJ
 import fiji.plugin.trackmate.Spot as Spot
 import fiji.plugin.trackmate.Settings as Settings
 import fiji.plugin.trackmate.Model as Model
 import fiji.plugin.trackmate.SelectionModel as SelectionModel
 import fiji.plugin.trackmate.TrackMate as TrackMate
-import fiji.plugin.trackmate.Logger as Logger
 import fiji.plugin.trackmate.detection.DetectorKeys as DetectorKeys
 import fiji.plugin.trackmate.detection.DogDetectorFactory as DogDetectorFactory
 import fiji.plugin.trackmate.tracking.sparselap.SparseLAPTrackerFactory as SparseLAPTrackerFactory
 import fiji.plugin.trackmate.tracking.LAPUtils as LAPUtils
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer as HyperStackDisplayer
-import fiji.plugin.trackmate.features.FeatureFilter as FeatureFilter
-import fiji.plugin.trackmate.features.FeatureAnalyzer as FeatureAnalyzer
 import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory as SpotContrastAndSNRAnalyzerFactory
-import fiji.plugin.trackmate.action.ExportStatsToIJAction as ExportStatsToIJAction
-import fiji.plugin.trackmate.io.TmXmlReader as TmXmlReader
-import fiji.plugin.trackmate.action.ExportTracksToXML as ExportTracksToXML
-import fiji.plugin.trackmate.io.TmXmlWriter as TmXmlWriter
-import fiji.plugin.trackmate.features.ModelFeatureUpdater as ModelFeatureUpdater
-import fiji.plugin.trackmate.features.SpotFeatureCalculator as SpotFeatureCalculator
-import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzer as SpotContrastAndSNRAnalyzer
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory as SpotIntensityAnalyzerFactory
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer as TrackSpeedStatisticsAnalyzer
-import fiji.plugin.trackmate.util.TMUtils as TMUtils
 
 # Setup
 # =====
@@ -95,6 +82,7 @@ PORT = 4064
 project_id = 1102
 USERNAME = "username"
 PASSWORD = "password"
+
 
 def connect_to_omero():
     "Connect to OMERO. Returns a reference to the gateway"
@@ -147,7 +135,7 @@ def create_omero_table_columns():
     columns[6] = TableDataColumn("Spot Mean Intensity", 6, Double)
     return columns
 
-      
+
 def get_spot(track_id, spot_id):
     track = model.getTrackModel().trackSpots(track_id)
     for spot in track:
@@ -172,7 +160,6 @@ j = images.iterator()
 while j.hasNext():
     # Open the image
     image = j.next()
-    size_t = image.getDefaultPixels().getSizeT()
     id = image.getId()
     print id
     open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id)
@@ -187,19 +174,19 @@ while j.hasNext():
     # Configure detector
     settings.detectorFactory = DogDetectorFactory()
     settings.detectorSettings = {
-        DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION : True,
-        DetectorKeys.KEY_RADIUS : 2.5,
-        DetectorKeys.KEY_TARGET_CHANNEL : 1,
-        DetectorKeys.KEY_THRESHOLD : 5.,
-        DetectorKeys.KEY_DO_MEDIAN_FILTERING : False,
+        DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION: True,
+        DetectorKeys.KEY_RADIUS: 2.5,
+        DetectorKeys.KEY_TARGET_CHANNEL: 1,
+        DetectorKeys.KEY_THRESHOLD: 5.,
+        DetectorKeys.KEY_DO_MEDIAN_FILTERING: False,
     }
 
     # Configure tracker
     settings.trackerFactory = SparseLAPTrackerFactory()
     settings.trackerSettings = LAPUtils.getDefaultLAPSettingsMap()
     settings.trackerSettings['LINKING_MAX_DISTANCE'] = 10.0
-    settings.trackerSettings['GAP_CLOSING_MAX_DISTANCE']=10.0
-    settings.trackerSettings['MAX_FRAME_GAP']= 3
+    settings.trackerSettings['GAP_CLOSING_MAX_DISTANCE'] = 10.0
+    settings.trackerSettings['MAX_FRAME_GAP'] = 3
 
     # Add the analyzers for some spot features
     settings.addSpotAnalyzerFactory(SpotIntensityAnalyzerFactory())
@@ -207,7 +194,6 @@ while j.hasNext():
 
     # Add an analyzer for some track features, such as the track mean speed.
     settings.addTrackAnalyzer(TrackSpeedStatisticsAnalyzer())
-   
     settings.initialSpotFilterValue = 1
     print(str(settings))
 
@@ -225,66 +211,54 @@ while j.hasNext():
 
     # Display Results
     selectionModel = SelectionModel(model)
-    displayer =  HyperStackDisplayer(model, selectionModel, imp)
+    displayer = HyperStackDisplayer(model, selectionModel, imp)
     displayer.render()
     displayer.refresh()
     # The feature model, that stores edge and track features.
     fm = model.getFeatureModel()
-    
+
     # Save the roi spot to omero
     rois = []
     for track_id in model.getTrackModel().trackIDs(True):
-        
+
         # Fetch the track feature from the feature model.
         v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
-        print('Track ' + str(track_id) + ': mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits())
-       
+
         track = model.getTrackModel().trackSpots(track_id)
         sorted_track = list(track)
         Collections.sort(sorted_track, Spot.frameComparator)
         roi = ROIData()
         rois.append(roi)
         points = ""
-        min_value = size_t
-        max_value = 0
         for spot in sorted_track:
             sid = spot.ID()
-            # Fetch spot features directly from spot. 
+            # Fetch spot features directly from spot.
             x = spot.getFeature('POSITION_X')
             y = spot.getFeature('POSITION_Y')
-            t = spot.getFeature('FRAME')
-            q = spot.getFeature('QUALITY')
             r = spot.getFeature('RADIUS')
             z = spot.getFeature('POSITION_Z')
             t = spot.getFeature('POSITION_T')
-            snr = spot.getFeature('SNR') 
-            mean = spot.getFeature('MEAN_INTENSITY')
-            print('\tspot ID = ' + str(sid) + ': x='+str(x)+', y='+str(y)+', t='+str(t)+', q='+str(q) + ', snr='+str(snr) + ', mean = ' + str(mean) + ', r= '+str(r))
             # Save spot as Point in OMERO
             ellipse = EllipseData(x, y, r, r)
             ellipse.setZ(int(z))
-            ellipse.setT(int(t)) 
-            ellipse.setText(str(track_id)+':'+str(sid)) # track ID and spot ID
-            # default color
+            ellipse.setT(int(t))
+            # set trackmate track ID and spot ID for later
+            ellipse.setText(str(track_id)+':'+str(sid))
+            # set a default color
             settings = ellipse.getShapeSettings()
             settings.setStroke(Color.RED)
             roi.addShapeData(ellipse)
-            points = points + str(x) + ',' + str(y) +' '
-            min_value = min(min_value, t)
-            max_value = max(max_value, t)
-            print str(min_value)+' '+str(max_value)
-            
+            points = points + str(x) + ',' + str(y) + ' '
+
         # Save the track
         points = points.strip()
-        for i in range(int(min_value), int(max_value)):
-            polyline = PolylineI()
-            polyline.setPoints(rstring(points))
-            pl = PolylineData(polyline)
-            pl.setT(int(i))
-            # default color
-            settings = pl.getShapeSettings()
-            settings.setStroke(Color.YELLOW)
-            roi.addShapeData(pl)
+        polyline = PolylineI()
+        polyline.setPoints(rstring(points))
+        pl = PolylineData(polyline)
+        # set a default color
+        settings = pl.getShapeSettings()
+        settings.setStroke(Color.YELLOW)
+        roi.addShapeData(pl)
 
     # Save the tracks back to OMERO
     roi_facility = gateway.getFacility(ROIFacility)
@@ -299,7 +273,7 @@ while j.hasNext():
             k = values.iterator()
             while k.hasNext():
                 shape = k.next()
-                if shape.getClass().getName() == "omero.gateway.model.EllipseData": 
+                if shape.getClass().getName() == "omero.gateway.model.EllipseData":
                     shape_id = shape.getId()
                     ids = shape.getText().split(":")
                     track_id = int(ids[0])
@@ -307,7 +281,7 @@ while j.hasNext():
                     v = fm.getTrackFeature(track_id, 'TRACK_MEAN_SPEED')
                     velocity = 'mean velocity = ' + str(v) + ' ' + model.getSpaceUnits() + '/' + model.getTimeUnits()
                     spot = get_spot(track_id, spot_id)
-                    # create a table row
+                    # create a row
                     row = []
                     row.append(image)
                     row.append(Double(roi.getId()))
@@ -317,15 +291,14 @@ while j.hasNext():
                     row.append(Double(spot.getFeature('SNR')))
                     row.append(Double(spot.getFeature('MEAN_INTENSITY')))
                     table_rows.append(row)
-        
-# Now create the table
 
-data = [[Object() for x in range(len(table_rows))] for y in range(len(columns))]
+# Now create the table
+data = [[Object() for tr in range(len(table_rows))] for c in range(len(columns))]
 for r in range(0, len(table_rows)):
     row = table_rows[r]
     for i in range(0, len(row)):
         data[i][r] = row[i]
-# Create the table
+
 table_data = TableData(columns, data)
 table_facility = gateway.getFacility(TablesFacility)
 data_object = ProjectData(ProjectI(project_id, False))
@@ -338,10 +311,10 @@ it = annotations.iterator()
 while it.hasNext():
     ann = it.next()
     if ann.getClass().getName() == "omero.gateway.model.FileAnnotationData":
-       if ann.getFileID() == oid:
-           ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
-           gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
-           break
+        if ann.getFileID() == oid:
+            ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
+            gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
+            break
 
 
 print "done"
