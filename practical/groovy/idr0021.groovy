@@ -89,7 +89,6 @@ project_id = 1101
 USERNAME = "username"
 PASSWORD = "password"
 
-NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 MAP_KEY = "Channels"
 
 save_data = true
@@ -155,7 +154,7 @@ def get_channel_wavelength(gateway, ctx, image_id, dataset_name) {
     j = annotations.iterator()
     while (j.hasNext()) {
         annotation = j.next()
-        if (annotation.getNameSpace().equals(NAMESPACE)) {
+        if (annotation.getNameSpace().equals(FileAnnotationData.BULK_ANNOTATIONS_NS)) {
             named_values = annotation.getContent()
             i = named_values.iterator()
             while (i.hasNext()) {
@@ -258,7 +257,7 @@ def create_table_columns(headings) {
     size = headings.size()
     table_columns = new TableDataColumn[size+1]
     //populate the headings
-    for (h = 0; h < headings.size(); h++) {
+    for (h = 0; h < size; h++) {
         heading = headings[h]
         if (heading.equals("Slice") || heading.equals("Dataset")) {
             table_columns[h] = new TableDataColumn(heading, h, String)
@@ -348,7 +347,7 @@ def upload_csv_to_omero(ctx, file, project_id) {
 }
 
 def save_summary_as_omero_table(ctx, rows, columns, project_id) {
-    "Create an OMERO table with the summary result and attach it to the specified dataset"
+    "Create an OMERO table with the summary result and attach it to the specified project"
     data = new Object[columns.length][rows.size()]
     for (r = 0; r < rows.size(); r++) {
         row = rows.get(r)
@@ -382,9 +381,10 @@ def save_summary_as_csv(file, rows, columns) {
     sb = new StringBuilder()
     try {
         stream = new PrintWriter(file)
-        for (i = 0; i < table_columns.length; i++) {
+        l = table_columns.length
+        for (i = 0; i < l; i++) {
             sb.append(table_columns[i].getName())
-            if (i != (table_columns.length-1)) {
+            if (i != (l-1)) {
                 sb.append(", ")
             }
         }
@@ -409,6 +409,7 @@ def save_summary_as_csv(file, rows, columns) {
         stream.close()
     }
 }
+
 // Connect
 gateway = connect_to_omero()
 user = gateway.getLoggedInUser()
