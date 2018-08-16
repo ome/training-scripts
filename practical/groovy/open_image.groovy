@@ -84,8 +84,7 @@ def download_image(gateway, image_id, path) {
 gateway = connect_to_omero()
 // Download the image. This could be composed of several files
 tmp_dir = Files.createTempDirectory("OMERO_download")
-
-files = download_image(gateway, image_id, tmp_dir.getAbsolutePath())
+files = download_image(gateway, image_id, tmp_dir.toString())
 
 files.each() { f ->
     options = "open=" + f.getAbsolutePath()
@@ -95,9 +94,13 @@ files.each() { f ->
 }
 
 //Delete file in directory then delete it
-tmp_dir.eachFile() { file ->
-  file.delete()
+dir = new File(tmp_dir.toString())
+entries = dir.listFiles()
+for (i =0; i < entries.length; i++) {
+    entries[i].delete()
 }
-tmp_dir.delete()
+dir.delete()
 gateway.disconnect()
-println("Disconnect")
+
+println("Done")
+
