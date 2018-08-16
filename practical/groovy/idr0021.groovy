@@ -34,10 +34,8 @@
 
 import java.util.ArrayList
 import java.lang.Math
+import java.lang.StringBuffer
 import java.nio.ByteBuffer
-import java.io.BufferedReader
-import java.io.FileReader
-import java.io.FilenameFilter
 import java.io.File
 import java.io.PrintWriter
 
@@ -112,7 +110,6 @@ def connect_to_omero() {
     gateway = new Gateway(simpleLogger)
     gateway.connect(credentials)
     return gateway
-
 }
 
 def get_datasets(gateway, ctx, project_id) {
@@ -126,28 +123,23 @@ def get_datasets(gateway, ctx, project_id) {
 }
 
 
-def get_image_ids(gateway, ctx, dataset_id) {
+def get_images(gateway, ctx, dataset_id) {
     "List all image's ids contained in a Dataset"
 
     browse = gateway.getFacility(BrowseFacility)
 
     ids = new ArrayList(1)
     ids.add(new Long(dataset_id))
-    images = browse.getImagesForDatasets(ctx, ids)
-
-    j = images.iterator()
-    image_ids = new ArrayList()
-    while (j.hasNext()) {
-        image_ids.add(j.next().getId())
-    }
-    return image_ids
+    return browse.getImagesForDatasets(ctx, ids)
 }
+
 
 def get_channels_data(gateway, ctx, image_id) {
     "List the channels data associated to the specified image"
     svc = gateway.getFacility(MetadataFacility)
     return svc.getChannelData(ctx, image_id)
 }
+
 
 def get_channel_wavelength(gateway, ctx, image_id, dataset_name) {
     "Load the map annotations and find the channel's wavelength matching the dataset name"
@@ -181,8 +173,8 @@ def get_channel_wavelength(gateway, ctx, image_id, dataset_name) {
             }
         }
     }
-
 }
+
 
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     "Open the image using the Bio-Formats Importer"
@@ -203,10 +195,10 @@ def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     options.append("]")
     options.append("windowless=true")
     IJ.runPlugIn("loci.plugins.LociImporter", options.toString())
-
 }
 
-def save_as_csv(rt, tmp_dir, image_id, channel_index, dataset_name) {
+
+def save_row(rt, table_rows, channel_index, dataset_name, image) {
     "Create a summary table from the original table"
     // Remove the rows not corresponding to the specified channel
     to_delete = new ArrayList()
@@ -243,12 +235,41 @@ def save_as_csv(rt, tmp_dir, image_id, channel_index, dataset_name) {
         rt.setValue("Dataset", i, dataset_name)
         rt.setValue("Bounding_Box", i, max_bounding_box)
     }
-    // Create a tmp file and save the result
-    path = tmp_dir.resolve("result_for_" + image_id + ".csv")
-    file_path = Files.createFile(path)
-    rt.updateResults()
-    rt.save(file_path.toString())
+    headings = rt.getHeadings()
+    row = new ArrayList()
+    for (j = 0; j < rt.size(); j++) {
+        for (i = 0; i < headings.length; i++) {
+            heading = rt.getColumnHeading(i)
+            if (heading.equals("Slice") || heading.equals("Dataset")) {
+                row.add(rt.getStringValue(i, j))
+            } else {
+                row.add(new Double(rt.getValue(i, j)))
+            }
+        }
+    }
+    row.add(image)
+    table_rows.add(row)
+    return headings
 }
+
+
+def create_table_columns(headings) {
+    "Create the table headings from the ImageJ results table"
+    size = headings.size()
+    table_columns = new TableDataColumn[size+1]
+    //populate the headings
+    for (h = 0; h < headings.size(); h++) {
+        heading = headings[h]
+        if (heading.equals("Slice") || heading.equals("Dataset")) {
+            table_columns[h] = new TableDataColumn(heading, h, String)
+        } else {
+            table_columns[h] = new TableDataColumn(heading, h, Double)
+        }
+    }
+    table_columns[size] = new TableDataColumn("Image", size, ImageData)
+    return table_columns
+}
+
 
 def save_rois_to_omero(ctx, image_id, imp) {
     // Save ROI's back to OMERO
@@ -278,7 +299,7 @@ def save_rois_to_omero(ctx, image_id, imp) {
     return roivec
 }
 
-def upload_csv_to_omero(ctx, file, type, object_id) {
+def upload_csv_to_omero(ctx, file, project_id) {
     "Upload the CSV file and attach it to the specified object"
     svc = gateway.getFacility(DataManagerFacility)
 
@@ -322,67 +343,12 @@ def upload_csv_to_omero(ctx, file, type, object_id) {
     fa.setFile(original_file)
     fa.setNs(rstring(namespace))
 
-    data_object = null
-    if (type.equals("Project")) {
-        data_object = new ProjectData(new ProjectI(object_id, false))
-    } else {
-        data_object = new DatasetData(new DatasetI(object_id, false))
-    }  
+    data_object = new ProjectData(new ProjectI(project_id, false)) 
     svc.attachAnnotation(ctx, new FileAnnotationData(fa), data_object)
 }
 
-
-def save_summary_as_omero_table(ctx, file, type, object_id, delimiter) {
-    "Convert the CSV file into an OMERO table and attach it to the specified object"
-    data = null
-    stream = null
-    rows = new ArrayList()
-    columns_list = new ArrayList()
-    try {
-        stream = new BufferedReader(new FileReader(file))
-        line = stream.readLine()
-        if (line == null) {
-            return
-        }
-        headers = line.split(delimiter)
-        index = 0
-        string_indexes = new ArrayList()
-        headers.each() { c ->
-            if (c.equals("Slice") || c.equals("Dataset")) {
-                columns_list.add(new TableDataColumn(c, index, String))
-                string_indexes.add(index)
-            } else {
-                columns_list.add(new TableDataColumn(c, index, Double))
-            }
-            index++
-        }
-        // Read the rest of the file
-        while ((line = stream.readLine()) != null) {
-            values = line.trim().split(delimiter)
-            i = 0
-            row = new ArrayList()
-            values.each() { c ->
-                if (string_indexes.contains(i)) {
-                    row.add(new String(c))
-                } else {
-                    row.add(new Double(c))
-                }
-                i++
-            }
-            rows.add(row)
-        }
-    } finally {
-        if (stream != null) {
-            stream.close()
-        }
-    }
-    // create columns
-    columns = new TableDataColumn[columns_list.size()]
-    i = 0
-    columns_list.each() { c ->
-        columns[i] = c
-        i++
-    }
+def save_summary_as_omero_table(ctx, rows, columns, project_id) {
+    "Create an OMERO table with the summary result and attach it to the specified dataset"
     data = new Object[columns.length][rows.size()]
     for (r = 0; r < rows.size(); r++) {
         row = rows.get(r)
@@ -393,16 +359,56 @@ def save_summary_as_omero_table(ctx, file, type, object_id, delimiter) {
     // Create the table
     table_data = new TableData(columns, data)
     table_facility = gateway.getFacility(TablesFacility)
-    data_object = null
-    if (type.equals("Project")) {
-        data_object = new ProjectData(new ProjectI(object_id, false))
-    } else {
-        data_object = new DatasetData(new DatasetI(object_id, false))
+    data_object = new ProjectData(new ProjectI(project_id, false))
+    result = table_facility.addTable(ctx, data_object, "Summary_from_Fiji", table_data)
+    oid = result.getOriginalFileId()
+    // Retrieve the annotation and set the namespace (due to a limitation of JavaGateway)
+    annotations = table_facility.getAvailableTables(ctx, data_object)
+    it = annotations.iterator()
+    while (it.hasNext()) {
+        ann = it.next()
+        if (ann.getFileID() == oid) {
+            ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
+            gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
+            break
+        }
     }
-    table_facility.addTable(ctx, data_object, "Summary_from_Fiji", table_data)
-
 }
 
+
+def save_summary_as_csv(file, rows, columns) {
+    "Save the summary locally as a CSV"
+    stream = null
+    sb = new StringBuilder()
+    try {
+        stream = new PrintWriter(file)
+        for (i = 0; i < table_columns.length; i++) {
+            sb.append(table_columns[i].getName())
+            if (i != (table_columns.length-1)) {
+                sb.append(", ")
+            }
+        }
+        sb.append("\n")
+        table_rows.each() { row ->
+            size = row.size()
+            for (i = 0; i < size; i++) {
+                value = row.get(i)
+                if (value instanceof ImageData) {
+                    sb.append(value.getId())
+                } else {
+                    sb.append(value)
+                }
+                if (i != (size-1)) {
+                    sb.append(", ")
+                }
+            }
+            sb.append("\n")
+        }
+        stream.write(sb.toString())
+    } finally {
+        stream.close()
+    }
+}
 // Connect
 gateway = connect_to_omero()
 user = gateway.getLoggedInUser()
@@ -412,7 +418,9 @@ exp = gateway.getLoggedInUser()
 exp_id = exp.getId()
 
 
-tmp_dir = Files.createTempDirectory("Fiji_csv")
+table_rows = new ArrayList()
+table_columns = null
+
 // get all the dataset_ids in an project
 datasets = get_datasets(gateway, ctx, project_id)
 j = datasets.iterator()
@@ -420,8 +428,9 @@ datasets.each() { d ->
     name = d.getName()
     // for each dataset load the images
     // get all images_ids in the dataset
-    image_ids = get_image_ids(gateway, ctx, d.getId())
-    image_ids.each() { id ->
+    images = get_images(gateway, ctx, d.getId())
+    images.each() { image ->
+        id = image.getId()
         channel_index = 1
         // Find the index of the channel matching the dataset name as a string
         // This section is very specific to the data we are looking at. Each channel has
@@ -451,10 +460,13 @@ datasets.each() { d ->
         rt = ResultsTable.getResultsTable()
         // Save the ROIs
         if (save_data) {
-            roivec = save_rois_to_omero(ctx, id, imp)	
+            roivec = save_rois_to_omero(ctx, id, imp)   
         }
-        println "saving locally results for image with ID " + id
-        save_as_csv(rt, tmp_dir, id, channel_index, name)
+        println "creating summary results for image ID " + id
+        headings = save_row(rt, table_rows, channel_index, name, image)
+        if (table_columns == null) {
+            table_columns = create_table_columns(headings)
+        }
         // Close the various components
         IJ.selectWindow("Results")
         IJ.run("Close")
@@ -465,62 +477,24 @@ datasets.each() { d ->
     }
 }
 
-// Aggregate the CVS files
-delimiter = ","
-dir = new File(tmp_dir.toString())
-
-csv_files = dir.listFiles(new FilenameFilter() {
-    public boolean accept(File dir, String filename) { return filename.endsWith(".csv") }
-})
 
 //Create the result file
+tmp_dir = Files.createTempDirectory("Fiji_csv")
 path = tmp_dir.resolve("idr0021_merged_results.csv")
 file_path = Files.createFile(path)
 file = new File(file_path.toString())
-data = null
-streams = new ArrayList()
-sb = new StringBuilder()
-try {
-    stream = new PrintWriter(file)
-    streams.add(stream)
-    //read the first file with the headers
-    s = new BufferedReader(new FileReader(csv_files[0]))
-    streams.add(s)
-    while ((line = s.readLine()) != null) {
-        sb.append(line)
-        sb.append("\n")
-    }
-    //Do not read header
-    for (i = 1; i < csv_files.length - 1; i++) {
-        f = csv_files[i]
-        s = new BufferedReader(new FileReader(f))
-        streams.add(s)
-        f.nextLine
-        while ((line = s.readLine()) != null) {
-            sb.append(line)
-            sb.append("\n")
-       }
-    }
-    stream.write(sb.toString())
-} finally {
-    streams.each() { stream ->
-         stream.close()
-    }
-}
+// create CSV file
+save_summary_as_csv(file, table_rows, table_columns)
+
 
 if (save_data) {
-    upload_csv_to_omero(ctx, file, "Project", project_id)
-    save_summary_as_omero_table(ctx, file, "Project", project_id, delimiter)
-    // delete the directory. First need to remove the files
-    entries = dir.listFiles()
-    for (i =0; i < entries.length; i++) {
-        entries[i].delete()
-    }
-    dir.delete()
+    upload_csv_to_omero(ctx, file, project_id)
+    save_summary_as_omero_table(ctx, table_rows, table_columns, project_id)
+    // delete the local copy of the CSV file
+    file.delete()
 }
 
 // Close the connection
 gateway.disconnect()
 
 println "processing done"
-
