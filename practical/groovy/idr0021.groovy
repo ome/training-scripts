@@ -424,13 +424,18 @@ table_columns = null
 
 // get all the dataset_ids in an project
 datasets = get_datasets(gateway, ctx, project_id)
-j = datasets.iterator()
+
+//Close windows before starting
+IJ.run("Close All")
 datasets.each() { d ->
     name = d.getName()
     // for each dataset load the images
     // get all images_ids in the dataset
     images = get_images(gateway, ctx, d.getId())
     images.each() { image ->
+        if (image.getName().endWith(".tif")) {
+            return
+        }
         id = image.getId()
         channel_index = 1
         // Find the index of the channel matching the dataset name as a string
@@ -469,12 +474,7 @@ datasets.each() { d ->
             table_columns = create_table_columns(headings)
         }
         // Close the various components
-        IJ.selectWindow("Results")
-        IJ.run("Close")
-        IJ.selectWindow("ROI Manager")
-        IJ.run("Close")
-        imp.changes = false // Prevent "Save Changes?" dialog
-        imp.close()
+        IJ.run("Close All")
     }
 }
 

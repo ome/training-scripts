@@ -368,6 +368,10 @@ table_columns = None
 
 # get all the dataset_ids in an project
 datasets = get_datasets(gateway, ctx, project_id)
+
+# Close windows before starting
+IJ.run("Close All")
+
 j = datasets.iterator()
 while j.hasNext():
     d = j.next()
@@ -377,6 +381,8 @@ while j.hasNext():
     images = get_images(gateway, ctx, d.getId())
     for image in images:
         id = image.getId()
+        if image.getName().endswith(".tif"):
+            continue
         channel_index = 1
         # Find the index of the channel matching the dataset name as a string
         channel_wavelength = get_channel_wavelength(gateway, ctx, id, name)
@@ -413,12 +419,7 @@ while j.hasNext():
             table_columns = create_table_columns(headings)
 
         # Close the various components
-        IJ.selectWindow("Results")
-        IJ.run("Close")
-        IJ.selectWindow("ROI Manager")
-        IJ.run("Close")
-        imp.changes = False     # Prevent "Save Changes?" dialog
-        imp.close()
+        IJ.run("Close All")
 
 # Create the Summary CSV
 tmp_dir = tempfile.gettempdir()
