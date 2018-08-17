@@ -35,16 +35,33 @@
  */
 
 import java.util.ArrayList
+import java.lang.StringBuffer
+import java.nio.ByteBuffer
+import java.io.File
+import java.io.FileInputStream
+import java.io.PrintWriter
+
+import java.nio.file.Files
 
 // OMERO Dependencies
 import omero.gateway.Gateway
 import omero.gateway.LoginCredentials
 import omero.gateway.SecurityContext
 import omero.gateway.facility.BrowseFacility
+import omero.gateway.facility.DataManagerFacility
 import omero.gateway.facility.ROIFacility
-import omero.log.SimpleLogger
 import omero.gateway.facility.TablesFacility
+import omero.log.SimpleLogger
+import omero.model.ChecksumAlgorithmI
+import omero.model.FileAnnotationI
+import omero.model.OriginalFileI
+import omero.model.enums.ChecksumAlgorithmSHA1160
+
+import static omero.rtypes.rlong
+import static omero.rtypes.rstring
+
 import omero.gateway.model.DatasetData
+import omero.gateway.model.FileAnnotationData
 import omero.gateway.model.ImageData
 import omero.gateway.model.TableData
 import omero.gateway.model.TableDataColumn
@@ -243,6 +260,90 @@ def create_table_columns(headings) {
 }
 
 
+def save_summary_as_csv(file, rows, columns) {
+    "Save the summary locally as a CSV"
+    stream = null
+    sb = new StringBuilder()
+    try {
+        stream = new PrintWriter(file)
+        l = table_columns.length
+        for (i = 0; i < l; i++) {
+            sb.append(table_columns[i].getName())
+            if (i != (l-1)) {
+                sb.append(", ")
+            }
+        }
+        sb.append("\n")
+        table_rows.each() { row ->
+            size = row.size()
+            for (i = 0; i < size; i++) {
+                value = row.get(i)
+                if (value instanceof ImageData) {
+                    sb.append(value.getId())
+                } else {
+                    sb.append(value)
+                }
+                if (i != (size-1)) {
+                    sb.append(", ")
+                }
+            }
+            sb.append("\n")
+        }
+        stream.write(sb.toString())
+    } finally {
+        stream.close()
+    }
+}
+
+def upload_csv_to_omero(ctx, file, dataset_id) {
+    "Upload the CSV file and attach it to the specified dataset"
+    svc = gateway.getFacility(DataManagerFacility)
+
+    print file.getName()
+    file_size = file.length()
+    original_file = new OriginalFileI()
+    original_file.setName(rstring(file.getName()))
+    original_file.setPath(rstring(file.getAbsolutePath()))
+    original_file.setSize(rlong(file_size))
+    checksum_algorithm = new ChecksumAlgorithmI()
+    checksum_algorithm.setValue(rstring(ChecksumAlgorithmSHA1160.value))
+    original_file.setHasher(checksum_algorithm)
+    original_file.setMimetype(rstring("text/csv"))
+    original_file = svc.saveAndReturnObject(ctx, original_file)
+    store = gateway.getRawFileService(ctx)
+
+    // Open file and read stream
+    INC = 262144
+    pos = 0
+    buf = new byte[INC]
+    ByteBuffer bbuf = null
+    stream = null
+    try {
+        store.setFileId(original_file.getId().getValue())
+        stream = new FileInputStream(file)
+        while ((rlen = stream.read(buf)) > 0) {
+            store.write(buf, pos, rlen)
+            pos += rlen
+            bbuf = ByteBuffer.wrap(buf)
+            bbuf.limit(rlen)
+        }
+        original_file = store.save()
+    } finally {
+        if (stream != null) {
+            stream.close()
+        }
+        store.close()
+    }
+    // create the file annotation
+    namespace = "training.demo"
+    fa = new FileAnnotationI()
+    fa.setFile(original_file)
+    fa.setNs(rstring(namespace))
+
+    data_object = new DatasetData(new DatasetI(dataset_id, false)) 
+    svc.attachAnnotation(ctx, new FileAnnotationData(fa), data_object)
+}
+
 // Prototype analysis example
 gateway = connect_to_omero()
 exp = gateway.getLoggedInUser()
@@ -289,6 +390,18 @@ images.each() { image ->
     imp.close()
     
 }
+
+//Create the result file
+tmp_dir = Files.createTempDirectory("Fiji_csv")
+path = tmp_dir.resolve("idr0021_merged_results.csv")
+file_path = Files.createFile(path)
+file = new File(file_path.toString())
+print file
+// create a CSV file and upload it
+save_summary_as_csv(file, table_rows, table_columns)
+upload_csv_to_omero(ctx, file, dataset_id)
+//delete the local copy of the file
+file.delete()
 
 save_summary_as_omero_table(ctx, table_rows, table_columns, dataset_id)
 
