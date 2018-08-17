@@ -407,7 +407,6 @@ upload_csv_to_omero(ctx, file, dataset_id)
 dir = new File(tmp_dir.toString())
 entries = dir.listFiles()
 for (i = 0; i < entries.length; i++) {
-    print entries[i].getName()
     entries[i].delete()
 }
 dir.delete()
