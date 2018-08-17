@@ -81,7 +81,6 @@ project_id = 1101
 USERNAME = "username"
 PASSWORD = "password"
 
-NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 MAP_KEY = "Channels"
 
 save_data = True
@@ -145,7 +144,7 @@ def get_channel_wavelength(gateway, ctx, image_id, dataset_name):
     j = annotations.iterator()
     while j.hasNext():
         annotation = j.next()
-        if annotation.getNameSpace() == NAMESPACE:
+        if annotation.getNameSpace() == FileAnnotationData.BULK_ANNOTATIONS_NS:
             named_values = annotation.getContent()
             i = named_values.iterator()
             while i.hasNext():
