@@ -402,8 +402,15 @@ print file
 // create a CSV file and upload it
 save_summary_as_csv(file, table_rows, table_columns)
 upload_csv_to_omero(ctx, file, dataset_id)
-//delete the local copy of the file
-file.delete()
+
+//delete the local copy of the temporary file and directory
+dir = new File(tmp_dir.toString())
+entries = dir.listFiles()
+for (i = 0; i < entries.length; i++) {
+    print entries[i].getName()
+    entries[i].delete()
+}
+dir.delete()
 
 save_summary_as_omero_table(ctx, table_rows, table_columns, dataset_id)
 
