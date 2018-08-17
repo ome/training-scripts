@@ -112,7 +112,7 @@ def connect_to_omero() {
 }
 
 def get_datasets(gateway, ctx, project_id) {
-    "List all dataset's ids contained in a Project"
+    "List all datasets contained in a Project"
 
     browse = gateway.getFacility(BrowseFacility)
     ids = new ArrayList(1)
@@ -123,7 +123,7 @@ def get_datasets(gateway, ctx, project_id) {
 
 
 def get_images(gateway, ctx, dataset_id) {
-    "List all image's ids contained in a Dataset"
+    "List all images contained in a Dataset"
 
     browse = gateway.getFacility(BrowseFacility)
 
@@ -299,7 +299,7 @@ def save_rois_to_omero(ctx, image_id, imp) {
 }
 
 def upload_csv_to_omero(ctx, file, project_id) {
-    "Upload the CSV file and attach it to the specified object"
+    "Upload the CSV file and attach it to the specified project"
     svc = gateway.getFacility(DataManagerFacility)
 
     file_size = file.length()
@@ -491,8 +491,13 @@ save_summary_as_csv(file, table_rows, table_columns)
 if (save_data) {
     upload_csv_to_omero(ctx, file, project_id)
     save_summary_as_omero_table(ctx, table_rows, table_columns, project_id)
-    // delete the local copy of the CSV file
-    file.delete()
+    // delete the local copy of the temporary file and directory
+    dir = new File(tmp_dir.toString())
+    entries = dir.listFiles()
+    for (i = 0; i < entries.length; i++) {
+        entries[i].delete()
+    }
+    dir.delete()
 }
 
 // Close the connection
