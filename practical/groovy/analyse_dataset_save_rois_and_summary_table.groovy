@@ -359,6 +359,8 @@ table_rows = new ArrayList()
 table_columns = null
 
 count = 0
+//Close all windows before starting
+IJ.run("Close All")
 images.each() { image ->
     // Open the image
     id = image.getId()
