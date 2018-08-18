@@ -298,8 +298,6 @@ def save_summary_as_csv(file, rows, columns) {
 def upload_csv_to_omero(ctx, file, dataset_id) {
     "Upload the CSV file and attach it to the specified dataset"
     svc = gateway.getFacility(DataManagerFacility)
-
-    print file.getName()
     file_size = file.length()
     original_file = new OriginalFileI()
     original_file.setName(rstring(file.getName()))
