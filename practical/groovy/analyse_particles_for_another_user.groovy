@@ -141,7 +141,7 @@ def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     options.append("\niid=")
     options.append(image_id)
     options.append("] ")
-    options.append("windowless=true")
+    options.append("windowless=true ")
     IJ.runPlugIn("loci.plugins.LociImporter", options.toString())
 
 }
