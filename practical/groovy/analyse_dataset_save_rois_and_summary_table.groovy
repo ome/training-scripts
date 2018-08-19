@@ -188,6 +188,8 @@ def save_row(rt, table_rows, image) {
     // Rename the table so we can read the summary table
     IJ.renameResults("Results")
     rt = ResultsTable.getResultsTable()
+    // Delete the Count column
+    rt.deleteColumn("Count")
     for (i = 0; i < rt.size(); i++) {
         value = rt.getStringValue("Slice", i)
         if (!value.startsWith(ref)) {
@@ -396,7 +398,7 @@ tmp_dir = Files.createTempDirectory("Fiji_csv")
 path = tmp_dir.resolve("idr0021_merged_results.csv")
 file_path = Files.createFile(path)
 file = new File(file_path.toString())
-print file
+
 // create a CSV file and upload it
 save_summary_as_csv(file, table_rows, table_columns)
 upload_csv_to_omero(ctx, file, dataset_id)
