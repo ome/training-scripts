@@ -188,8 +188,6 @@ def save_row(rt, table_rows, image) {
     // Rename the table so we can read the summary table
     IJ.renameResults("Results")
     rt = ResultsTable.getResultsTable()
-    // Delete the Count column
-    rt.deleteColumn("Count")
     for (i = 0; i < rt.size(); i++) {
         value = rt.getStringValue("Slice", i)
         if (!value.startsWith(ref)) {
