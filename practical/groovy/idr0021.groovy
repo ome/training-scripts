@@ -434,7 +434,7 @@ datasets.each() { d ->
     // get all images_ids in the dataset
     images = get_images(gateway, ctx, d.getId())
     images.each() { image ->
-        if (image.getName().endWith(".tif")) {
+        if (image.getName().endsWith(".tif")) {
             return
         }
         id = image.getId()
