@@ -20,16 +20,17 @@
  */
 
 /*
- * This Groovy script uses ImageJ to analyse particles, and saved the results
- * locally in a CSV file. The file is then uploaded and attached to the specified
- * project as a file annotation.
+ * This Groovy script uses ImageJ to analyse particles.
+* The generated ROIs are then saved back to OMERO.
+ * We create a summary CSV and a summary table of the measurement and attach
+ * them to the dataset.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
  * Select Groovy as language in the Scripting Dialog.
  * Error handling is omitted to ease the reading of the script but
  * this should be added
  * if used in production to make sure the services are closed
  * Information can be found at
- * https://docs.openmicroscopy.org/latest/omero/developers/Java.html
+ * https://docs.openmicroscopy.org/latest/omero5/developers/Java.html
  */
 
 import java.util.ArrayList
