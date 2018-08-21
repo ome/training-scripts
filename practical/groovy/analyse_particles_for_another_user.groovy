@@ -21,7 +21,7 @@
 
 /*
  * This Groovy script uses ImageJ to analyse particles, the generated ROIs are
- * saved to OMERO and the generated measurements are saved as OMERO tables.
+ * saved to OMERO.
  * In this script, the analysis can be done on behalf of another user by a person
  * with more privileges e.g. analyst.
  * More details about restricted privileges can be found at
