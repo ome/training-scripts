@@ -339,12 +339,12 @@ def save_summary_as_csv(file, rows, columns):
     with open(file.name, 'wb') as master:
         master_csv = csv.writer(master)
         headers = []
-        for i in range(0, len(table_columns)):
-            headers.append(table_columns[i].getName())
+        for i in range(0, len(columns)):
+            headers.append(columns[i].getName())
         master_csv.writerow(headers)
 
-        for i in range(0, len(table_rows)):
-            row = table_rows[i]
+        for i in range(0, len(rows)):
+            row = rows[i]
             line = []
             size = len(row)
             for j in range(0, size):
