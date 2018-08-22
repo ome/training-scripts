@@ -21,7 +21,7 @@
 
 /*
  * This Groovy script uses ImageJ to analyse particles, the generated ROIs are
- * saved to OMERO and the generated measurements are saved as OMERO tables.
+ * saved to OMERO.
  * In this script, the analysis can be done on behalf of another user by a person
  * with more privileges e.g. analyst.
  * More details about restricted privileges can be found at
@@ -140,8 +140,8 @@ def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     options.append(group_id)
     options.append("\niid=")
     options.append(image_id)
-    options.append("]")
-    options.append("windowless=true")
+    options.append("] ")
+    options.append("windowless=true view=Hyperstack ")
     IJ.runPlugIn("loci.plugins.LociImporter", options.toString())
 
 }

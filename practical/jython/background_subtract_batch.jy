@@ -18,6 +18,9 @@
 # ------------------------------------------------------------------------------
 
 # This Jython script uses ImageJ to Subtract Background.
+# The images with subtracted background are imported into a new Dataset in OMERO.
+# The dataset is named script_editor_output_from_dataset_ID where ID is the ID of 
+# the specified dataset.
 # Use this script in the Scripting Dialog of Fiji (File > New > Script).
 # Select Python as language in the Scripting Dialog.
 # Error handling is omitted to ease the reading of the script but
@@ -78,7 +81,7 @@ port=%s
 pass=%s
 groupID=%s
 iid=%s]
- windowless=true""" % (HOST, USERNAME, PORT, PASSWORD, group_id, image_id)
+ windowless=true view=Hyperstack """ % (HOST, USERNAME, PORT, PASSWORD, group_id, image_id)
     IJ.runPlugIn("loci.plugins.LociImporter", options)
 
 

@@ -21,6 +21,9 @@
 
 /*
  * This Groovy script uses ImageJ to Subtract Background.
+ * The images with subtracted background are imported into a new Dataset in OMERO.
+ * The dataset is named script_editor_output_from_dataset_ID where ID is the ID of 
+ * the specified dataset.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
  * Select Groovy as language in the Scripting Dialog.
  * Error handling is omitted to ease the reading of the script but this
@@ -98,8 +101,8 @@ def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     options.append(group_id)
     options.append("\niid=")
     options.append(image_id)
-    options.append("]")
-    options.append("windowless=true")
+    options.append("] ")
+    options.append("windowless=true view=Hyperstack ")
     IJ.runPlugIn("loci.plugins.LociImporter", options.toString())
 
 }
