@@ -353,7 +353,12 @@ def save_summary_as_omero_table(ctx, rows, columns, project_id) {
     for (r = 0; r < rows.size(); r++) {
         row = rows.get(r)
         for (i = 0; i < row.size(); i++) {
-            data[i][r] = row.get(i)
+            //Due to a limitation of OMERO.parade multiply value by 100
+            v = row.get(i)
+            if (v instanceof Double) {
+                v = v * 100
+            }
+            data[i][r] = v
         }
     }
     // Create the table
@@ -475,7 +480,12 @@ datasets.each() { d ->
             table_columns = create_table_columns(headings)
         }
         // Close the various components
-        IJ.run("Close All")
+        IJ.selectWindow("Results")
+        IJ.run("Close")
+        IJ.selectWindow("ROI Manager")
+        IJ.run("Close")
+        imp.changes = false     // Prevent "Save Changes?" dialog
+        imp.close()
     }
 }
 
