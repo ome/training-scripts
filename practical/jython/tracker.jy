@@ -39,6 +39,7 @@ from omero.gateway import Gateway
 from omero.gateway import LoginCredentials
 from omero.gateway import SecurityContext
 from omero.gateway.facility import BrowseFacility
+from omero.gateway.facility import DataManagerFacility
 from omero.gateway.facility import ROIFacility
 from omero.gateway.facility import TablesFacility
 from omero.gateway.model import EllipseData
@@ -53,6 +54,11 @@ from omero.log import SimpleLogger
 from omero.model import PolylineI
 from omero.model import ProjectI
 from omero.rtypes import rstring
+from omero.rtypes import rlong
+from omero.model import ChecksumAlgorithmI
+from omero.model import FileAnnotationI
+from omero.model import OriginalFileI
+from omero.model.enums import ChecksumAlgorithmSHA1160
 
 
 from ij import IJ
@@ -70,6 +76,11 @@ import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory as 
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory as SpotIntensityAnalyzerFactory
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer as TrackSpeedStatisticsAnalyzer
 
+# Import required to save the results as CSV
+import csv
+import os
+import tempfile
+
 # Setup
 # =====
 
@@ -77,7 +88,7 @@ import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer as Trac
 HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 #  parameters to edit
-project_id = 1103
+project_id = 1102
 USERNAME = "username"
 PASSWORD = "password"
 
@@ -149,6 +160,71 @@ def get_spot(track_id, spot_id):
     for spot in track:
         if spot.ID() == spot_id:
             return spot
+
+def upload_csv_to_omero(ctx, file, project_id):
+    "Upload the CSV file and attach it to the specified object"
+    svc = gateway.getFacility(DataManagerFacility)
+    file_size = os.path.getsize(file.name)
+    original_file = OriginalFileI()
+    name = os.path.split(file.name)[1]
+    original_file.setName(rstring(name))
+    original_file.setPath(rstring(file.name))
+    original_file.setSize(rlong(file_size))
+
+    checksum_algorithm = ChecksumAlgorithmI()
+    checksum_algorithm.setValue(rstring(ChecksumAlgorithmSHA1160.value))
+    original_file.setHasher(checksum_algorithm)
+    original_file.setMimetype(rstring("text/csv"))
+    original_file = svc.saveAndReturnObject(ctx, original_file)
+    store = gateway.getRawFileService(ctx)
+
+    # Open file and read stream
+    store.setFileId(original_file.getId().getValue())
+    print original_file.getId().getValue()
+    try:
+        store.setFileId(original_file.getId().getValue())
+        with open(file.name, 'rb') as stream:
+            buf = 10000
+            for pos in range(0, long(file_size), buf):
+                block = None
+                if file_size-pos < buf:
+                    block_size = file_size-pos
+                else:
+                    block_size = buf
+                stream.seek(pos)
+                block = stream.read(block_size)
+                store.write(block, pos, block_size)
+
+        original_file = store.save()
+    finally:
+        store.close()
+
+    # create the file annotation
+    namespace = "training.trackmate.demo"
+    fa = FileAnnotationI()
+    fa.setFile(original_file)
+    fa.setNs(rstring(namespace))
+
+    data_object = ProjectData(ProjectI(project_id, False))
+    svc.attachAnnotation(ctx, FileAnnotationData(fa), data_object)
+
+
+def save_summary_as_csv(file, rows, columns):
+    "Save the summary locally as a CSV"
+    with open(file.name, 'wb') as master:
+        master_csv = csv.writer(master)
+        headers = []
+        for i in range(0, len(columns)):
+            headers.append(columns[i].getName())
+        master_csv.writerow(headers)
+
+        for i in range(0, len(rows)):
+            row = table_rows[i]
+            line = []
+            size = len(row)
+            for j in range(0, size): 
+                line.append(row[j])
+            master_csv.writerow(line)
 
 
 gateway = connect_to_omero()
@@ -372,5 +448,14 @@ while it.hasNext():
         ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
         gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
         break
+
+# Create the Summary CSV
+tmp_dir = tempfile.gettempdir()
+file = tempfile.TemporaryFile(mode='wb', prefix='summary_results_', suffix='.csv', dir=tmp_dir)
+
+save_summary_as_csv(file, summary_table_rows, average_columns)
+upload_csv_to_omero(ctx, file, project_id)
+# delete local copy of the file
+os.remove(file.name)
 
 print "done"
