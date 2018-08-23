@@ -234,6 +234,7 @@ def save_row(rt, table_rows, channel_index, dataset_name, image) {
     for (i = 0; i < rt.size(); i++) {
         rt.setValue("Dataset", i, dataset_name)
         rt.setValue("Bounding_Box", i, max_bounding_box)
+        rt.setValue("Channel Index", i, channel_index)
     }
     headings = rt.getHeadings()
     row = new ArrayList()

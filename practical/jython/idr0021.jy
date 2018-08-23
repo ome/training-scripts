@@ -203,6 +203,7 @@ def save_row(rt, table_rows, channel_index, dataset_name, image):
     for i in range(0, rt.size()):
         rt.setValue("Dataset", i, dataset_name)
         rt.setValue("Bounding_Box", i, max_bounding_box)
+        rt.setValue("Channel Index", i, channel_index)
     # Create a tmp file and save the result
     headings = rt.getHeadings()
     row = []
