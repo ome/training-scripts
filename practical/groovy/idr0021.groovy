@@ -153,6 +153,7 @@ def get_channel_wavelength(gateway, ctx, image_id, dataset_name) {
     }
     // Iterate through annotation
     j = annotations.iterator()
+    wavelength = 0
     while (j.hasNext()) {
         annotation = j.next()
         if (annotation.getNameSpace().equals(FileAnnotationData.BULK_ANNOTATIONS_NS)) {
@@ -166,13 +167,15 @@ def get_channel_wavelength(gateway, ctx, image_id, dataset_name) {
                         values = ch_name.split(":")
                         name = values[1]
                         if (dataset_name.contains(name)) {
-                            return values[0]
+                            wavelength = values[0]
+                            return
                         }
                     }
                 }
             }
         }
     }
+    return wavelength
 }
 
 
@@ -435,7 +438,7 @@ datasets = get_datasets(gateway, ctx, project_id)
 //Close windows before starting
 IJ.run("Close All")
 datasets.each() { d ->
-    name = d.getName()
+    dataset_name = d.getName()
     // for each dataset load the images
     // get all images_ids in the dataset
     images = get_images(gateway, ctx, d.getId())
@@ -448,7 +451,7 @@ datasets.each() { d ->
         // Find the index of the channel matching the dataset name as a string
         // This section is very specific to the data we are looking at. Each channel has
         // wavelength information but not name directly associated to it.
-        channel_wavelength = get_channel_wavelength(gateway, ctx, id, name)
+        channel_wavelength = get_channel_wavelength(gateway, ctx, id, dataset_name)
         channels = get_channels_data(gateway, ctx, id)
         channels.each() { channel ->
             em = channel.getEmissionWavelength(null)
@@ -456,7 +459,7 @@ datasets.each() { d ->
                 v = em.getValue().intValue().toString()
                 if (v.equals(channel_wavelength)) {
                     channel_index = channel.getIndex()+1
-                    print "Found index: "+str(channel_index)
+                    println "Found index: "+ channel_index
                 }
             }
         }
@@ -476,7 +479,7 @@ datasets.each() { d ->
             roivec = save_rois_to_omero(ctx, id, imp)   
         }
         println "creating summary results for image ID " + id
-        headings = save_row(rt, table_rows, channel_index, name, image)
+        headings = save_row(rt, table_rows, channel_index, dataset_name, image)
         if (table_columns == null) {
             table_columns = create_table_columns(headings)
         }
