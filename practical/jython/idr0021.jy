@@ -249,8 +249,7 @@ def upload_csv_to_omero(ctx, file, project_id):
     svc = gateway.getFacility(DataManagerFacility)
     file_size = os.path.getsize(file.name)
     original_file = OriginalFileI()
-    name = os.path.split(file.name)[1]
-    original_file.setName(rstring(name))
+    original_file.setName(rstring("idr0021_merged_results.csv"))
     original_file.setPath(rstring(file.name))
     original_file.setSize(rlong(file_size))
 
