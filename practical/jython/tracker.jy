@@ -135,7 +135,7 @@ iid=%s]
 
 def create_omero_results_table_columns(units):
     columns = [TableDataColumn] * 7
-    columns[0] = TableDataColumn("Image ID", 0, ImageData)
+    columns[0] = TableDataColumn("Image", 0, ImageData)
     columns[1] = TableDataColumn("ROI ID", 1, Double)
     columns[2] = TableDataColumn("Shape ID", 2, Double)
     columns[3] = TableDataColumn("Track Mean Velocity (" + units + ")", 3, Double)
@@ -147,7 +147,7 @@ def create_omero_results_table_columns(units):
 
 def create_omero_summary_table_columns(units):
     columns = [TableDataColumn] * 5
-    columns[0] = TableDataColumn("Image ID", 0, ImageData)
+    columns[0] = TableDataColumn("Image", 0, ImageData)
     columns[1] = TableDataColumn("Average Track Mean Velocity (" + units + ")", 3, Double)
     columns[2] = TableDataColumn("Average Spot Quality", 4, Double)
     columns[3] = TableDataColumn("Average Spot SNR", 5, Double)
@@ -222,8 +222,12 @@ def save_summary_as_csv(file, rows, columns):
             row = table_rows[i]
             line = []
             size = len(row)
-            for j in range(0, size): 
-                line.append(row[j])
+            for j in range(0, size):
+                value = row[j]
+                if j == 0:
+                    line.append(value.getId())
+                else:
+                    line.append(value)
             master_csv.writerow(line)
 
 
