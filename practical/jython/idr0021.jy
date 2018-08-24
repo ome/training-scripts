@@ -1,0 +1,452 @@
+# -----------------------------------------------------------------------------
+#  Copyright (C) 2018 University of Dundee. All rights reserved.
+#
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# ------------------------------------------------------------------------------
+
+# This Jython script uses ImageJ to analyse particles.
+# The generated ROIs are then saved back to OMERO.
+# We create a summary CSV and a summary table of the measurement and attach
+# them to the dataset.
+# Use this script in the Scripting Dialog of Fiji (File > New > Script).
+# Select Python as language in the Scripting Dialog.
+# Error handling is omitted to ease the reading of the script but
+# this should be added
+# if used in production to make sure the services are closed
+# Information can be found at
+# https://docs.openmicroscopy.org/latest/omero5/developers/Java.html
+
+from java.lang import Double
+from java.lang import Long
+from java.lang import Object
+from java.lang import String
+from java.util import ArrayList
+
+# OMERO Dependencies
+from omero.gateway import Gateway
+from omero.gateway import LoginCredentials
+from omero.gateway import SecurityContext
+from omero.gateway.facility import BrowseFacility
+from omero.gateway.facility import DataManagerFacility
+from omero.gateway.facility import MetadataFacility
+from omero.gateway.facility import ROIFacility
+from omero.gateway.facility import TablesFacility
+from omero.gateway.model import FileAnnotationData
+from omero.gateway.model import MapAnnotationData
+from omero.gateway.model import ImageData
+from omero.gateway.model import ProjectData
+from omero.gateway.model import TableData
+from omero.gateway.model import TableDataColumn
+
+from omero.model import ImageI
+from omero.model import ProjectI
+from omero.log import SimpleLogger
+from omero.rtypes import rlong
+from omero.rtypes import rstring
+from omero.model import ChecksumAlgorithmI
+from omero.model import FileAnnotationI
+from omero.model import OriginalFileI
+from omero.model.enums import ChecksumAlgorithmSHA1160
+
+from org.openmicroscopy.shoola.util.roi.io import ROIReader
+
+from ij import IJ
+from ij.plugin.frame import RoiManager
+from ij.measure import ResultsTable
+
+# Import required to save the results as CSV
+import csv
+import os
+import tempfile
+
+# Setup
+# =====
+
+# OMERO Server details
+HOST = "outreach.openmicroscopy.org"
+PORT = 4064
+project_id = 1101
+USERNAME = "username"
+PASSWORD = "password"
+
+MAP_KEY = "Channels"
+
+save_data = True
+
+if HOST.startswith("idr"):
+    save_data = False
+
+
+def connect_to_omero():
+    "Connect to OMERO. Returns a reference to the gateway"
+
+    credentials = LoginCredentials()
+    credentials.getServer().setHostname(HOST)
+    credentials.getServer().setPort(PORT)
+    credentials.getUser().setUsername(USERNAME.strip())
+    credentials.getUser().setPassword(PASSWORD.strip())
+    simpleLogger = SimpleLogger()
+    gateway = Gateway(simpleLogger)
+
+    user = gateway.connect(credentials)
+    print user.getGroupId()
+    return gateway, user
+
+
+def get_datasets(gateway, ctx, project_id):
+    "List all dataset's ids contained in a Project"
+
+    browse = gateway.getFacility(BrowseFacility)
+    ids = ArrayList(1)
+    val = Long(project_id)
+    ids.add(val)
+    projects = browse.getProjects(ctx, ids)
+    return projects[0].getDatasets()
+
+
+def get_images(gateway, ctx, dataset_id):
+    "List all image's ids contained in a Dataset"
+
+    browse = gateway.getFacility(BrowseFacility)
+
+    ids = ArrayList(1)
+    val = Long(dataset_id)
+    ids.add(val)
+    return browse.getImagesForDatasets(ctx, ids)
+
+
+def get_channels_data(gateway, ctx, image_id):
+    "List the channels data associated to the specified image"
+    svc = gateway.getFacility(MetadataFacility)
+    return svc.getChannelData(ctx, image_id)
+
+
+def get_channel_wavelength(gateway, ctx, image_id, dataset_name):
+    "Load the map annotations and find the channel's wavelength matching the dataset name"
+    svc = gateway.getFacility(MetadataFacility)
+    types = ArrayList(1)
+    types.add(MapAnnotationData)
+    data = ImageData(ImageI(image_id, False))
+    annotations = svc.getAnnotations(ctx, data, types, None)
+    # Iterate through annotation
+    j = annotations.iterator()
+    wavelength = 0
+    while j.hasNext():
+        annotation = j.next()
+        if annotation.getNameSpace() == FileAnnotationData.BULK_ANNOTATIONS_NS:
+            named_values = annotation.getContent()
+            i = named_values.iterator()
+            while i.hasNext():
+                nv = i.next()
+                if nv.name == MAP_KEY:
+                    channels = nv.value.split("; ")
+                    for c, ch_name in enumerate(channels):
+                        values = ch_name.split(":")
+                        name = values[1]
+                        if name in dataset_name:
+                            wavelength = values[0]
+                            break
+    return wavelength
+
+
+def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id):
+    "Open the image using the Bio-Formats Importer"
+
+    options = """location=[OMERO]
+open=[omero:server=%s
+user=%s
+port=%s
+pass=%s
+groupID=%s
+iid=%s]
+ windowless=true view=Hyperstack """ % (HOST, USERNAME, PORT, PASSWORD, group_id, image_id)
+    IJ.runPlugIn("loci.plugins.LociImporter", options)
+
+
+def save_row(rt, table_rows, channel_index, dataset_name, image):
+    "Create a summary table from the original table"
+    # Remove the rows not corresponding to the specified channel
+    to_delete = []
+    ref = "c:" + str(channel_index)
+    max_bounding_box = 0
+    for i in range(0, rt.size()):
+        label = rt.getStringValue("Label", i)
+        if ref in label:
+            w = rt.getStringValue("Width", i)
+            h = rt.getStringValue("Height", i)
+            area = float(w)*float(h)
+            max_bounding_box = max(area, max_bounding_box)
+
+    # Rename the table so we can read the summary table
+    IJ.renameResults("Results")
+    rt = ResultsTable.getResultsTable()
+    for i in range(0, rt.size()):
+        value = rt.getStringValue("Slice", i)
+        if not value.startswith(ref):
+            to_delete.append(i)
+    # Delete the rows we do not need
+    for index, value in enumerate(to_delete):
+        v = value-index
+        rt.deleteRow(v)
+    rt.updateResults()
+    # Insert values in summary table
+    for i in range(0, rt.size()):
+        rt.setValue("Dataset", i, dataset_name)
+        rt.setValue("Bounding_Box", i, max_bounding_box)
+        rt.setValue("Channel Index", i, channel_index)
+    # Create a tmp file and save the result
+    headings = rt.getHeadings()
+    row = []
+    for j in range(0, rt.size()):
+        for i in range(0, len(headings)):
+            heading = rt.getColumnHeading(i)
+            if heading == "Slice" or heading == "Dataset":
+                row.append(rt.getStringValue(i, j))
+            else:
+                row.append(Double(rt.getValue(i, j)))
+    row.append(image)
+    table_rows.append(row)
+    return headings
+
+
+def save_rois_to_omero(ctx, image_id, imp):
+    # Save ROI's back to OMERO
+    reader = ROIReader()
+    roi_list = reader.readImageJROIFromSources(image_id, imp)
+    roi_facility = gateway.getFacility(ROIFacility)
+    result = roi_facility.saveROIs(ctx, image_id, exp_id, roi_list)
+
+    roivec = []
+
+    j = result.iterator()
+    while (j.hasNext()):
+        roidata = j.next()
+        roi_id = roidata.getId()
+
+        i = roidata.getIterator()
+        while (i.hasNext()):
+            roi = i.next()
+            shape = roi[0]
+            t = shape.getZ()
+            z = shape.getT()
+            c = shape.getC()
+            shape_id = shape.getId()
+            roivec.append([roi_id, shape_id, z, c, t])
+    return roivec
+
+
+def upload_csv_to_omero(ctx, file, project_id):
+    "Upload the CSV file and attach it to the specified object"
+    svc = gateway.getFacility(DataManagerFacility)
+    file_size = os.path.getsize(file.name)
+    original_file = OriginalFileI()
+    original_file.setName(rstring("idr0021_merged_results.csv"))
+    original_file.setPath(rstring(file.name))
+    original_file.setSize(rlong(file_size))
+
+    checksum_algorithm = ChecksumAlgorithmI()
+    checksum_algorithm.setValue(rstring(ChecksumAlgorithmSHA1160.value))
+    original_file.setHasher(checksum_algorithm)
+    original_file.setMimetype(rstring("text/csv"))
+    original_file = svc.saveAndReturnObject(ctx, original_file)
+    store = gateway.getRawFileService(ctx)
+
+    # Open file and read stream
+    store.setFileId(original_file.getId().getValue())
+    print original_file.getId().getValue()
+    try:
+        store.setFileId(original_file.getId().getValue())
+        with open(file.name, 'rb') as stream:
+            buf = 10000
+            for pos in range(0, long(file_size), buf):
+                block = None
+                if file_size-pos < buf:
+                    block_size = file_size-pos
+                else:
+                    block_size = buf
+                stream.seek(pos)
+                block = stream.read(block_size)
+                store.write(block, pos, block_size)
+
+        original_file = store.save()
+    finally:
+        store.close()
+
+    # create the file annotation
+    namespace = "training.demo"
+    fa = FileAnnotationI()
+    fa.setFile(original_file)
+    fa.setNs(rstring(namespace))
+
+    data_object = ProjectData(ProjectI(project_id, False))
+    svc.attachAnnotation(ctx, FileAnnotationData(fa), data_object)
+
+
+def save_summary_as_omero_table(ctx, rows, columns, project_id):
+    "Create an OMERO table with the summary result and attach it to the specified project"
+
+    data = [[Object() for x in range(len(rows))] for y in range(len(columns))]
+    for r in range(0, len(rows)):
+        row = rows[r]
+        for i in range(0, len(row)):
+            # Due to a limitation of OMERO.parade multiply value by 100
+            v = row[i]
+            if isinstance(v, Double):
+                v = Double(v.doubleValue() * 100)
+            data[i][r] = v
+    # Create the table
+    table_data = TableData(columns, data)
+    table_facility = gateway.getFacility(TablesFacility)
+    data_object = ProjectData(ProjectI(project_id, False))
+    result = table_facility.addTable(ctx, data_object, "Summary_from_Fiji", table_data)
+
+    oid = result.getOriginalFileId()
+    # Retrieve the annotation and set the namespace (due to a limitation of JavaGateway)
+    annotations = table_facility.getAvailableTables(ctx, data_object)
+    it = annotations.iterator()
+    while it.hasNext():
+        ann = it.next()
+        if ann.getFileID() == oid:
+            ann.setNameSpace(FileAnnotationData.BULK_ANNOTATIONS_NS)
+            gateway.getUpdateService(ctx).saveAndReturnObject(ann.asIObject())
+            break
+
+
+def create_table_columns(headings):
+    "Create the table headings from the ImageJ results table"
+    size = len(headings)
+    table_columns = [TableDataColumn]*(size+1)
+    # populate the headings
+    for h in range(0, size):
+        heading = headings[h]
+        if heading == "Slice" or heading == "Dataset":
+            table_columns[h] = TableDataColumn(heading, h, String)
+        else:
+            table_columns[h] = TableDataColumn(heading, h, Double)
+
+    table_columns[size] = TableDataColumn("Image", size, ImageData)
+    return table_columns
+
+
+def save_summary_as_csv(file, rows, columns):
+    "Save the summary locally as a CSV"
+    with open(file.name, 'wb') as master:
+        master_csv = csv.writer(master)
+        headers = []
+        for i in range(0, len(columns)):
+            headers.append(columns[i].getName())
+        master_csv.writerow(headers)
+
+        for i in range(0, len(rows)):
+            row = rows[i]
+            line = []
+            size = len(row)
+            for j in range(0, size):
+                value = row[j]
+                if j == (size-1):
+                    line.append(value.getId())
+                else:
+                    line.append(value)
+            master_csv.writerow(line)
+
+
+# Connect
+gateway, user = connect_to_omero()
+group_id = user.getGroupId()
+ctx = SecurityContext(group_id)
+exp = gateway.getLoggedInUser()
+exp_id = exp.getId()
+
+table_rows = []
+table_columns = None
+
+# get all the dataset_ids in an project
+datasets = get_datasets(gateway, ctx, project_id)
+
+# Close windows before starting
+IJ.run("Close All")
+
+j = datasets.iterator()
+while j.hasNext():
+    d = j.next()
+    dataset_name = d.getName()
+    # for each dataset load the images
+    # get all images_ids in the dataset
+    images = get_images(gateway, ctx, d.getId())
+    for image in images:
+        id = image.getId()
+        if image.getName().endswith(".tif"):
+            continue
+        channel_index = 1
+        # Find the index of the channel matching the dataset name as a string
+        channel_wavelength = get_channel_wavelength(gateway, ctx, id, dataset_name)
+        channels = get_channels_data(gateway, ctx, id)
+        i = channels.iterator()
+        while i.hasNext():
+            channel = i.next()
+            em = channel.getEmissionWavelength(None)
+            if em is not None:
+                v = str(int(em.getValue()))
+                if channel_wavelength == v:
+                    channel_index = channel.getIndex()+1
+                    print "Found index: "+str(channel_index)
+                    break
+
+        open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, id)
+        imp = IJ.getImage()
+        # Some analysis which creates ROI's and Results Table
+        IJ.run("8-bit")
+        IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
+        IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack summarize")
+        IJ.run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding feret's summarize stack display redirect=None decimal=3")
+
+        rm = RoiManager.getInstance()
+        rm.runCommand(imp, "Measure")
+        rt = ResultsTable.getResultsTable()
+        # Save the ROIs
+        if save_data:
+            roivec = save_rois_to_omero(ctx, id, imp)
+
+        print "creating summary results for image ID " + str(id)
+        headings = save_row(rt, table_rows, channel_index, dataset_name, image)
+        if (table_columns is None):
+            table_columns = create_table_columns(headings)
+
+        # Close the various components
+        IJ.selectWindow("Results")
+        IJ.run("Close")
+        IJ.selectWindow("ROI Manager")
+        IJ.run("Close")
+        imp.changes = False     # Prevent "Save Changes?" dialog
+        imp.close()
+
+# Create the Summary CSV
+tmp_dir = tempfile.gettempdir()
+file = tempfile.TemporaryFile(mode='wb', prefix='idr0021_merged_results_', suffix='.csv', dir=tmp_dir)
+
+save_summary_as_csv(file, table_rows, table_columns)
+
+# Attach the summary csv file to the Project
+if save_data:
+    upload_csv_to_omero(ctx, file, project_id)
+    save_summary_as_omero_table(ctx, table_rows, table_columns, project_id)
+    # delete local copy of the file
+    os.remove(file.name)
+
+# Close the connection
+gateway.disconnect()
+
+print "processing done"
