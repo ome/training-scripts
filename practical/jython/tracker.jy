@@ -167,7 +167,7 @@ def upload_csv_to_omero(ctx, file, project_id):
     file_size = os.path.getsize(file.name)
     original_file = OriginalFileI()
     name = os.path.split(file.name)[1]
-    original_file.setName(rstring(name))
+    original_file.setName(rstring("trackmate_summary_results.csv"))
     original_file.setPath(rstring(file.name))
     original_file.setSize(rlong(file_size))
 
@@ -455,7 +455,7 @@ while it.hasNext():
 
 # Create the Summary CSV
 tmp_dir = tempfile.gettempdir()
-file = tempfile.TemporaryFile(mode='wb', prefix='summary_results_', suffix='.csv', dir=tmp_dir)
+file = tempfile.TemporaryFile(mode='wb', prefix='trackmate_summary_results_', suffix='.csv', dir=tmp_dir)
 
 save_summary_as_csv(file, summary_table_rows, average_columns)
 upload_csv_to_omero(ctx, file, project_id)
