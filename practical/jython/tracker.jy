@@ -219,7 +219,7 @@ def save_summary_as_csv(file, rows, columns):
         master_csv.writerow(headers)
 
         for i in range(0, len(rows)):
-            row = table_rows[i]
+            row = rows[i]
             line = []
             size = len(row)
             for j in range(0, size):
