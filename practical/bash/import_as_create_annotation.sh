@@ -30,19 +30,19 @@ PASSWORD=${PASSWORD:-ome}
 HOST=${HOST:-outreach.openmicroscopy.org}
 SUDOER=${SUDOER:-trainer-1}
 OMEUSER=${OMEUSER:-user-1}
-IMAGEPATH=${IMAGEPATH:-/}
-ATTACHMENTPATH=${ATTACHMENTPATH:-/}
+IMAGEPATH=${IMAGEPATH:-}
+ATTACHMENTPATH=${ATTACHMENTPATH:-}
 
 deleteimage=false
 deletefile=false
 
-if [ "$IMAGEPATH"="/" ]; then
+if [ -z "$IMAGEPATH" ]; then
     touch image_to_import.fake
     IMAGEPATH=$dir/image_to_import.fake
     deleteimage=true
 fi
 
-if [ "$ATTACHMENTPATH"="/" ]; then
+if [ -z "$ATTACHMENTPATH" ]; then
     touch file_to_upload.csv
     ATTACHMENTPATH=$dir/file_to_upload.csv
     deletefile=true
