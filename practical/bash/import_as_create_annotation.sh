@@ -21,7 +21,7 @@
 #   * log in as another user
 #   * create a new dataset
 #   * import an image
-#   * upload a attachment
+#   * upload an attachment
 #
 #
 dir=$(pwd -P)
@@ -41,7 +41,6 @@ if [ "$IMAGEPATH"="/" ]; then
     IMAGEPATH=$dir/image_to_import.fake
     deleteimage=true
 fi
-#printf $IMAGEPATH
 
 if [ "$ATTACHMENTPATH"="/" ]; then
     touch file_to_upload.csv
@@ -62,7 +61,7 @@ result=`$OMEROPATH import -T $dataset $IMAGEPATH --output ids`
 imageid=`cut -d':' -f2 <<< $result`
 printf 'imageid %s \n' "$id"
 
-# Upload a CSV and attach it to the Image
+# Upload a CSV
 result=`$OMEROPATH upload $ATTACHMENTPATH`
 originalfileid=`cut -d':' -f2 <<< $result`
 printf 'originalfileid %s \n' "$originalfileid"
