@@ -63,8 +63,9 @@ appropriate credentials on a Dataset at a time, updating the dataset_id each tim
 
 This will Analyse Particles and create ROIs on all channels of each Image.
 
-This script also creates an OMERO.table for each Image with all ROIs and their
-measurements from Fiji. Each OMERO.table is linked to a single Image.
+This script also creates a summary OMERO.table one row per image containing measurements results
+e.g. the bounding box of the biggest ROI.
+The table is linked to the Project. The output is also saved as a CSV file and linked to the Project.
 
 
 Create Map Annotations and Table from ROIs
