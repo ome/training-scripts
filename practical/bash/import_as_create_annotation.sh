@@ -49,7 +49,7 @@ if [ "$ATTACHMENTPATH"="/" ]; then
     deletefile=true
 fi
 
-# Log in as
+# Log in as another user
 $OMEROPATH login --sudo ${SUDOER} -u $OMEUSER -s $HOST -w $PASSWORD
 
 # Create a dataset as the specified user
