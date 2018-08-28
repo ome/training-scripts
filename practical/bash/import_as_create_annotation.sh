@@ -58,8 +58,10 @@ dataset=`$OMEROPATH obj new Dataset name='Basel-workflow'`
 result=`$OMEROPATH import -T $dataset $IMAGEPATH --output ids`
 
 # Retrieve the Image's id. It is returned as Image:123
-imageid=`cut -d':' -f2 <<< $result`
-printf 'imageid %s \n' "$id"
+imageids=`cut -d':' -f2 <<< $result`
+
+# Split the IDs separated by ,
+IFS=',' read -ra ids <<< "$imageids"
 
 # Upload a CSV
 result=`$OMEROPATH upload $ATTACHMENTPATH`
@@ -71,8 +73,11 @@ result=`$OMEROPATH obj new FileAnnotation file=OriginalFile:$originalfileid`
 fileid=`cut -d':' -f2 <<< $result`
 printf 'fileid %s \n' "$fileid"
 
-# Link the annotation to the Image
-$OMEROPATH obj new ImageAnnotationLink parent=Image:$imageid child=FileAnnotation:$fileid
+# Link the annotation to all the Images
+for id in "${ids[@]}"; do
+	printf 'imageid %s \n' "$id"
+    $OMEROPATH obj new ImageAnnotationLink parent=Image:$id child=FileAnnotation:$fileid
+done
 
 # Delete the Image and the local file if created
 if [ $deleteimage = true ]; then
