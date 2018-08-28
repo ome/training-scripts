@@ -8,7 +8,7 @@ import options followed by rendering of the imported data and metadata import.
 Import options data
 ===================
 
-For the OMERO.insight import, we use a [DICOM dataset](https://zenodo.org/record/16956#.Wt-UNtPwbdc).
+For the OMERO.insight import, we use a [Lionheart MRI DICOM dataset](https://doi.org/10.5281/zenodo.16956).
 
 For the in-place import, we use the first image from the [SVS dataset](https://downloads.openmicroscopy.org/images/SVS/).
 
