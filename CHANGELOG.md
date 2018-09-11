@@ -1,3 +1,8 @@
+0.3.1 (September 2018)
+----------------------
+
+Fix bug found during the MIAP workshop (Basel/Switzerland)
+
 0.3.0 (August 2018)
 -----------------
 
