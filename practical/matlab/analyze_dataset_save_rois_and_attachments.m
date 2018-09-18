@@ -31,13 +31,15 @@ client.enableKeepAlive(60);
 session = client.createSession(user, password);
 % Initiliaze the service used to save the Regions of Interest (ROI)
 iUpdate = session.getUpdateService();
+% Load the Dataset/Images
 dataset = getDatasets(session, datasetId, true);
 images = toMatlabList(dataset.linkedImageList);
 % Iterate through the images
 datasetName = dataset.getName().getValue();
 disp(datasetName);
-values = zeros(2, numel(images));
-for i = 1 : numel(images)
+size = numel(images);
+values = zeros(2, size);
+for i = 1 : size
     image = images(i);
     imageId = image.getId().getValue();
     % Load the channels information to determine the channel to analyze
@@ -49,7 +51,7 @@ for i = 1 : numel(images)
         channelName = channel.getLogicalChannel().getName();
         % Determine the index of the channel to analyze
         if contains(char(datasetName), char(channelName))
-            channelIndex = j;
+            channelIndex = j-1; % OMERO index starts at 0
             break
         end
     end
@@ -58,20 +60,15 @@ for i = 1 : numel(images)
     [~, threshold] = edge(plane, 'sobel');
     fudgeFactor = .5;
     BWs = edge(plane,'sobel', threshold * fudgeFactor);
-    figure, imshow(BWs), title('binary gradient mask');
     se90 = strel('line', 3, 90);
     se0 = strel('line', 3, 0);
     BWsdil = imdilate(BWs, [se90 se0]);
-    figure, imshow(BWsdil), title('dilated gradient mask');
     BWdfill = imfill(BWsdil, 'holes');
-    figure, imshow(BWdfill);
-    title('binary image with filled holes');
     BWnobord = imclearborder(BWdfill, 4);
-    figure, imshow(BWnobord), title('cleared border image');
     seD = strel('diamond',1);
     BWfinal = imerode(BWnobord,seD);
     BWfinal = imerode(BWfinal,seD);
-    figure, imshow(BWfinal), title('segmented image');
+    fig = figure; imshow(BWfinal), title('segmented image');
 
     [B,L] = bwboundaries(BWnobord, 'noholes');
     roi = omero.model.RoiI;
@@ -89,16 +86,17 @@ for i = 1 : numel(images)
     % Link the roi and the image
     roi.setImage(omero.model.ImageI(imageId, false));
     roi = iUpdate.saveAndReturnObject(roi);
+    close(fig);
 end
 
 % create a CSV
 headers = 'Dataset_name,ImageID,Area';
 tmpName = [tempname,'.csv'];
 [filepath,name,ext] = fileparts(tmpName);
-f = fullfile(filepath, 'results.csv');
+f = fullfile(filepath, 'results_matlab.csv');
 fileID = fopen(f,'w');
 fprintf(fileID,'%s\n',headers);
-for i = 1 : numel(images)
+for i = 1 : size
     row = strcat(char(datasetName), ',', num2str(values(1, i)), ',', num2str(values(2, i)));
     fprintf(fileID,'%s\n',row);
 end
@@ -108,4 +106,31 @@ fclose(fileID);
 fileAnnotation = writeFileAnnotation(session, f, 'mimetype', 'text/csv', 'namespace', 'training.demo');
 linkAnnotation(session, fileAnnotation, 'dataset', datasetId);
 
+% Create an OMERO table
+columns = javaArray('omero.grid.Column', 3);
+valuesString = javaArray('java.lang.String', 1);
+columns(1) = omero.grid.StringColumn('DatasetName', '', 64, valuesString);
+columns(2) = omero.grid.LongColumn('ImageID', '', []);
+columns(3) = omero.grid.DoubleColumn('Area', '', []);
+
+table = session.sharedResources().newTable(1, char('cell_matlab'));
+% Initialize the table
+table.initialize(columns);
+% Add one row per Image
+for i = 1 : size
+    row = javaArray('omero.grid.Column', 3);
+    valuesString = javaArray('java.lang.String', 1);
+    valuesString(1) = java.lang.String(datasetName);
+    row(1) = omero.grid.StringColumn('DatasetName', '', 64, valuesString);
+    row(2) = omero.grid.LongColumn('ImageID', '', [values(1,i)]);
+    row(3) = omero.grid.DoubleColumn('Area', '', [values(2,i)]);
+    table.addData(row);
+end
+
+file = table.getOriginalFile();
+% link the table to the dataset
+fa = omero.model.FileAnnotationI;
+fa.setFile(file);
+fa.setNs(rstring(omero.constants.namespaces.NSBULKANNOTATIONS.value));
+linkAnnotation(session, fa, 'dataset', datasetId);
 client.closeSession();
