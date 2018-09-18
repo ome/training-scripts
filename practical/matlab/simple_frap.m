@@ -18,6 +18,7 @@
 % Simple FRAP plots from Ellipses on images
 % Save the mean values as map annotation, and the plotted values
 % as an attachment on the Images.
+% The script has been tested with Matlab2017a
 
 host='outreach.openmicroscopy.org';
 % To be modified
