@@ -73,6 +73,7 @@ for i = 1 : size
 
     [B,L] = bwboundaries(BWnobord, 'noholes');
     roi = omero.model.RoiI;
+    max_area = 0;
     for k = 1 : length(B)
        boundary = B{k};
        x_coordinates = boundary(:,2);
