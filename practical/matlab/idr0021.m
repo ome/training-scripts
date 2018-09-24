@@ -91,7 +91,7 @@ for i = 1 : numel(datasets)
         end
         % Link the roi and the image
         roi.setImage(omero.model.ImageI(imageId, false));
-        %roi = iUpdate.saveAndReturnObject(roi);
+        roi = iUpdate.saveAndReturnObject(roi);
         val.add(imageId);
         val.add(max_area);
         value_images.add(val);
