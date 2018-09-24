@@ -78,7 +78,7 @@ for i = 1 : size
        boundary = B{k};
        x_coordinates = boundary(:,2);
        y_coordinates = boundary(:,1);
-       shape = createPolyline(x_coordinates, y_coordinates);
+       shape = createPolygon(x_coordinates, y_coordinates);
        roi.addShape(shape);
        area = polyarea(x_coordinates, y_coordinates);
        max_area = max(max_area, area);

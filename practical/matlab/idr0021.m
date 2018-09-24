@@ -18,7 +18,8 @@
 % Detect cells using image segmentation
 % see https://www.mathworks.com/examples/image/mw/images-ex64621327-detecting-a-cell-using-image-segmentation
 % The shapes are saved as polylines.
-% The following script has been tested with Matlab2017a
+% The script has been tested with Matlab2017a
+
 host='outreach.openmicroscopy.org';
 % To be modified
 user='USERNAME';
@@ -83,7 +84,7 @@ for i = 1 : numel(datasets)
             boundary = B{b};
             x_coordinates = boundary(:,2);
             y_coordinates = boundary(:,1);
-            shape = createPolyline(x_coordinates, y_coordinates);
+            shape = createPolygon(x_coordinates, y_coordinates);
             roi.addShape(shape);
             area = polyarea(x_coordinates, y_coordinates);
             max_area = max(max_area, area);
