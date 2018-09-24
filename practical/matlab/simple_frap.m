@@ -61,16 +61,14 @@ for i = 1 : numel(images)
             end
         end
     end
-    channel_index = 0;
-    channels(1,1) = java.lang.Integer(channel_index);
 
     % We analyse the first z and the first channel
     keys = strings(1, sizeT);
     values = strings(1, sizeT);
     means = zeros(1, sizeT);
     for t = 0:sizeT-1
-    	% OMERO index starts at 0
-        stats = service.getShapeStatsRestricted(toAnalyse, 0, t, channels);
+        % OMERO index starts at 0
+        stats = service.getShapeStatsRestricted(toAnalyse, 0, t, [0]);
         disp(stats(1,1));
         calculated = stats(1,1);
         mean = calculated.mean(1,1);
@@ -85,9 +83,8 @@ for i = 1 : numel(images)
     linkAnnotation(session, mapAnnotation, 'image', imageId);
 
     % Plot the result
-    [n,p] = size(means);
-    time = 1:n;
-    fig = plot(t,means);
+    time = 1:sizeT;
+    fig = plot(means);
     xlabel('Timepoint'), ylabel('Values');
     % Save the plot as png
     name = strcat(char(image.getName().getValue()),'_FRAP_plot.png');
@@ -99,4 +96,5 @@ for i = 1 : numel(images)
     delete(name)
     
 end
+disp("Done");
 client.closeSession();
