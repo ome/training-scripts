@@ -135,4 +135,5 @@ fa = omero.model.FileAnnotationI;
 fa.setFile(file);
 fa.setNs(rstring(omero.constants.namespaces.NSBULKANNOTATIONS.value));
 linkAnnotation(session, fa, 'dataset', datasetId);
+disp("Done");
 client.closeSession();
