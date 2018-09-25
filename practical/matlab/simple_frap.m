@@ -51,6 +51,9 @@ for i = 1 : numel(images)
     % Load the ROIs linked to the Image. Only keep the Ellipses
     roiResult = service.findByImage(imageId, []);
     rois = roiResult.rois;
+    if rois.size == 0
+        continue;
+    end
     toAnalyse = java.util.ArrayList;
     for thisROI  = 1:rois.size
         roi = rois.get(thisROI-1);
