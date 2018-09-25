@@ -17,7 +17,7 @@
 
 % Detect cells using image segmentation
 % see https://www.mathworks.com/examples/image/mw/images-ex64621327-detecting-a-cell-using-image-segmentation
-% The shapes are saved as polylines.
+% The shapes are saved as polygons.
 % The script has been tested with Matlab2017a
 
 host='outreach.openmicroscopy.org';
