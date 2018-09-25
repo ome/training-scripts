@@ -72,7 +72,6 @@ for i = 1 : numel(images)
     for t = 0:sizeT-1
         % OMERO index starts at 0
         stats = service.getShapeStatsRestricted(toAnalyse, 0, t, [0]);
-        disp(stats(1,1));
         calculated = stats(1,1);
         mean = calculated.mean(1,1);
         index = t+1;
