@@ -56,8 +56,10 @@ for i = 1 : size
             break
         end
     end
+    z = 0;
+    t = 0;
     % Load the plane, OMERO index starts at 0. sizeZ and SizeT = 1
-    plane = getPlane(session, image, 0, channelIndex, 0);
+    plane = getPlane(session, image, z, channelIndex, t);
     [~, threshold] = edge(plane, 'sobel');
     fudgeFactor = .5;
     BWs = edge(plane,'sobel', threshold * fudgeFactor);
@@ -79,6 +81,7 @@ for i = 1 : size
        x_coordinates = boundary(:,2);
        y_coordinates = boundary(:,1);
        shape = createPolygon(x_coordinates, y_coordinates);
+       setShapeCoordinates(shape, z, channelIndex, t);
        roi.addShape(shape);
        area = polyarea(x_coordinates, y_coordinates);
        max_area = max(max_area, area);
