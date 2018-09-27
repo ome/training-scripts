@@ -125,11 +125,9 @@ fileAnnotation = writeFileAnnotation(session, f, 'mimetype', 'text/csv', 'namesp
 linkAnnotation(session, fileAnnotation, 'project', projectId);
 
 % Create an OMERO table
-columns = javaArray('omero.grid.Column', 3);
-valuesString = javaArray('java.lang.String', 1);
-columns(1) = omero.grid.StringColumn('DatasetName', '', 64, valuesString);
-columns(2) = omero.grid.LongColumn('Image', '', []);
-columns(3) = omero.grid.DoubleColumn('Area', '', []);
+columns = javaArray('omero.grid.Column', 2);
+columns(1) = omero.grid.LongColumn('Image', '', []);
+columns(2) = omero.grid.DoubleColumn('Area', '', []);
 % Create a new table.
 table = session.sharedResources().newTable(1, char('cell_matlab'));
 % Initialize the table
@@ -140,12 +138,9 @@ for i = 1 : numel(datasets)
     datasetName = dataset.getName().getValue();
     for kk = 0: numel(values_images)-1
         val = values_images.get(kk);
-        row = javaArray('omero.grid.Column', 3);
-        valuesString = javaArray('java.lang.String', 1);
-        valuesString(1) = java.lang.String(datasetName);
-        row(1) = omero.grid.StringColumn('DatasetName', '', 64, valuesString);
-        row(2) = omero.grid.LongColumn('Image', '', [val.get(0)]);
-        row(3) = omero.grid.DoubleColumn('Area', '', [val.get(1)]);
+        row = javaArray('omero.grid.Column', 1);
+        row(1) = omero.grid.LongColumn('Image', '', [val.get(0)]);
+        row(2) = omero.grid.DoubleColumn('Area', '', [val.get(1)]);
         table.addData(row);
     end
 end
