@@ -112,7 +112,7 @@ for d = 1 : numel(datasets)
     values_images = values.get(d);
     dataset = datasets(d);
     datasetName = dataset.getName().getValue();
-    for kk = 0: numel(values_images)-1
+    for kk = 0: values_images.size()-1
         val = values_images.get(kk);
         row = strcat(char(datasetName), ',', num2str(val.get(0)), ',', num2str(val.get(1)));
         fprintf(fileID,'%s\n',row);
@@ -136,7 +136,7 @@ for i = 1 : numel(datasets)
     values_images = values.get(i);
     dataset = datasets(i);
     datasetName = dataset.getName().getValue();
-    for kk = 0: numel(values_images)-1
+    for kk = 0: values_images.size()-1
         val = values_images.get(kk);
         row = javaArray('omero.grid.Column', 1);
         row(1) = omero.grid.LongColumn('Image', '', [val.get(0)]);
