@@ -84,6 +84,22 @@ for i = 1 : numel(images)
     mapAnnotation = writeMapAnnotation(session, cellstr(keys), cellstr(values), 'namespace', 'demo.simple_frap_data');
     linkAnnotation(session, mapAnnotation, 'image', imageId);
 
+    % Create a CSV
+    headers = 'Image_name,ImageID,Timepoint,Mean';
+    tmpName = [tempname,'.csv'];
+    [filepath,imageName,ext] = fileparts(tmpName);
+    f = fullfile(filepath, 'results_frap.csv');
+    fileID = fopen(f,'w');
+    fprintf(fileID,'%s\n',headers);
+    for j = 1 : numel(keys)
+        row = strcat(char(imageName), ',', num2str(imageId), ',', keys(1, j), ',', values(1, i));
+        fprintf(fileID,'%s\n',row);
+    end
+    fclose(fileID);
+    % Create a file annotation
+    fileAnnotation = writeFileAnnotation(session, f, 'mimetype', 'text/csv', 'namespace', 'training.demo');
+    linkAnnotation(session, fileAnnotation, 'image', imageId);
+
     % Plot the result
     time = 1:sizeT;
     fig = plot(means);
