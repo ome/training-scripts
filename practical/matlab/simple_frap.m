@@ -92,7 +92,7 @@ for i = 1 : numel(images)
     fileID = fopen(f,'w');
     fprintf(fileID,'%s\n',headers);
     for j = 1 : numel(keys)
-        row = strcat(char(imageName), ',', num2str(imageId), ',', keys(1, j), ',', values(1, i));
+        row = strcat(char(imageName), ',', num2str(imageId), ',', keys(1, j), ',', values(1, j));
         fprintf(fileID,'%s\n',row);
     end
     fclose(fileID);
