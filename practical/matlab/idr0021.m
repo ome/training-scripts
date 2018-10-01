@@ -59,7 +59,7 @@ for i = 1 : numel(datasets)
         for j = 1 : numel(channels)
             channel = channels(j);
             channelId = channel.getId().getValue();
-            channelName = channel.getLogicalChannel().getName();
+            channelName = channel.getLogicalChannel().getName().getValue();
             % Determine the index of the channel to analyze
             if contains(char(datasetName), char(channelName))
                 channelIndex = j-1; % OMERO index starts at 0
