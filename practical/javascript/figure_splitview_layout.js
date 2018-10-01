@@ -27,8 +27,10 @@ figureModel.getSelected().forEach(p => {
         // offset to the right each time we create a new panel
         j.x = j.x + (j.width * 1.05);
         // turn all channels off except for the current index
-        j.channels.forEach((ch, i) => {
-            ch.active = i === c;
+        j.channels = j.channels.map((ch, i) => {
+            var newc = Object.assign({}, ch);
+            newc.active = i === c;
+            return newc;
         });
         // create new panel from json
         figureModel.panels.create(j);
