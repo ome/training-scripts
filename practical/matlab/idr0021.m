@@ -47,6 +47,10 @@ for i = 1 : numel(datasets)
     for k = 1 : numel(images)
         val = java.util.ArrayList;
         image = images(k);
+        imageName = image.getName().getValue();
+        if endsWith(imageName, '.tif')
+            continue
+        end
         imageId = image.getId().getValue();
         disp(imageId);
         % Load the channels information to determine the channel to analyze
