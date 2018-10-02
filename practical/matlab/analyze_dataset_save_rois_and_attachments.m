@@ -91,7 +91,9 @@ for i = 1 : size
     values(2, i) = max_area;
     % Link the roi and the image
     roi.setImage(omero.model.ImageI(imageId, false));
-    roi = iUpdate.saveAndReturnObject(roi);
+    if length(B) > 0
+        roi = iUpdate.saveAndReturnObject(roi);
+    end
     close(fig);
 end
 
