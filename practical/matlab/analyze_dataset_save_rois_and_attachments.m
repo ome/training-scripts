@@ -99,9 +99,7 @@ end
 
 % create a CSV
 headers = 'Dataset_name,ImageID,Area';
-tmpName = [tempname,'.csv'];
-[filepath,name,ext] = fileparts(tmpName);
-f = fullfile(filepath, 'results_matlab.csv');
+f = [tempname,'.csv'];
 fileID = fopen(f,'w');
 fprintf(fileID,'%s\n',headers);
 for i = 1 : size
@@ -125,7 +123,6 @@ table.initialize(columns);
 % Add one row per Image
 for i = 1 : size
     row = javaArray('omero.grid.Column', 2);
-    valuesString = javaArray('java.lang.String', 1);
     row(1) = omero.grid.LongColumn('ImageID', '', [values(1,i)]);
     row(2) = omero.grid.DoubleColumn('Area', '', [values(2,i)]);
     table.addData(row);
