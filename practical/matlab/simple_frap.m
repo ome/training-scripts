@@ -37,9 +37,6 @@ service = session.getRoiService();
 dataset = getDatasets(session, datasetId, true);
 images = toMatlabList(dataset.linkedImageList);
 
-datasetName = dataset.getName().getValue();
-disp(datasetName);
-
 % Iterate through the images
 
 for i = 1 : numel(images)
