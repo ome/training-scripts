@@ -24,7 +24,8 @@ host='outreach.openmicroscopy.org';
 % To be modified
 user='USERNAME';
 password='PASSWORD';
-projectId = 4253; 
+projectId = 4253;
+online_algo = false;
 
 
 client = loadOmero(host);
@@ -70,22 +71,31 @@ for i = 1 : numel(datasets)
         t = 0;
         % Load the plane, OMERO index starts at 0. sizeZ and SizeT = 1
         plane = getPlane(session, image, z, channelIndex, t);
-        method = 'roberts';
-        factor = 1;
-        [~, threshold] = edge(plane, method);
-        BWs = edge(plane, method, threshold*factor);
-        se90 = strel('line', 3, 90);
-        se0 = strel('line', 3, 0);
-        BWsdil = imdilate(BWs, [se90 se0]);
-        %BWdfill = imfill(BWsdil, 'holes');
-        BWnobord = imclearborder(BWsdil, 4);
-        seD = strel('diamond',1);
-        BWfinal = imerode(BWnobord,seD);
-        BWfinal = imerode(BWfinal,seD);
-        fig = figure; imshow(BWfinal), title('segmented image');
-        [B,L] = bwboundaries(BWfinal, 'noholes');
-        roi = omero.model.RoiI;
-        max_area = 0;
+        if ~online_algo
+            threshNstd = 6;
+            minPixelsPerCentriole = 20;   % minimum size of objects of interest
+            vals = reshape(plane, [numel(plane), 1]);   % reshape to 1 column
+            mean1 = mean(vals);
+            std1 = std(vals);
+            % images are mostly background, so estimate threshold using basic stats
+            thresh1 = mean1 + threshNstd * std1;
+            bwRaw = imbinarize(plane, thresh1);
+            BWfinal = bwareaopen(bwRaw, minPixelsPerCentriole);  % remove small objects
+            fig = figure; imshow(BWfinal), title('segmented image');
+        else
+            method = 'roberts';
+            factor = 1;
+            [~, threshold] = edge(plane, method);
+            BWs = edge(plane, method, threshold*factor);
+            se90 = strel('line', 3, 90);
+            se0 = strel('line', 3, 0);
+            BWsdil = imdilate(BWs, [se90 se0]);
+            BWnobord = imclearborder(BWsdil, 4);
+            seD = strel('diamond',1);
+            BWfinal = imerode(BWnobord,seD);
+            BWfinal = imerode(BWfinal,seD);
+            fig = figure; imshow(BWfinal), title('segmented image online algorithm');
+        end
         for b = 1:length(B)
             boundary = B{b};
             x_coordinates = boundary(:,2);
@@ -98,7 +108,7 @@ for i = 1 : numel(datasets)
         end
         % Link the roi and the image
         roi.setImage(omero.model.ImageI(imageId, false));
-        if length(B) > 0
+        if ~isempty(B)
             roi = iUpdate.saveAndReturnObject(roi);
             val.add(imageId);
             val.add(max_area);

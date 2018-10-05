@@ -25,6 +25,7 @@ host='outreach.openmicroscopy.org';
 user='USERNAME';
 password='PASSWORD';
 datasetId = 23953;
+online_algo = false;
 
 client = loadOmero(host);
 client.enableKeepAlive(60);
@@ -36,11 +37,8 @@ iUpdate = session.getUpdateService();
 dataset = getDatasets(session, datasetId, true);
 images = toMatlabList(dataset.linkedImageList);
 % Iterate through the images
-datasetName = dataset.getName().getValue();
-disp(datasetName);
-size = numel(images);
-values = zeros(2, size);
-for i = 1 : size
+values = zeros(numel(images), 2);
+for i = 1 : numel(images)
     image = images(i);
     imageId = image.getId().getValue();
     % Load the channels information to determine the channel to analyze
@@ -60,19 +58,31 @@ for i = 1 : size
     t = 0;
     % Load the plane, OMERO index starts at 0. sizeZ and SizeT = 1
     plane = getPlane(session, image, z, channelIndex, t);
-    method = 'roberts';
-    factor = 1;
-    [~, threshold] = edge(plane, method);
-    BWs = edge(plane, method, threshold*factor);
-    se90 = strel('line', 3, 90);
-    se0 = strel('line', 3, 0);
-    BWsdil = imdilate(BWs, [se90 se0]);
-    %BWdfill = imfill(BWsdil, 'holes');
-    BWnobord = imclearborder(BWsdil, 4);
-    seD = strel('diamond',1);
-    BWfinal = imerode(BWnobord,seD);
-    BWfinal = imerode(BWfinal,seD);
-    fig = figure; imshow(BWfinal), title('segmented image');
+    if ~online_algo
+        threshNstd = 6;
+        minPixelsPerCentriole = 20;   % minimum size of objects of interest
+        vals = reshape(plane, [numel(plane), 1]);   % reshape to 1 column
+        mean1 = mean(vals);
+        std1 = std(vals);
+        % images are mostly background, so estimate threshold using basic stats
+        thresh1 = mean1 + threshNstd * std1;
+        bwRaw = imbinarize(plane, thresh1);
+        BWfinal = bwareaopen(bwRaw, minPixelsPerCentriole);  % remove small objects
+        fig = figure; imshow(BWfinal), title('segmented image');
+    else
+        method = 'roberts';
+        factor = 1;
+        [~, threshold] = edge(plane, method);
+        BWs = edge(plane, method, threshold*factor);
+        se90 = strel('line', 3, 90);
+        se0 = strel('line', 3, 0);
+        BWsdil = imdilate(BWs, [se90 se0]);
+        BWnobord = imclearborder(BWsdil, 4);
+        seD = strel('diamond',1);
+        BWfinal = imerode(BWnobord,seD);
+        BWfinal = imerode(BWfinal,seD);
+        fig = figure; imshow(BWfinal), title('segmented image online algorithm');
+    end
 
     [B,L] = bwboundaries(BWfinal, 'noholes');
     roi = omero.model.RoiI;
@@ -87,53 +97,27 @@ for i = 1 : size
        area = polyarea(x_coordinates, y_coordinates);
        max_area = max(max_area, area);
     end
-    values(1, i) = imageId;
-    values(2, i) = max_area;
+    values(i, 1) = imageId;
+    values(i, 2) = max_area;
     % Link the roi and the image
     roi.setImage(omero.model.ImageI(imageId, false));
-    if length(B) > 0
+    if ~isempty(B)
         roi = iUpdate.saveAndReturnObject(roi);
     end
     close(fig);
 end
 
 % create a CSV
-headers = 'Dataset_name,ImageID,Area';
+headers = 'Dataset_name,ImageID,Area\n';
 f = [tempname,'.csv'];
 fileID = fopen(f,'w');
-fprintf(fileID,'%s\n',headers);
-for i = 1 : size
-    row = strcat(char(datasetName), ',', num2str(values(1, i)), ',', num2str(values(2, i)));
+fprintf(fileID, headers);
+for i = 1 : numel(images)
+    row = strcat(char(datasetName), ',', num2str(values(i, 1)), ',', num2str(values(i, 2)));
     fprintf(fileID,'%s\n',row);
 end
 fclose(fileID);
 
-% Create a file annotation
-fileAnnotation = writeFileAnnotation(session, f, 'mimetype', 'text/csv', 'namespace', 'training.demo');
-linkAnnotation(session, fileAnnotation, 'dataset', datasetId);
-
-% Create an OMERO table
-columns = javaArray('omero.grid.Column', 2);
-columns(1) = omero.grid.LongColumn('ImageID', '', []);
-columns(2) = omero.grid.DoubleColumn('Area', '', []);
-
-table = session.sharedResources().newTable(1, char('cell_matlab'));
-% Initialize the table
-table.initialize(columns);
-% Add one row per Image
-for i = 1 : size
-    row = javaArray('omero.grid.Column', 2);
-    row(1) = omero.grid.LongColumn('ImageID', '', [values(1,i)]);
-    row(2) = omero.grid.DoubleColumn('Area', '', [values(2,i)]);
-    table.addData(row);
-end
-
-file = table.getOriginalFile();
-% link the table to the dataset
-fa = omero.model.FileAnnotationI;
-fa.setFile(file);
-fa.setNs(rstring(omero.constants.namespaces.NSBULKANNOTATIONS.value));
-linkAnnotation(session, fa, 'dataset', datasetId);
 disp("Done");
 client.closeSession();
 
