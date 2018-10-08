@@ -96,6 +96,9 @@ for i = 1 : numel(datasets)
             BWfinal = imerode(BWfinal,seD);
             fig = figure; imshow(BWfinal), title('segmented image online algorithm');
         end
+        [B,L] = bwboundaries(BWfinal, 'noholes');
+        roi = omero.model.RoiI;
+        max_area = 0;
         for b = 1:length(B)
             boundary = B{b};
             x_coordinates = boundary(:,2);
