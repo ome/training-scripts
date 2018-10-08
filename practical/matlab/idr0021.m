@@ -137,6 +137,14 @@ for d = 1 : numel(datasets)
 end
 fclose(fileID);
 
+% Read the CSV and plot ImageID vs Area
+data = csvread(f, 1, 1);
+col1 = data(:, 1);
+col2 = data(:, 2);
+scatter(col1, col2)
+xlabel('ImageID')
+ylabel('Area')
+
 % Create a file annotation and link it to the Project
 fileAnnotation = writeFileAnnotation(session, f, 'mimetype', 'text/csv', 'namespace', 'training.demo');
 linkAnnotation(session, fileAnnotation, 'project', projectId);
