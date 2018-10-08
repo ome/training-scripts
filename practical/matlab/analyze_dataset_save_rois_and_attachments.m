@@ -35,6 +35,7 @@ session = client.createSession(user, password);
 iUpdate = session.getUpdateService();
 % Load the Dataset/Images
 dataset = getDatasets(session, datasetId, true);
+datasetName = dataset.getName().getValue();
 images = toMatlabList(dataset.linkedImageList);
 % Iterate through the images
 values = zeros(numel(images), 2);
@@ -117,6 +118,14 @@ for i = 1 : numel(images)
     fprintf(fileID,'%s\n',row);
 end
 fclose(fileID);
+
+% Read the CSV and plot ImageID vs Area
+data = csvread(f, 1, 1);
+col1 = data(:, 1);
+col2 = data(:, 2);
+scatter(col1, col2)
+xlabel('ImageID')
+ylabel('Area')
 
 disp("Done");
 client.closeSession();
