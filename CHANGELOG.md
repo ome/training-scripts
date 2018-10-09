@@ -1,3 +1,8 @@
+0.4.0 (October 2018)
+--------------------
+
+Add MATLAB material for the Neubias workshop (Edinburgh/U.K.)
+
 0.3.1 (September 2018)
 ----------------------
 
