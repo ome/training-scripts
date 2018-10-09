@@ -99,6 +99,7 @@ for i = 1 : numel(datasets)
         [B,L] = bwboundaries(BWfinal, 'noholes');
         roi = omero.model.RoiI;
         max_area = 0;
+        max_points = 0;
         for b = 1:length(B)
             boundary = B{b};
             x_coordinates = boundary(:,2);
@@ -108,6 +109,7 @@ for i = 1 : numel(datasets)
             roi.addShape(shape);
             area = polyarea(x_coordinates, y_coordinates);
             max_area = max(max_area, area);
+            max_points = max(max_points, numel(x_coordinates));
         end
         % Link the roi and the image
         roi.setImage(omero.model.ImageI(imageId, false));
@@ -115,6 +117,7 @@ for i = 1 : numel(datasets)
             roi = iUpdate.saveAndReturnObject(roi);
             val.add(imageId);
             val.add(max_area);
+            val.add(max_points);
             value_images.add(val);
         end
         close(fig);
@@ -134,7 +137,7 @@ for d = 1 : numel(datasets)
     datasetName = dataset.getName().getValue();
     for kk = 0: values_images.size()-1
         val = values_images.get(kk);
-        row = strcat(char(datasetName), ',', num2str(val.get(0)), ',', num2str(val.get(1)));
+        row = strcat(char(datasetName), ',', num2str(val.get(0)), ',', num2str(val.get(1)), ',', num2str(val.get(2)));
         fprintf(fileID,'%s\n',row);
     end  
 end
@@ -153,9 +156,10 @@ fileAnnotation = writeFileAnnotation(session, f, 'mimetype', 'text/csv', 'namesp
 linkAnnotation(session, fileAnnotation, 'project', projectId);
 
 % Create an OMERO table
-columns = javaArray('omero.grid.Column', 2);
+columns = javaArray('omero.grid.Column', 3);
 columns(1) = omero.grid.LongColumn('Image', '', []);
 columns(2) = omero.grid.DoubleColumn('Area', '', []);
+columns(3) = omero.grid.DoubleColumn('Points', '', []);
 % Create a new table.
 table = session.sharedResources().newTable(1, char('cell_matlab'));
 % Initialize the table
@@ -169,6 +173,7 @@ for i = 1 : numel(datasets)
         row = javaArray('omero.grid.Column', 1);
         row(1) = omero.grid.LongColumn('Image', '', [val.get(0)]);
         row(2) = omero.grid.DoubleColumn('Area', '', [val.get(1)]);
+        row(3) = omero.grid.DoubleColumn('Points', '', [val.get(2)]);
         table.addData(row);
     end
 end
