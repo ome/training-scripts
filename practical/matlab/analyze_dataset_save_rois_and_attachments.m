@@ -31,7 +31,7 @@ client = loadOmero(host);
 client.enableKeepAlive(60);
 % Create an OMERO session
 session = client.createSession(user, password);
-% Initiliaze the service used to save the Regions of Interest (ROI)
+% Initialize the service used to save the Regions of Interest (ROI)
 iUpdate = session.getUpdateService();
 % Load the Dataset/Images
 dataset = getDatasets(session, datasetId, true);
