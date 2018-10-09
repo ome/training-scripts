@@ -127,7 +127,7 @@ scatter(col1, col2)
 xlabel('ImageID')
 ylabel('Area')
 
-% Create a file annotation and link it to the Project
+% Create a file annotation and link it to the Dataset
 fileAnnotation = writeFileAnnotation(session, f, 'mimetype', 'text/csv', 'namespace', 'training.demo');
 linkAnnotation(session, fileAnnotation, 'dataset', datasetId);
 
