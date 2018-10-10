@@ -1,3 +1,8 @@
+0.4.1 (October 2018)
+--------------------
+
+Improve MATLAB scripts for the Neubias workshop (Edinburgh/U.K.)
+
 0.4.0 (October 2018)
 --------------------
 
