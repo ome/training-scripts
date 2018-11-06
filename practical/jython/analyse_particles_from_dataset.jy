@@ -178,19 +178,17 @@ ids = filter_images_by_tag(ctx, images, tag_text)
 
 print "tagged_image_ids", ids
 
-# Input ids in a comma seperated fashion
-IJ.run("Set Measurements...", "area mean standard modal min centroid center \
-        perimeter bounding fit shape feret's integrated median skewness \
-        kurtosis area_fraction stack display redirect=None decimal=3")
-
 for id1 in ids:
     # if target_user ~= None:
     # Switch context to target user and open omeroImage as ImagePlus object
     imp = open_omero_image(ctx, id1)
     # Some analysis which creates ROI's and Results Table
-    IJ.setAutoThreshold(imp, "Default dark")
-    IJ.run(imp, "Analyze Particles...",
-           "size=50-Infinity display clear add stack")
+    IJ.run("8-bit");
+    IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
+    IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack");
+    IJ.run("Set Measurements...", "area mean standard modal min centroid center \
+            perimeter bounding fit shape feret's integrated median skewness \
+            kurtosis area_fraction stack display redirect=None decimal=3")
     rm = RoiManager.getInstance()
     rm.runCommand(imp, "Measure")
     save_rois_to_omero(ctx, id1, imp)

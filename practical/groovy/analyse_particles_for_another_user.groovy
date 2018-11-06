@@ -196,7 +196,7 @@ ids.each() { id1 ->
     imp = IJ.getImage()
     // Some analysis which creates ROI's and Results Table
     IJ.run("8-bit");
-    IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
+    IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
     IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack");
     IJ.run("Set Measurements...", "area mean standard modal min centroid center \
             perimeter bounding fit shape feret's integrated median skewness \
