@@ -170,7 +170,7 @@ ids.each() { id ->
     imp = IJ.getImage()
     // Analyse the images. This section could be replaced by any other macro
     IJ.run("8-bit");
-    IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
+    IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
     IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack");
     IJ.run("Set Measurements...", "area mean standard modal min centroid center \
             perimeter bounding summarize feret's median\
