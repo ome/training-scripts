@@ -356,7 +356,8 @@ def save_summary_as_omero_table(ctx, rows, columns, project_id) {
     data = new Object[columns.length][rows.size()]
     for (r = 0; r < rows.size(); r++) {
         row = rows.get(r)
-        for (i = 0; i < row.size(); i++) {
+        //row.size() should equal columns.length
+        for (i = 0; i < columns.length; i++) {
             //Due to a limitation of OMERO.parade multiply value by 100
             v = row.get(i)
             if (v instanceof Double) {
