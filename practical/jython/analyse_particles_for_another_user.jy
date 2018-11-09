@@ -199,9 +199,11 @@ def save_rois_to_omero(ctx, image_id, imp):
 
 # Prototype analysis example
 gateway = connect_to_omero()
-ctx = SecurityContext(group_id)
+
 exp = gateway.getLoggedInUser()
 exp_id = exp.getId()
+group_id = exp.getGroupId()
+ctx = SecurityContext(group_id)
 
 # get all images_ids in an omero dataset
 ids = get_image_ids(gateway, ctx, dataset_id)
