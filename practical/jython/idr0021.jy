@@ -213,7 +213,7 @@ def save_row(rt, table_rows, channel_index, dataset_name, image):
     for j in range(0, rt.size()):
         for i in range(0, len(headings)):
             heading = rt.getColumnHeading(i)
-            if heading == "Slice" or heading == "Dataset":
+            if heading == "Slice" or heading == "Dataset" or heading == "Label":
                 row.append(rt.getStringValue(i, j))
             else:
                 row.append(Double(rt.getValue(i, j)))
@@ -332,7 +332,7 @@ def create_table_columns(headings):
     # populate the headings
     for h in range(0, size):
         heading = headings[h]
-        if heading == "Slice" or heading == "Dataset":
+        if heading == "Slice" or heading == "Dataset" or heading == "Label":
             table_columns[h] = TableDataColumn(heading, h, String)
         else:
             table_columns[h] = TableDataColumn(heading, h, Double)
