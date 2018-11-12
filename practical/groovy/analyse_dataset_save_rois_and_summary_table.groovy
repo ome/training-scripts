@@ -366,7 +366,8 @@ images.each() { image ->
     imp = IJ.getImage()
     // Analyse the images. This section could be replaced by any other macro
     IJ.run("8-bit")
-    IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
+    //white might be required depending on the version of Fiji
+    IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
     IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack summarize")
     IJ.run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding feret's summarize stack display redirect=None decimal=3")
 
