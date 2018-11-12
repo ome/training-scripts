@@ -468,6 +468,7 @@ datasets.each() { d ->
         imp = IJ.getImage()
         // Some analysis which creates ROI's and Results Table
         IJ.run("8-bit")
+        // white might be required depending on the version of Fiji
         IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
         IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack summarize")
         IJ.run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding feret's summarize stack display redirect=None decimal=3")
