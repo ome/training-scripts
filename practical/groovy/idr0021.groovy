@@ -472,8 +472,6 @@ datasets.each() { d ->
         IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack summarize")
         IJ.run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding feret's summarize stack display redirect=None decimal=3")
 
-        rm = RoiManager.getInstance()
-        rm.runCommand(imp, "Measure")
         rt = ResultsTable.getResultsTable()
         // Save the ROIs
         if (save_data) {
