@@ -209,16 +209,17 @@ def save_row(rt, table_rows, channel_index, dataset_name, image):
         rt.setValue("Channel Index", i, channel_index)
     # Create a tmp file and save the result
     headings = rt.getHeadings()
-    row = []
     for j in range(0, rt.size()):
+        row = []
         for i in range(0, len(headings)):
             heading = rt.getColumnHeading(i)
             if heading == "Slice" or heading == "Dataset" or heading == "Label":
                 row.append(rt.getStringValue(i, j))
             else:
                 row.append(Double(rt.getValue(i, j)))
-    row.append(image)
-    table_rows.append(row)
+        row.append(image)
+        table_rows.append(row)
+
     return headings
 
 

@@ -240,8 +240,9 @@ def save_row(rt, table_rows, channel_index, dataset_name, image) {
         rt.setValue("Channel Index", i, channel_index)
     }
     headings = rt.getHeadings()
-    row = new ArrayList()
+    
     for (j = 0; j < rt.size(); j++) {
+        row = new ArrayList()
         for (i = 0; i < headings.length; i++) {
             heading = rt.getColumnHeading(i)
             if (heading.equals("Slice") || heading.equals("Dataset") || heading.equals("Label")) {
@@ -250,9 +251,10 @@ def save_row(rt, table_rows, channel_index, dataset_name, image) {
                 row.add(new Double(rt.getValue(i, j)))
             }
         }
+        row.add(image)
+        table_rows.add(row)
     }
-    row.add(image)
-    table_rows.add(row)
+    
     return headings
 }
 
@@ -356,8 +358,7 @@ def save_summary_as_omero_table(ctx, rows, columns, project_id) {
     data = new Object[columns.length][rows.size()]
     for (r = 0; r < rows.size(); r++) {
         row = rows.get(r)
-        //row.size() should equal columns.length
-        for (i = 0; i < columns.length; i++) {
+        for (i = 0; i < row.size(); i++) {
             //Due to a limitation of OMERO.parade multiply value by 100
             v = row.get(i)
             if (v instanceof Double) {
