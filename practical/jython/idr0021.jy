@@ -387,6 +387,7 @@ while j.hasNext():
     # get all images_ids in the dataset
     images = get_images(gateway, ctx, d.getId())
     for image in images:
+        IJ.run("Close All")
         id = image.getId()
         if image.getName().endswith(".tif"):
             continue

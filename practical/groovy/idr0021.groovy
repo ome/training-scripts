@@ -447,6 +447,7 @@ datasets.each() { d ->
         if (image.getName().endsWith(".tif")) {
             return
         }
+        IJ.run("Close All")
         id = image.getId()
         channel_index = 1
         // Find the index of the channel matching the dataset name as a string
