@@ -240,19 +240,21 @@ def save_row(rt, table_rows, channel_index, dataset_name, image) {
         rt.setValue("Channel Index", i, channel_index)
     }
     headings = rt.getHeadings()
-    row = new ArrayList()
+    
     for (j = 0; j < rt.size(); j++) {
+        row = new ArrayList()
         for (i = 0; i < headings.length; i++) {
             heading = rt.getColumnHeading(i)
-            if (heading.equals("Slice") || heading.equals("Dataset")) {
+            if (heading.equals("Slice") || heading.equals("Dataset") || heading.equals("Label")) {
                 row.add(rt.getStringValue(i, j))
             } else {
                 row.add(new Double(rt.getValue(i, j)))
             }
         }
+        row.add(image)
+        table_rows.add(row)
     }
-    row.add(image)
-    table_rows.add(row)
+    
     return headings
 }
 
@@ -264,7 +266,7 @@ def create_table_columns(headings) {
     //populate the headings
     for (h = 0; h < size; h++) {
         heading = headings[h]
-        if (heading.equals("Slice") || heading.equals("Dataset")) {
+        if (heading.equals("Slice") || heading.equals("Dataset") || heading.equals("Label")) {
             table_columns[h] = new TableDataColumn(heading, h, String)
         } else {
             table_columns[h] = new TableDataColumn(heading, h, Double)
@@ -446,6 +448,7 @@ datasets.each() { d ->
         if (image.getName().endsWith(".tif")) {
             return
         }
+        IJ.run("Close All")
         id = image.getId()
         channel_index = 1
         // Find the index of the channel matching the dataset name as a string
@@ -467,12 +470,11 @@ datasets.each() { d ->
         imp = IJ.getImage()
         // Some analysis which creates ROI's and Results Table
         IJ.run("8-bit")
-        IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
+        // white might be required depending on the version of Fiji
+        IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
         IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack summarize")
         IJ.run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding feret's summarize stack display redirect=None decimal=3")
 
-        rm = RoiManager.getInstance()
-        rm.runCommand(imp, "Measure")
         rt = ResultsTable.getResultsTable()
         // Save the ROIs
         if (save_data) {

@@ -209,16 +209,17 @@ def save_row(rt, table_rows, channel_index, dataset_name, image):
         rt.setValue("Channel Index", i, channel_index)
     # Create a tmp file and save the result
     headings = rt.getHeadings()
-    row = []
     for j in range(0, rt.size()):
+        row = []
         for i in range(0, len(headings)):
             heading = rt.getColumnHeading(i)
-            if heading == "Slice" or heading == "Dataset":
+            if heading == "Slice" or heading == "Dataset" or heading == "Label":
                 row.append(rt.getStringValue(i, j))
             else:
                 row.append(Double(rt.getValue(i, j)))
-    row.append(image)
-    table_rows.append(row)
+        row.append(image)
+        table_rows.append(row)
+
     return headings
 
 
@@ -301,7 +302,7 @@ def save_summary_as_omero_table(ctx, rows, columns, project_id):
     data = [[Object() for x in range(len(rows))] for y in range(len(columns))]
     for r in range(0, len(rows)):
         row = rows[r]
-        for i in range(0, len(row)):
+        for i in range(0, len(columns)):
             # Due to a limitation of OMERO.parade multiply value by 100
             v = row[i]
             if isinstance(v, Double):
@@ -332,7 +333,7 @@ def create_table_columns(headings):
     # populate the headings
     for h in range(0, size):
         heading = headings[h]
-        if heading == "Slice" or heading == "Dataset":
+        if heading == "Slice" or heading == "Dataset" or heading == "Label":
             table_columns[h] = TableDataColumn(heading, h, String)
         else:
             table_columns[h] = TableDataColumn(heading, h, Double)
@@ -387,6 +388,7 @@ while j.hasNext():
     # get all images_ids in the dataset
     images = get_images(gateway, ctx, d.getId())
     for image in images:
+        IJ.run("Close All")
         id = image.getId()
         if image.getName().endswith(".tif"):
             continue
@@ -409,12 +411,11 @@ while j.hasNext():
         imp = IJ.getImage()
         # Some analysis which creates ROI's and Results Table
         IJ.run("8-bit")
-        IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
+        # white might be required depending on the version of Fiji
+        IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
         IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack summarize")
         IJ.run("Set Measurements...", "area mean standard modal min centroid center perimeter bounding feret's summarize stack display redirect=None decimal=3")
 
-        rm = RoiManager.getInstance()
-        rm.runCommand(imp, "Measure")
         rt = ResultsTable.getResultsTable()
         # Save the ROIs
         if save_data:
