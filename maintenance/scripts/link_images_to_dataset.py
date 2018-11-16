@@ -22,7 +22,7 @@
 
 """
 This script creates a new dataset and links all images with a given name
-to it for users user-1 through user-40.
+to it for users user-1 through user-50.
 """
 
 import argparse
@@ -76,7 +76,11 @@ def run(password, dataset_name, target, host, port):
             link = omero.model.DatasetImageLinkI()
             link.setParent(dataset)
             link.setChild(omero.model.ImageI(image_id, False))
-            conn.getUpdateService().saveObject(link)
+            try:
+              conn.getUpdateService().saveObject(link)
+            except Exception as ex:
+              print "Error while linking image - link probably already \
+                    exists: %s" % str(ex)
         except Exception as exc:
             print "Error while linking images: %s" % str(exc)
         finally:
