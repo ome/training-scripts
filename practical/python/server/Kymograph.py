@@ -42,7 +42,7 @@ import omero.scripts as scripts
 from numpy import zeros, hstack, vstack, asarray, math
 import logging
 from PIL import Image
-from cStringIO import StringIO
+from io import StringIO
 
 logger = logging.getLogger('kymograph')
 

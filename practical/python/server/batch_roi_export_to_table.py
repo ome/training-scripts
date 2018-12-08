@@ -38,7 +38,7 @@ BATCH_ROI_EXPORT_NS = "omero.batch_roi_export.map_ann"
 
 def log(data):
     """Handle logging or printing in one place."""
-    print data
+    print(data)
 
 
 def get_export_data(conn, script_params, image):
@@ -88,12 +88,12 @@ def get_export_data(conn, script_params, image):
             the_z = unwrap(shape.theZ)
             z_indexes = [the_z]
             if the_z is None and all_planes:
-                z_indexes = range(image.getSizeZ())
+                z_indexes = list(range(image.getSizeZ()))
             # Same for T...
             the_t = unwrap(shape.theT)
             t_indexes = [the_t]
             if the_t is None and all_planes:
-                t_indexes = range(image.getSizeT())
+                t_indexes = list(range(image.getSizeT()))
             # Get the C shape is on.
             # This is independent of ch_indexes we're getting intensities for
             the_c = unwrap(shape.theC)
@@ -370,7 +370,7 @@ def run_script():
             description="List of Dataset IDs or Image IDs.").ofType(rlong(0)),
 
         scripts.List(
-            "Intensity_For_Channels", grouping="4", default=[1L, 2L, 3L, 4L],
+            "Intensity_For_Channels", grouping="4", default=[1, 2, 3, 4],
             description="Indices of Channels to measure intensity."
             ).ofType(rlong(0)),
 
