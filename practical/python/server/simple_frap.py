@@ -72,7 +72,7 @@ def run(conn, params):
         # Simply use any Ellipse we find...
         shape_id = None
         for roi in result.rois:
-            print("ROI:  ID:", roi.getId().getValue())
+            print(("ROI:  ID:", roi.getId().getValue()))
             for s in roi.copyShapes():
                 if type(s) == omero.model.EllipseI:
                     shape_id = s.id.val

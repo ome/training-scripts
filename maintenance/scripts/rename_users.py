@@ -78,7 +78,7 @@ def run(username, password, host, port):
         admin_service = conn.getAdminService()
         for i, full_name in enumerate(full_names):
             username = 'user-%s' % (i + 1)
-            print username, full_name
+            print(username, full_name)
             exp = admin_service.lookupExperimenter(username)
             names = full_name.split(" ")
             exp.firstName = rstring(names[0])
@@ -86,7 +86,7 @@ def run(username, password, host, port):
             admin_service.updateExperimenter(exp)
 
     except Exception as exc:
-            print "Error while renaming users: %s" % str(exc)
+            print("Error while renaming users: %s" % str(exc))
     finally:
         conn.close()
 

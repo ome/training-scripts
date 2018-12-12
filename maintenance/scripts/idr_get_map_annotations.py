@@ -65,26 +65,26 @@ def run(username, password, idr_id, local_id, host, port):
         idr_datasets = get_idr_datasets_as_dict(session, idr_id)
         for dataset in project.listChildren():
 
-            print "\n\nDataset", dataset.id, dataset.name
+            print("\n\nDataset", dataset.id, dataset.name)
             # Get IDR Dataset with same name:
             idr_dataset = idr_datasets.get(dataset.name)
             if idr_dataset is None:
-                print "    NO IDR Dataset found!"
+                print("    NO IDR Dataset found!")
                 continue
 
             idr_images = get_idr_images_as_dict(session, idr_dataset['id'])
             for image in dataset.listChildren():
 
-                print "Image", image.id, image.name
+                print("Image", image.id, image.name)
                 idr_image = idr_images[image.name]
                 if idr_image is None:
-                    print "    NO IDR Image found!"
+                    print("    NO IDR Image found!")
                     continue
 
                 # Get map annotations for image...
                 url = map_ann_url + "&image=%s" % idr_image['id']
                 map_anns = session.get(url).json()['annotations']
-                print "  adding ", len(map_anns), " map anns..."
+                print("  adding ", len(map_anns), " map anns...")
                 for ann in map_anns:
                     key_value_data = ann['values']
                     map_ann = omero.gateway.MapAnnotationWrapper(conn)
@@ -93,7 +93,7 @@ def run(username, password, idr_id, local_id, host, port):
                     map_ann.save()
                     image.linkAnnotation(map_ann)
     except Exception as exc:
-            print "Error while deleting annotations: %s" % str(exc)
+            print("Error while deleting annotations: %s" % str(exc))
     finally:
         conn.close()
 

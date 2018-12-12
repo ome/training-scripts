@@ -43,7 +43,7 @@ def link_tags(conn, datasetname, image_tag_links, image_ratings):
 
     for i in range(1, 41):
         username = "user-%s" % i
-        print username
+        print(username)
         exp = conn.getAdminService().lookupExperimenter(username)
         exp_id = exp.id.val
         
@@ -51,7 +51,7 @@ def link_tags(conn, datasetname, image_tag_links, image_ratings):
                 attributes={'name': datasetname},
                 opts={'owner': exp_id})
         if dataset is None:
-            print "Dataset not found"
+            print("Dataset not found")
             continue
         links = []
         for image in dataset.listChildren():
@@ -73,13 +73,13 @@ def link_tags(conn, datasetname, image_tag_links, image_ratings):
                 link.details.owner = ExperimenterI(exp_id, False)
                 links.append(link)
 
-        print 'links', len(links)
+        print('links', len(links))
         group_id = dataset.getDetails().getGroup().id
         conn.SERVICE_OPTS.setOmeroGroup(group_id)
         try:
             conn.getUpdateService().saveArray(links, conn.SERVICE_OPTS)
         except ValidationException:
-            print "Failed to link for %s" % username
+            print("Failed to link for %s" % username)
 
 
 def run(datasetname, password, host, port):
@@ -106,7 +106,7 @@ def run(datasetname, password, host, port):
                 image_tag_links[image.getName()] = tag_ids
 
         # print image_tag_links
-        print 'image_ratings', image_ratings
+        print('image_ratings', image_ratings)
         link_tags(conn, datasetname, image_tag_links, image_ratings)
     
     finally:

@@ -46,7 +46,7 @@ def copy_image(conn, idr_image):
             yield p
     img = conn.createImageFromNumpySeq(planeGen(), image_name, sizeZ=1,
                                        sizeC=size_C, sizeT=1, channelList=clist)
-    print "New image", img.id, img.name
+    print("New image", img.id, img.name)
     return img
 
 
@@ -88,13 +88,13 @@ def run(username, password, plate_id, host, port):
     plate = update_service.saveAndReturnObject(plate)
 
     for idr_well in idr_plate.listChildren():
-        print "Well", idr_well.id, 'row', idr_well.row, 'col', idr_well.column
+        print("Well", idr_well.id, 'row', idr_well.row, 'col', idr_well.column)
         # For each Well, get image and clone locally...
         new_imgs = []
         for idr_wellsample in idr_well.listChildren():
             idr_image = idr_wellsample.getImage()
 
-            print "Image", idr_image.id
+            print("Image", idr_image.id)
             image = copy_image(conn, idr_image)
             new_imgs.append(image)
         # link to Plate...
