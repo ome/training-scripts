@@ -18,16 +18,9 @@ OMEUSER=${OMEUSER:-trainer-1}
 $OMEROPATH login -u $OMEUSER -s $HOST -w $PASSWORD
 if [ "$DATASETIDS" = "none" ]
 then
-    result=`$OMEROPATH hql --ids-only --limit 1000 --style plain -q --all "SELECT id from Dataset WHERE name = '$DATASETNAME'"`
-    for i in $result
-    do
-        #remove the ordinal numbers
-        datasetids_raw+=${i#*,}
-        datasetids_raw+=","
-    done
-    dataset_number=${i%,*}
-    #remove the trailing comma
-    datasetids=${datasetids_raw%?}
+    result=`$OMEROPATH hql --ids-only --limit 1000 --style plain -q --all "SELECT id from Dataset WHERE name = '$DATASETNAME'" | cut -f 2 -d , | tr '\n' ,`
+    dataset_number=`echo $result | tr -cd , | wc -c | sed -e 's/[[:space:]]*//'`
+    datasetids=`echo $result | sed -e 's/,$//'`
 else
     datasetids=$DATASETIDS
     dataset_number="specified datasets"
