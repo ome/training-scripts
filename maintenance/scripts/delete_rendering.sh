@@ -16,10 +16,9 @@ NUMBER=${NUMBER:-50}
 OMEUSER=${OMEUSER:-trainer-1}
 
 $OMEROPATH login -u $OMEUSER -s $HOST -w $PASSWORD
-result=`$OMEROPATH hql --ids-only --limit 1000 --style plain -q --all "SELECT id from Dataset WHERE name = '$DATASETNAME'"`
 if [ "$DATASETIDS" = "none" ]
 then
-    echo "none ID"
+    result=`$OMEROPATH hql --ids-only --limit 1000 --style plain -q --all "SELECT id from Dataset WHERE name = '$DATASETNAME'"`
     for i in $result
     do
         #remove the ordinal numbers
