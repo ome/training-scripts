@@ -63,7 +63,7 @@ HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 group_id = "-1"
 // parameters to edit
-image_id = "1001"
+image_id = 1001
 USERNAME = "username"
 PASSWORD = "password"
 
@@ -146,7 +146,7 @@ gateway = connect_to_omero()
 
 println "opening Image..."
 // Open the Image using Bio-Formats
-open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id)
+open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, String.valueOf(image_id))
 
 // Crop the image
 println "cropping..."
