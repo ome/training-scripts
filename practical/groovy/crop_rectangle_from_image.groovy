@@ -155,7 +155,7 @@ IJ.run("Crop")
 
 // Save modified image as OME-TIFF using Bio-Formats Exporter
 imp = IJ.getImage()
-path_to_file = imp.getTitle() + ".ome.tiff"
+path_to_file = imp.getTitle().replaceAll("\\s","") + ".ome.tiff"
 println  path_to_file
 options = "save=" + path_to_file + " export compression=Uncompressed"
 IJ.run(imp, "Bio-Formats Exporter", options)
