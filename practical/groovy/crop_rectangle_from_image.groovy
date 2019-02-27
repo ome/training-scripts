@@ -22,7 +22,7 @@
 /*
  * This Groovy script uses ImageJ to crop an image.
  * The cropped image is saved locally as OME-TIFF using Bio-Formats Exporter.
- * Upload the OME-TIFF to OMERO.
+ * The OME-TIFF is then imported to OMERO.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
  * Select Groovy as language in the Scripting Dialog.
  * Error handling is omitted to ease the reading of the script but this
@@ -150,7 +150,7 @@ open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id)
 
 // Crop the image
 println "cropping..."
-IJ.makeRectangle(0, 0, 50, 50)
+IJ.makeRectangle(0, 0, 200, 200)
 IJ.run("Crop")
 
 // Save modified image as OME-TIFF using Bio-Formats Exporter
