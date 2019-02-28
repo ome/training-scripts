@@ -183,3 +183,4 @@ println "imported"
 
 // Close the connection
 gateway.disconnect()
+println "Done"

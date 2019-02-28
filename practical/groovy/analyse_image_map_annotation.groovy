@@ -156,3 +156,4 @@ fac.attachAnnotation(ctx, data, new ImageData(new ImageI(image_id, false)))
 
 // Close the connection
 gateway.disconnect()
+println "Done"
