@@ -21,7 +21,7 @@
 
 /*
  * This Groovy script uses ImageJ to analyse an Image.
- * The number of generated ROIs is then adding alongside other information
+ * The number of generated ROIs is then added
  * to a MapAnnotation (Key/Value pairs). The MapAnnotation is then attached
  * to the Image.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
