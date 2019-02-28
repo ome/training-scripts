@@ -20,9 +20,10 @@
  */
 
 /*
- * This Groovy script uses ImageJ to crop an image.
- * The cropped image is saved locally as OME-TIFF using Bio-Formats Exporter.
- * Upload the OME-TIFF to OMERO.
+ * This Groovy script uses ImageJ to analyse an Image.
+ * The number of generated ROIs is then adding alongside other information
+ * to a MapAnnotation (Key/Value pairs). The MapAnnotation is then attached
+ * to the Image.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
  * Select Groovy as language in the Scripting Dialog.
  * Error handling is omitted to ease the reading of the script but this
