@@ -85,7 +85,7 @@ def connect_to_omero() {
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     "Open the image using the Bio-Formats Importer"
 
-    StringBuffer options = new StringBuffer()
+    StringBuilder options = new StringBuilder()
     options.append("location=[OMERO] open=[omero:server=")
     options.append(HOST)
     options.append("\nuser=")
@@ -156,7 +156,7 @@ IJ.run("Crop")
 // Save modified image as OME-TIFF using Bio-Formats Exporter
 imp = IJ.getImage()
 name = imp.getTitle().replaceAll("\\s","")
-file = File.createTempFile("name", ".ome.tiff")
+file = File.createTempFile(name, ".ome.tiff")
 path_to_file = file.getAbsolutePath()
 println  path_to_file
 options = "save=" + path_to_file + " export compression=Uncompressed"
