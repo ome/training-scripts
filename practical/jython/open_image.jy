@@ -1,3 +1,9 @@
+#@ String(label="Username") USERNAME
+#@ String(label="Password", style='password') PASSWORD
+#@ String(label="Host",value='outreach.openmicroscopy.org') HOST
+#@ Integer(label="Port",value=4064) PORT
+#@ Integer(label="ImageId" ) image_id
+
 # -----------------------------------------------------------------------------
 #  Copyright (C) 2017 University of Dundee. All rights reserved.
 #
@@ -41,17 +47,6 @@ from omero.log import SimpleLogger
 
 from ij import IJ
 
-
-# Setup
-# =====
-
-# OMERO Server details
-HOST = "outreach.openmicroscopy.org"
-PORT = 4064
-#  parameters to edit
-image_id = "1001"
-USERNAME = "username"
-PASSWORD = "password"
 
 
 def connect_to_omero():
