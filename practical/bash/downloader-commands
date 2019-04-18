@@ -7,5 +7,5 @@ download.bat -b <path-to-target-dir> -s outreach.openmicroscopy.org -u <user nam
 # To download metadata of images in two datasets with ID1 and ID2
 ./download.sh -b <path-to-target-dir> -s outreach.openmicroscopy.org -u <user name> -w <password> -f ome-xml Dataset:$ID2,$ID1
 
-# To find IDs images tagged with a particular tag in the target directory
-grep   '^<Tag.*Marvin' <path-to-target-dir>/Image/*/Annotation/*/Metadata/*xml
+# To find IDs images tagged with a tag named "your-tag" in the target directory
+grep   '^<Tag.*your-tag' <path-to-target-dir>/Image/*/Annotation/*/Metadata/*xml
