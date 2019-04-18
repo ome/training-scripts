@@ -12,7 +12,7 @@ disp(groupId)
 % Exercise 2
 % List the images of a particular dataset.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-datasetId = 2608;
+datasetId = REPLACE_WITH_DATASET_ID;
 loadedDatasets = getDatasets(session, datasetId, true);
 dataset = loadedDatasets(1);
 datasetName = dataset.getName().getValue();
