@@ -7,7 +7,7 @@ session = client.createSession('USER', 'PASSWORD');
 client.enableKeepAlive(60);
 eventContext = session.getAdminService().getEventContext();
 groupId = eventContext.groupId;
-disp(groupId)
+disp(groupId);
 
 % Exercise 2
 % List the images of a particular dataset.
