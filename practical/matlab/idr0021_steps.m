@@ -1,9 +1,10 @@
-% Note: Do not run the whole script. Select the code block
-% of each exercise, right-click and "Evaluate Selection". 
-% Then proceed to the next exercise.
-% The exercises build on top of each other (later exercises
-% cannot be run unless the previous exercises have been 
-% executed successfully). If you get stuck, clear the workspace
+% Note: In Matlab create a New -> Script. Copy and paste
+% everything into the new file. But do not run the whole script! 
+% Select the code block of each exercise, right-click and 
+% "Evaluate Selection". Then proceed to the next exercise. 
+% Later exercises cannot be run unless the previous exercises
+% have been executed successfully.
+% If you get stuck, right-click on "Workspace", "Clear Workspace" 
 % and try again from the beginning.
 
 % Exercise 1
@@ -20,9 +21,10 @@ disp(groupId);
 
 % Exercise 2
 % List the images of a particular dataset.
+% Use the Id of the 'matlab-dataset' here.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-datasetId = MATLAB_DATASET_ID;
+datasetId = DATASET_ID;
 loadedDatasets = getDatasets(session, datasetId, true);
 dataset = loadedDatasets(1);
 datasetName = dataset.getName().getValue();
@@ -35,12 +37,14 @@ end
 
 
 % Exercise 3
-% Get the target protein name (== name of the relevant channel).
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Get the name of the target protein from the
+% map annotations (key-value pairs).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-image = datasetImages(1); % Pick one image from the dataset (they all have the same target protein)
+ % Pick one image from the dataset (they all have the same target protein):
+image = datasetImages(1);
 annotations = getObjectAnnotations(session, 'map', 'image', image.getId().getValue());
-% Iterate through all map annotations ('key-value pairs')
+% Iterate through all map annotations ('key-value pairs'):
 for j = 1 : length(annotations)
     rows = annotations(j).getMapValue();
     for k = 0 : rows.size() - 1
@@ -54,7 +58,8 @@ fprintf('Target protein: %s\n', target);
 
 
 % Exercise 4
-% Determine the channel indices of the relevant channel.
+% Determine the channel indices of the relevant channel
+% (the channel in which the target protein is stained).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 1 : length(datasetImages)
@@ -77,20 +82,24 @@ end
 % Perform image segmentation on one image.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-fprintf('Using image: %s, channel: %s (index: %i)\n', image.getName().getValue(), target, channelIndex)
+fprintf('Using image: %s, channel: %s (index: %i)\n', ...
+    image.getName().getValue(), target, channelIndex)
+% Get the pixel values of the relevant plane
+% (Note: channel index in OMERO starts with 0)
 z = 0;
 t = 0;
-plane = getPlane(session, image, z, channelIndex - 1, t);
-threshNstd = 6;
+ch = channelIndex - 1
+plane = getPlane(session, image, z, ch, t);
+
 minPixelsPerCentriole = 20;   % minimum size of objects of interest
-vals = reshape(plane, [numel(plane), 1]);   % reshape to 1 column
-mean1 = mean(vals);
-std1 = std(vals);
-% images are mostly background, so estimate threshold using basic stats
-thresh1 = mean1 + threshNstd * std1;
-bwRaw = imbinarize(plane, thresh1);
-BWfinal = bwareaopen(bwRaw, minPixelsPerCentriole);  % remove small objects
-imshow(BWfinal);
+multiplier = 6; % x times standard dev used as threshold
+pix_values = reshape(plane, [numel(plane), 1]);   % reshape to 1 column
+pix_mean = mean(pix_values);
+pix_std = std(pix_values);
+threshold = pix_mean + multiplier * pix_std;
+bwRaw = imbinarize(plane, threshold);
+bwFinal = bwareaopen(bwRaw, minPixelsPerCentriole);  % remove small objects
+imshow(bwFinal);
 title(strcat(string(image.getName().getValue()), ' (segmented)'));
 
 
@@ -116,20 +125,21 @@ for i = 1 : length(datasetImages)
     end
     
     fprintf('Analyse Image: %s, Channel: %i\n', image.getName().getValue(), channelIndex);
-    plane = getPlane(session, image, z, channelIndex - 1, t); % channel index in OMERO starts with 0
-    threshNstd = 6;
-    minPixelsPerCentriole = 20;   % minimum size of objects of interest
-    vals = reshape(plane, [numel(plane), 1]);   % reshape to 1 column
-    mean1 = mean(vals);
-    std1 = std(vals);
-    % images are mostly background, so estimate threshold using basic stats
-    thresh1 = mean1 + threshNstd * std1;
-    bwRaw = imbinarize(plane, thresh1);
-    BWfinal = bwareaopen(bwRaw, minPixelsPerCentriole);
-    
-    [B,L] = bwboundaries(BWfinal, 'noholes');
+    plane = getPlane(session, image, z, channelIndex - 1, t); 
+    pix_values = reshape(plane, [numel(plane), 1]);
+    pix_mean = mean(pix_values);
+    pix_std = std(pix_values);
+    threshold = pix_mean + multiplier * pix_std;
+    bwRaw = imbinarize(plane, threshold);
+    % separate the objects:
+    bwFinal = bwareaopen(bwRaw, minPixelsPerCentriole);
+    [B,L] = bwboundaries(bwFinal, 'noholes');
+    % calculate some properties:
+    props = regionprops(bwFinal, plane, {'Perimeter', 'MaxIntensity'});
     roi = omero.model.RoiI;
     max_area = 0;
+    max_per = 0;
+    max_in = 0;
     csv_row = java.util.ArrayList;
     for b = 1:length(B)
         boundary = B{b};
@@ -140,6 +150,8 @@ for i = 1 : length(datasetImages)
         roi.addShape(shape);
         area = polyarea(x_coordinates, y_coordinates);
         max_area = max(max_area, area);
+        max_per = max(max_per, props(b).Perimeter(1));
+        max_in = max(max_in, props(b).MaxIntensity(1));
     end
     % Link the roi and the image
     imageId = image.getId().getValue();
@@ -148,45 +160,53 @@ for i = 1 : length(datasetImages)
         roi = iUpdate.saveAndReturnObject(roi);
         csv_row.add(imageId);
         csv_row.add(max_area);
+        csv_row.add(max_per);
+        csv_row.add(max_in);
         csv_data.add(csv_row);
     end 
 end
 
 % Create a CSV file
-headers = 'ImageID,Area';
+headers = 'ImageID,Max_Area,Max_Perimeter,Max_Intesity';
 fileID = fopen('results.csv','w');
 fprintf(fileID,'%s\n',headers);
 for kk = 0: csv_data.size()-1
         csv_row = csv_data.get(kk);
-        row = strcat(num2str(csv_row.get(0)), ',', num2str(csv_row.get(1)));
+        row = strcat(num2str(csv_row.get(0)), ',', num2str(csv_row.get(1)),...
+            ',', num2str(csv_row.get(2)), ',', num2str(csv_row.get(3)));
         fprintf(fileID,'%s\n',row);
 end
 fclose(fileID);
 % Create and link the CSV file annotation
-fileAnnotation = writeFileAnnotation(session, 'results.csv', 'mimetype', 'text/csv', 'namespace', 'training.demo');
+fileAnnotation = writeFileAnnotation(session, 'results.csv', 'mimetype',... 
+'text/csv', 'namespace', 'training.demo');
 linkAnnotation(session, fileAnnotation, 'dataset', datasetId);
 
 
 % Exercise 7:
 % Save the results as OMERO.table.
-% After this step go back to OMERO.web,
-% select an image and expand the 'Tables' tab
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% After this step go back to OMERO.web, select an image 
+% from the evaluated dataset and expand the 'Tables' tab
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-columns = javaArray('omero.grid.Column', 2);
+columns = javaArray('omero.grid.Column', 4);
 columns(1) = omero.grid.LongColumn('Image', '', []);
-columns(2) = omero.grid.DoubleColumn('Area', '', []);
+columns(2) = omero.grid.DoubleColumn('Max_Area', '', []);
+columns(3) = omero.grid.DoubleColumn('Max_Perimeter', '', []);
+columns(4) = omero.grid.DoubleColumn('Max_Intesity', '', []);
 table = session.sharedResources().newTable(1, char('from_matlab'));
 table.initialize(columns);
 for kk = 0: csv_data.size()-1
     csv_row = csv_data.get(kk);
     row = javaArray('omero.grid.Column', 1);
     row(1) = omero.grid.LongColumn('Image', '', [csv_row.get(0)]);
-    row(2) = omero.grid.DoubleColumn('Area', '', [csv_row.get(1)]);
+    row(2) = omero.grid.DoubleColumn('Max_Area', '', [csv_row.get(1)]);
+    row(3) = omero.grid.DoubleColumn('Max_Perimeter', '', [csv_row.get(2)]);
+    row(4) = omero.grid.DoubleColumn('Max_Intesity', '', [csv_row.get(3)]);
     table.addData(row);
 end
 file = table.getOriginalFile();
-% link table to an Image
+% link table to the dataset
 fa = omero.model.FileAnnotationI;
 fa.setFile(file);
 fa.setNs(rstring(omero.constants.namespaces.NSBULKANNOTATIONS.value));
