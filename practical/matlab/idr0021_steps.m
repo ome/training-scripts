@@ -1,5 +1,5 @@
 % Note: In Matlab create a New -> Script. Copy and paste
-% everything into the new file. But do not run the whole script! 
+% everything into the new file. But do not run the whole script. 
 % Select the code block of each exercise, right-click and 
 % "Evaluate Selection". Then proceed to the next exercise. 
 % Later exercises cannot be run unless the previous exercises
@@ -155,10 +155,12 @@ for i = 1 : length(datasetImages)
     end
     % Link the roi and the image
     imageId = image.getId().getValue();
+    imageName = image.getName().getValue();
     roi.setImage(omero.model.ImageI(imageId, false));
     if ~isempty(B)
         roi = iUpdate.saveAndReturnObject(roi);
         csv_row.add(imageId);
+        csv_row.add(imageName);
         csv_row.add(max_area);
         csv_row.add(max_per);
         csv_row.add(max_in);
@@ -167,13 +169,14 @@ for i = 1 : length(datasetImages)
 end
 
 % Create a CSV file
-headers = 'ImageID,Max_Area,Max_Perimeter,Max_Intesity';
+headers = 'ImageID,Image_Name,Max_Area,Max_Perimeter,Max_Intesity';
 fileID = fopen('results.csv','w');
 fprintf(fileID,'%s\n',headers);
 for kk = 0: csv_data.size()-1
         csv_row = csv_data.get(kk);
         row = strcat(num2str(csv_row.get(0)), ',', num2str(csv_row.get(1)),...
-            ',', num2str(csv_row.get(2)), ',', num2str(csv_row.get(3)));
+            ',', num2str(csv_row.get(2)), ',', num2str(csv_row.get(3)), ...
+            ',', num2str(csv_row.get(4)));
         fprintf(fileID,'%s\n',row);
 end
 fclose(fileID);
@@ -189,20 +192,22 @@ linkAnnotation(session, fileAnnotation, 'dataset', datasetId);
 % from the evaluated dataset and expand the 'Tables' tab
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-columns = javaArray('omero.grid.Column', 4);
+columns = javaArray('omero.grid.Column', 5);
 columns(1) = omero.grid.LongColumn('Image', '', []);
-columns(2) = omero.grid.DoubleColumn('Max_Area', '', []);
-columns(3) = omero.grid.DoubleColumn('Max_Perimeter', '', []);
-columns(4) = omero.grid.DoubleColumn('Max_Intesity', '', []);
+columns(2) = omero.grid.StringColumn('Image_Name', '', 255, []);
+columns(3) = omero.grid.DoubleColumn('Max_Area', '', []);
+columns(4) = omero.grid.DoubleColumn('Max_Perimeter', '', []);
+columns(5) = omero.grid.DoubleColumn('Max_Intesity', '', []);
 table = session.sharedResources().newTable(1, char('from_matlab'));
 table.initialize(columns);
 for kk = 0: csv_data.size()-1
     csv_row = csv_data.get(kk);
     row = javaArray('omero.grid.Column', 1);
     row(1) = omero.grid.LongColumn('Image', '', [csv_row.get(0)]);
-    row(2) = omero.grid.DoubleColumn('Max_Area', '', [csv_row.get(1)]);
-    row(3) = omero.grid.DoubleColumn('Max_Perimeter', '', [csv_row.get(2)]);
-    row(4) = omero.grid.DoubleColumn('Max_Intesity', '', [csv_row.get(3)]);
+    row(2) = omero.grid.StringColumn('Image_Name', '', 255, [csv_row.get(1)]);
+    row(3) = omero.grid.DoubleColumn('Max_Area', '', [csv_row.get(2)]);
+    row(4) = omero.grid.DoubleColumn('Max_Perimeter', '', [csv_row.get(3)]);
+    row(5) = omero.grid.DoubleColumn('Max_Intesity', '', [csv_row.get(4)]);
     table.addData(row);
 end
 file = table.getOriginalFile();
