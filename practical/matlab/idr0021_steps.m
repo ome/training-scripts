@@ -88,7 +88,7 @@ fprintf('Using image: %s, channel: %s (index: %i)\n', ...
 % (Note: channel index in OMERO starts with 0)
 z = 0;
 t = 0;
-ch = channelIndex - 1
+ch = channelIndex - 1;
 plane = getPlane(session, image, z, ch, t);
 
 minPixelsPerCentriole = 20;   % minimum size of objects of interest
