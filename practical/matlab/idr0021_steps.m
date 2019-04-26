@@ -62,6 +62,7 @@ fprintf('Target protein: %s\n', target);
 % (the channel in which the target protein is stained).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+channelIndices = containers.Map();
 for i = 1 : length(datasetImages)
     image = datasetImages(i);
     channels = loadChannels(session, image);
@@ -72,18 +73,29 @@ for i = 1 : length(datasetImages)
         channelName = lc.getName().getValue();
         if channelName == target
             channelIndex = j;
-            disp(channelIndex);
+            channelIndices(string(image.getName().getValue())) = channelIndex;
+            fprintf('%s, channel index: %i\n', ...
+                    image.getName().getValue(), channelIndex);
         end
     end
 end
-
 
 % Exercise 5
 % Perform image segmentation on one image.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Get image 'siControl_N20_Cep215_I_20110411_Mon-1509_0_SIR_PRJ.dv' and the
+% relevant channel index
+for i = 1 : length(datasetImages)
+    image = datasetImages(i);
+    if image.getName().getValue() == 'siControl_N20_Cep215_I_20110411_Mon-1509_0_SIR_PRJ.dv'
+        channelIndex = channelIndices(string(image.getName().getValue()));
+        break;
+    end
+end   
 fprintf('Using image: %s, channel: %s (index: %i)\n', ...
     image.getName().getValue(), target, channelIndex)
+
 % Get the pixel values of the relevant plane
 % (Note: channel index in OMERO starts with 0)
 z = 0;
@@ -112,17 +124,7 @@ iUpdate = session.getUpdateService(); % needed to save the ROIs
 csv_data = java.util.ArrayList;
 for i = 1 : length(datasetImages)
     image = datasetImages(i);
-    channels = loadChannels(session, image);
-    for j = 1 : numel(channels) 
-        channel = channels(j);
-        channelId = channel.getId().getValue();
-        lc = channel.getLogicalChannel();
-        channelName = lc.getName().getValue();
-        if channelName == target
-            channelIndex = j;
-            break;
-        end
-    end
+    channelIndex = channelIndices(string(image.getName().getValue()));
     
     fprintf('Analyse Image: %s, Channel: %i\n', image.getName().getValue(), channelIndex);
     plane = getPlane(session, image, z, channelIndex - 1, t); 
