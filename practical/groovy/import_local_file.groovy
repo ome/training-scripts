@@ -122,7 +122,7 @@ gateway = connect_to_omero()
 
 // Create a Dataset
 d = new DatasetData()
-d.setName("Cropped Image")
+d.setName("Image Imported via Fiji")
 dm = gateway.getFacility(DataManagerFacility)
 user = gateway.getLoggedInUser()
 ctx = new SecurityContext(user.getGroupId())
