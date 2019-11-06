@@ -62,6 +62,7 @@ def connect_to_omero():
     gateway.connect(credentials)
     return gateway
 
+
 gateway = connect_to_omero()
 # Create a dataset
 name = "test_dataset"
