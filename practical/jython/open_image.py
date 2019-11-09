@@ -4,6 +4,7 @@
 #@ Integer(label="Port",value=4064) PORT
 #@ Integer(label="ImageId" ) image_id
 
+
 # -----------------------------------------------------------------------------
 #  Copyright (C) 2017 University of Dundee. All rights reserved.
 #
@@ -48,6 +49,10 @@ from omero.log import SimpleLogger
 from ij import IJ
 
 
+# Setup
+# =====
+
+
 
 def connect_to_omero():
     "Connect to OMERO"
@@ -77,6 +82,8 @@ gateway = connect_to_omero()
 
 # Download the image. This could be composed of several files
 tmp_dir = tempfile.mkdtemp()
+print(tmp_dir)
+
 files = download_image(gateway, image_id, tmp_dir)
 for f in files:
     options = "open=" + f.getAbsolutePath()
