@@ -34,7 +34,6 @@ def run(name, password, dataset_name, dataset_id, host, port):
     conn = BlitzGateway(name, password, host=host, port=port)
     try:
         conn.connect()
-        rnd_service = conn.getRenderingSettingsService()
         datasets = []
         if dataset_id >= 0:
             datasets.append(conn.getObject("Dataset", dataset_id))
@@ -43,23 +42,25 @@ def run(name, password, dataset_name, dataset_id, host, port):
                                        attributes={"name": dataset_name})
 
         for dataset in datasets:
-            print dataset.getId()
+            print(dataset.getId())
             for image in dataset.listChildren():
                 pixels = image.getPrimaryPixels()
-                print pixels.getId()
+                pixId = pixels.getId()
+                print(pixId)
                 params = omero.sys.ParametersI()
-                query = "from RenderingDef where pixels.id = '%s'" % pixels.getId()
+                query = "from RenderingDef where pixels.id = '%s'" % pixId
                 query_service = conn.getQueryService()
-                result = query_service.findAllByQuery(query, params, conn.SERVICE_OPTS)
+                result = query_service.findAllByQuery(query, params,
+                                                      conn.SERVICE_OPTS)
                 if result is not None:
                     rnd_ids = [rnd.id.val for rnd in result]
                     if len(rnd_ids) > 0:
-                        print "Deleting %s rnds..." % len(rnd_ids)
-                        print rnd_ids
+                        print("Deleting %s rnds..." % len(rnd_ids))
+                        print(rnd_ids)
                         conn.deleteObjects("RenderingDef", rnd_ids, wait=True)
 
     except Exception as exc:
-        print "Error while deleting rendering: %s" % str(exc)
+        print("Error while deleting rendering: %s" % str(exc))
     finally:
         conn.close()
 
