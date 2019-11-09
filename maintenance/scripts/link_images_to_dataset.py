@@ -34,7 +34,7 @@ def run(password, dataset_name, target, host, port):
 
     for i in range(1, 51):
         username = "user-%s" % i
-        print username
+        print(username)
         conn = BlitzGateway(username, password, host=host, port=port)
         try:
             conn.connect()
@@ -48,7 +48,7 @@ def run(password, dataset_name, target, host, port):
                                                   conn.SERVICE_OPTS)
 
             if len(images) == 0:
-                print "No images with name %s found" % target
+                print("No images with name %s found" % target)
                 continue
             image_id = images[0].getId().getValue()
 
@@ -82,7 +82,7 @@ def run(password, dataset_name, target, host, port):
               print "Error while linking image - link probably already \
                     exists: %s" % str(ex)
         except Exception as exc:
-            print "Error while linking images: %s" % str(exc)
+            print("Error while linking images: %s" % str(exc))
         finally:
             conn.close()
 

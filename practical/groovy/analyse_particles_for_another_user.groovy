@@ -127,7 +127,7 @@ def switch_security_context(ctx, target_user) {
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     "Open the image using the Bio-Formats Importer"
 
-    StringBuffer options = new StringBuffer()
+    StringBuilder options = new StringBuilder()
     options.append("location=[OMERO] open=[omero:server=")
     options.append(HOST)
     options.append("\nuser=")
@@ -195,8 +195,9 @@ ids.each() { id1 ->
     open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, String.valueOf(id1))
     imp = IJ.getImage()
     // Some analysis which creates ROI's and Results Table
-    IJ.run("8-bit");
-    IJ.run(imp, "Auto Threshold", "method=MaxEntropy white stack")
+    IJ.run("8-bit")
+    //white might be required depending on the version of Fiji
+    IJ.run(imp, "Auto Threshold", "method=MaxEntropy stack")
     IJ.run(imp, "Analyze Particles...", "size=10-Infinity pixel display clear add stack");
     IJ.run("Set Measurements...", "area mean standard modal min centroid center \
             perimeter bounding fit shape feret's integrated median skewness \
