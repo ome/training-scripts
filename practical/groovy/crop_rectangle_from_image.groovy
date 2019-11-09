@@ -1,6 +1,6 @@
 /*
  * -----------------------------------------------------------------------------
- *  Copyright (C) 2018 University of Dundee. All rights reserved.
+ *  Copyright (C) 2019 University of Dundee. All rights reserved.
  *
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,9 @@
  */
 
 /*
- * This Groovy script uses ImageJ to Subtract Background.
- * The images with subtracted background are imported into a new Dataset in OMERO.
- * The dataset is named script_editor_output_from_dataset_ID where ID is the ID of 
- * the specified dataset.
+ * This Groovy script uses ImageJ to crop an image.
+ * The cropped image is saved locally as OME-TIFF using Bio-Formats Exporter.
+ * The OME-TIFF is then imported to OMERO.
  * Use this script in the Scripting Dialog of Fiji (File > New > Script).
  * Select Groovy as language in the Scripting Dialog.
  * Error handling is omitted to ease the reading of the script but this
@@ -33,7 +32,6 @@
  */
 
 import java.io.File
-import java.util.ArrayList
 import java.lang.reflect.Array
 
 // OMERO Dependencies
@@ -65,10 +63,9 @@ HOST = "outreach.openmicroscopy.org"
 PORT = 4064
 group_id = "-1"
 // parameters to edit
-dataset_id = 1001
+image_id = 1001
 USERNAME = "username"
 PASSWORD = "password"
-
 
 def connect_to_omero() {
     "Connect to OMERO"
@@ -88,7 +85,7 @@ def connect_to_omero() {
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     "Open the image using the Bio-Formats Importer"
 
-    StringBuffer options = new StringBuffer()
+    StringBuilder options = new StringBuilder()
     options.append("location=[OMERO] open=[omero:server=")
     options.append(HOST)
     options.append("\nuser=")
@@ -104,26 +101,6 @@ def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     options.append("] ")
     options.append("windowless=true view=Hyperstack ")
     IJ.runPlugIn("loci.plugins.LociImporter", options.toString())
-
-}
-
-def get_image_ids(gateway, dataset_id) {
-    "List all image's ids contained in a Dataset"
-
-    browse = gateway.getFacility(BrowseFacility)
-    user = gateway.getLoggedInUser()
-    ctx = new SecurityContext(user.getGroupId())
-    ids = new ArrayList(1)
-    val = new Long(dataset_id)
-    ids.add(val)
-    images = browse.getImagesForDatasets(ctx, ids)
-    j = images.iterator()
-    image_ids = new ArrayList()
-    while (j.hasNext()) {
-        image = j.next()
-        image_ids.add(String.valueOf(image.getId()))
-    }
-    return image_ids
 }
 
 def find_dataset(gateway, dataset_id) {
@@ -134,8 +111,8 @@ def find_dataset(gateway, dataset_id) {
     return browse.findIObject(ctx, "omero.model.Dataset", dataset_id)
 }
 
-def upload_image(path, gateway, id) {
-    "Upload an image to omero"
+def upload_image(paths, gateway, id) {
+    "Upload an image to OMERO"
 
     user = gateway.getLoggedInUser()
     sessionKey = gateway.getSessionId(user)
@@ -153,60 +130,57 @@ def upload_image(path, gateway, id) {
     error_handler = new ErrorHandler(config)
 
     library.addObserver(new LoggingImportMonitor())
-    candidates = new ImportCandidates(reader, path, error_handler)
+    candidates = new ImportCandidates(reader, paths, error_handler)
     containers = candidates.getContainers()
     containers.each() { c ->
         c.setTarget(dataset)
     }
     reader.setMetadataOptions(new DefaultMetadataOptions(MetadataLevel.ALL))
     return library.importCandidates(config, candidates)
-
 }
 
+
 // Connect to OMERO
+println "connecting..."
 gateway = connect_to_omero()
 
-// Retrieve the images contained in the specified dataset
-image_ids = get_image_ids(gateway, dataset_id)
+println "opening Image..."
+// Open the Image using Bio-Formats
+open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, String.valueOf(image_id))
 
-//Create a dataset to store the newly created images will be added
-name = "script_editor_output_from_dataset_" + dataset_id
+// Crop the image
+println "cropping..."
+IJ.makeRectangle(0, 0, 200, 200)
+IJ.run("Crop")
+
+// Save modified image as OME-TIFF using Bio-Formats Exporter
+imp = IJ.getImage()
+name = imp.getTitle().replaceAll("\\s","")
+file = File.createTempFile(name, ".ome.tiff")
+path_to_file = file.getAbsolutePath()
+println  path_to_file
+options = "save=" + path_to_file + " export compression=Uncompressed"
+IJ.run(imp, "Bio-Formats Exporter", options)
+imp.changes = false
+imp.close()
+
+// Create a Dataset
 d = new DatasetData()
-d.setName(name)
+d.setName("Cropped Image")
 dm = gateway.getFacility(DataManagerFacility)
 user = gateway.getLoggedInUser()
 ctx = new SecurityContext(user.getGroupId())
 d = dm.createDataset(ctx, d, null)
 
-// Loop through each image
-image_ids.each() { image_id ->
-    println image_id
-    open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id)
-    IJ.run("Enhance Contrast...", "saturated=0.3")
-    IJ.run("Subtract Background...", "rolling=50 stack")
+// Import the generated OME-TIFF to OMERO
+println "importing..."
+str2d = new String[1]
+str2d[0] = path_to_file
+success = upload_image(str2d, gateway, d.getId())
+// delete the local OME-TIFF image
+(new File(path_to_file)).delete()
+println "imported"
 
-    // Save modified image as OME-TIFF using Bio-Formats
-    imp = IJ.getImage()
-    imp = IJ.getImage()
-    name = imp.getTitle().replaceAll("\\s","")
-    file = File.createTempFile("name", ".ome.tiff")
-    path_to_file = file.getAbsolutePath()
-    println  path_to_file
-    options = "save=" + path_to_file + " export compression=Uncompressed"
-    IJ.run(imp, "Bio-Formats Exporter", options)
-    imp.changes = false
-    imp.close()
-
-    // Upload the generated OME-TIFF to OMERO
-    println "uploading..."
-    str2d = new String[1]
-    str2d[0] = path_to_file
-    success = upload_image(str2d, gateway, d.getId())
-    // delete the local OME-TIFF image
-    (new File(path_to_file)).delete()
-    println "imported"
-}
-
-println "Done"
 // Close the connection
 gateway.disconnect()
+println "Done"

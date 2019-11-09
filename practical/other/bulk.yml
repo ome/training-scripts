@@ -1,0 +1,11 @@
+---
+continue: "true"
+transfer: "ln_s"
+# exclude: "clientpath"
+checksum_algorithm: "File-Size-64"
+logprefix: "logs/"
+output: "yaml"
+path: "import-paths.csv"
+columns:
+  - target
+  - path

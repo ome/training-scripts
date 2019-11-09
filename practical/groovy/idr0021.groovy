@@ -182,7 +182,7 @@ def get_channel_wavelength(gateway, ctx, image_id, dataset_name) {
 def open_image_plus(HOST, USERNAME, PASSWORD, PORT, group_id, image_id) {
     "Open the image using the Bio-Formats Importer"
 
-    StringBuffer options = new StringBuffer()
+    StringBuilder options = new StringBuilder()
     options.append("location=[OMERO] open=[omero:server=")
     options.append(HOST)
     options.append("\nuser=")
