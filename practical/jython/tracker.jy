@@ -85,7 +85,7 @@ import tempfile
 # =====
 
 # OMERO Server details
-HOST = "outreach.openmicroscopy.org"
+HOST = "workshop.openmicroscopy.org"
 PORT = 4064
 #  parameters to edit
 project_id = 1102

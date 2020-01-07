@@ -58,7 +58,7 @@ public class OmeroBgSubtractBatch {
     // Edit value
     private static long datasetId = 0;
 
-    private static String HOST = "outreach.openmicroscopy.org";
+    private static String HOST = "workshop.openmicroscopy.org";
 
     private static int PORT = 4064;
 

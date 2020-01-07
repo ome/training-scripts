@@ -47,7 +47,7 @@ import ij.IJ
 // =====
 
 // OMERO Server details
-HOST = "outreach.openmicroscopy.org"
+HOST = "workshop.openmicroscopy.org"
 PORT = 4064
 // parameters to edit
 image_id = "1001"

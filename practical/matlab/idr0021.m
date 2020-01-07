@@ -20,7 +20,7 @@
 % The shapes are saved as polygons.
 % The script has been tested with Matlab2017a
 
-host='outreach.openmicroscopy.org';
+host='workshop.openmicroscopy.org';
 % To be modified
 user='USERNAME';
 password='PASSWORD';

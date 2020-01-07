@@ -1,11 +1,11 @@
 # To download an image on Unix
-./download.sh -b <path-to-target-dir> -s outreach.openmicroscopy.org -u <user name> -w <password> -f binary Image:<image ID>
+./download.sh -b <path-to-target-dir> -s workshop.openmicroscopy.org -u <user name> -w <password> -f binary Image:<image ID>
 
 # To download an image on Windows
-download.bat -b <path-to-target-dir> -s outreach.openmicroscopy.org -u <user name> -w <password> -f binary Image:<image ID>
+download.bat -b <path-to-target-dir> -s workshop.openmicroscopy.org -u <user name> -w <password> -f binary Image:<image ID>
 
 # To download metadata of images in two datasets with ID1 and ID2
-./download.sh -b <path-to-target-dir> -s outreach.openmicroscopy.org -u <user name> -w <password> -f ome-xml Dataset:$ID2,$ID1
+./download.sh -b <path-to-target-dir> -s workshop.openmicroscopy.org -u <user name> -w <password> -f ome-xml Dataset:$ID2,$ID1
 
 # To find IDs images tagged with a tag named "your-tag" in the target directory
 grep   '^<Tag.*your-tag' <path-to-target-dir>/Image/*/Annotation/*/Metadata/*xml

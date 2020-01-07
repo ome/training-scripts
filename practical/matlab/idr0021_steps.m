@@ -11,7 +11,7 @@
 % Connect to OMERO and print your group ID.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-client = loadOmero('outreach.openmicroscopy.org');
+client = loadOmero('workshop.openmicroscopy.org');
 session = client.createSession('USER', 'PASSWORD');
 client.enableKeepAlive(60);
 eventContext = session.getAdminService().getEventContext();
