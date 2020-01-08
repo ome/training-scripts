@@ -52,18 +52,35 @@ def run(password, dataset_name, target, host, port):
                 continue
             image_id = images[0].getId().getValue()
 
-            print('id', image_id)
+            print("Found image, id %s" % image_id)
 
-            dataset = omero.model.DatasetI()
-            dataset.setName(omero.rtypes.rstring(dataset_name))
-            dataset = conn.getUpdateService().saveAndReturnObject(dataset)
-            dataset_id = dataset.getId().getValue()
-            print(username, dataset_id)
+            query = "from Dataset where name='%s' \
+                    AND details.owner.omeName=:username" % dataset_name
+            query_service = conn.getQueryService()
+            datasets = query_service.findAllByQuery(query, params,
+                                                    conn.SERVICE_OPTS)
+
+            dataset_id = -1
+            if len(datasets) > 0:
+                dataset = datasets[0]
+                dataset_id = dataset.getId().getValue()
+                print("Dataset exists, id %s" % dataset_id)
+
+            if dataset_id == -1:
+                dataset = omero.model.DatasetI()
+                dataset.setName(omero.rtypes.rstring(dataset_name))
+                dataset = conn.getUpdateService().saveAndReturnObject(dataset)
+                dataset_id = dataset.getId().getValue()
+                print("Created new dataset, id %s" % dataset_id)
 
             link = omero.model.DatasetImageLinkI()
             link.setParent(dataset)
             link.setChild(omero.model.ImageI(image_id, False))
-            conn.getUpdateService().saveObject(link)
+            try:
+                conn.getUpdateService().saveObject(link)
+            except Exception as ex:
+                print("Error while linking image - link probably already \
+                      exists: %s" % str(ex))
         except Exception as exc:
             print("Error while linking images: %s" % str(exc))
         finally:
