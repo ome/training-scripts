@@ -27,7 +27,7 @@
 dir=$(pwd -P)
 OMEROPATH=${OMEROPATH:-/opt/omero/server/OMERO.server/bin/omero}
 PASSWORD=${PASSWORD:-ome}
-HOST=${HOST:-outreach.openmicroscopy.org}
+HOST=${HOST:-workshop.openmicroscopy.org}
 SUDOER=${SUDOER:-trainer-1}
 OMEUSER=${OMEUSER:-user-1}
 IMAGEPATH=${IMAGEPATH:-}

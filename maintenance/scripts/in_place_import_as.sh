@@ -30,9 +30,10 @@
 
 echo Starting
 SUDOER=${SUDOER:-importer1}
-OMEROPATH=${OMEROPATH:-/opt/omero/server/OMERO.server/bin/omero}
+OMERODIR=${OMERODIR:-/opt/omero/server/OMERO.server}
+VENV_SERVER=${VENV_SERVER:-/opt/omero/server/venv3}
 PASSWORD=${PASSWORD:-ome}
-HOST=${HOST:-outreach.openmicroscopy.org}
+HOST=${HOST:-workshop.openmicroscopy.org}
 FOLDER=${FOLDER:-siRNAi-HeLa}
 NUMBER=${NUMBER:-50}
 OMEUSER=${OMEUSER:-user}
@@ -40,15 +41,19 @@ DATATYPE=${DATATYPE:-dataset}
 IMPORTTYPE=${IMPORTTYPE:-bulk}
 BULKFILE=${BULKFILE:-idr0021-scripts/idr0021-experimentA-bulk.yml}
 PROJECTNAME=${PROJECTNAME:-idr0021}
+
+export OMERODIR
+export PATH=$VENV_SERVER/bin:$PATH
+
 for ((i=1;i<=$NUMBER;i++));
-do  $OMEROPATH login --sudo ${SUDOER} -u $OMEUSER-$i -s $HOST -w $PASSWORD
+do  omero login --sudo ${SUDOER} -u $OMEUSER-$i -s $HOST -w $PASSWORD
     if [ "$DATATYPE" = "dataset" ]; then
         if [ "$IMPORTTYPE" = "normal" ]; then
-            DatasetId=$($OMEROPATH obj new Dataset name=$FOLDER)
-            $OMEROPATH import -d $DatasetId --transfer=ln_s $FOLDER
+            DatasetId=$(omero obj new Dataset name=$FOLDER)
+            omero import -d $DatasetId --transfer=ln_s $FOLDER
         elif [ "$IMPORTTYPE" = "bulk" ]; then
             # Create the project
-            projectId=`$OMEROPATH obj new Project name=$PROJECTNAME`
+            projectId=`omero obj new Project name=$PROJECTNAME`
             # Get the name of the filepaths.tsv file from the bulk.yml
             tsv=`grep path: $BULKFILE | cut -d '"' -f2`
             # Assume it is in the same directory as the bulk.yml
@@ -58,15 +63,19 @@ do  $OMEROPATH login --sudo ${SUDOER} -u $OMEUSER-$i -s $HOST -w $PASSWORD
             datasets=`cat $filepaths | cut -f1 | cut -d ':' -f3 | uniq`
             for dataset in $datasets
             do
-                datasetId=`$OMEROPATH obj new Dataset name=$dataset`
-                linkId=`$OMEROPATH obj new ProjectDatasetLink parent=$projectId child=$datasetId`
+                datasetId=`omero obj new Dataset name=$dataset`
+                linkId=`omero obj new ProjectDatasetLink parent=$projectId child=$datasetId`
             done
             # Then launch the import
-            $OMEROPATH import --bulk $BULKFILE
+            omero import --bulk $BULKFILE
         fi
     elif [ "$DATATYPE" = "plate" ]; then
-        $OMEROPATH import --transfer=ln_s $FOLDER
+        omero import --transfer=ln_s $FOLDER
+        DatasetId=$(omero obj new Dataset name=$FOLDER)
+        omero import -d $DatasetId --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
+    elif [ "$DATATYPE" = "plate" ]; then
+        omero import --transfer=ln_s "/OMERO/in-place-import/$FOLDER"
     fi
-    $OMEROPATH logout
+    omero logout
 done
 echo Finishing
