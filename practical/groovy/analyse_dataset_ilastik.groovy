@@ -1,6 +1,6 @@
 /*
  * -----------------------------------------------------------------------------
- *  Copyright (C) 2018 University of Dundee. All rights reserved.
+ *  Copyright (C) 2020 University of Dundee. All rights reserved.
  *
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ import ij.measure.ResultsTable
 // =====
 
 // OMERO Server details
-HOST = "outreach.openmicroscopy.org"
+HOST = "workshop.openmicroscopy.org"
 PORT = 4064
 
 //  parameters to edit
@@ -159,6 +159,17 @@ if (data_dir == null) {
     return
 }
 
+pixelClassificationProject = IJ.getFilePath("Choose a ilastik Project File")
+if (pixelClassificationProject == null) {
+	println "cancel"
+	return
+}
+
+
+//Set the path to the executable
+IJ.run("Configure ilastik executable location")
+
+
 // Prototype analysis example
 gateway = connect_to_omero()
 exp = gateway.getLoggedInUser()
@@ -169,18 +180,13 @@ exp_id = exp.getId()
 // get all images in an omero dataset
 images = get_images(gateway, ctx, dataset_id)
 
-//Set the path to the executable
-IJ.run("Configure ilastik executable location")
-
-axisOrder = "tzyxc"
 inputDataset = "[/data]"
 dir = new File(data_dir.toString())
 files = dir.listFiles()
 
-//This needs to be a "real" ilastik project
-pixelClassificationProject = data_dir+"/pixel-class-wednesday.ilp"
+
 outputType = "Probabilities" //Default
-axisOrder = "tzyxc"
+axisOrder = "tzyxc" //axis of the model
 inputDataset = "[/data]"
 
 images.each() { image ->
@@ -231,4 +237,3 @@ images.each() { image ->
 // Close the connection
 gateway.disconnect()
 println "processing done"
-
