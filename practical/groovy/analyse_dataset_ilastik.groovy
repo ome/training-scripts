@@ -30,6 +30,11 @@
  * https://docs.openmicroscopy.org/latest/omero5/developers/Java.html
  */
 
+#@ String(label="Username") USERNAME
+#@ String(label="Password", style='password') PASSWORD
+#@ String(label="Host",value='workshop.openmicroscopy.org') HOST
+#@ Integer(label="Port",value=4064) PORT
+
 import java.util.ArrayList
 
 
