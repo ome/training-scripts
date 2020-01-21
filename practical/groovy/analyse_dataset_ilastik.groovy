@@ -32,8 +32,9 @@
 
 #@ String(label="Username") USERNAME
 #@ String(label="Password", style='password') PASSWORD
-#@ String(label="Host",value='workshop.openmicroscopy.org') HOST
-#@ Integer(label="Port",value=4064) PORT
+#@ String(label="Host", value='workshop.openmicroscopy.org') HOST
+#@ Integer(label="Port", value=4064) PORT
+#@ Integer(label="Dataset ID") dataset_id
 
 import java.util.ArrayList
 
@@ -59,19 +60,6 @@ import ij.process.ByteProcessor
 import ij.process.ShortProcessor
 import ij.plugin.frame.RoiManager
 import ij.measure.ResultsTable
-
-
-// Setup
-// =====
-
-// OMERO Server details
-HOST = "workshop.openmicroscopy.org"
-PORT = 4064
-
-//  parameters to edit
-dataset_id = 2331
-USERNAME = "username"
-PASSWORD = "password"
 
 
 def connect_to_omero() {
