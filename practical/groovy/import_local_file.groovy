@@ -30,10 +30,10 @@
  * https://docs.openmicroscopy.org/latest/omero5/developers/Java.html
  */
 
-*@ String(label="Username") USERNAME
-*@ String(label="Password", style='password') PASSWORD
-*@ String(label="Host",value='outreach.openmicroscopy.org') HOST
-*@ Integer(label="Port",value=4064) PORT
+#@ String(label="Username") USERNAME
+#@ String(label="Password", style='password') PASSWORD
+#@ String(label="Host", value='workshop.openmicroscopy.org') HOST
+#@ Integer(label="Port", value=4064) PORT
 
 import java.io.File
 import java.lang.reflect.Array
