@@ -1,3 +1,15 @@
+0.7.1 (January 2020)
+--------------------
+
+- Add example to show how to import local file using groovy script [#69](https://github.com/ome/training-scripts/pull/69)
+- Add groovy script to analyse data using ilastik [#76](https://github.com/ome/training-scripts/pull/76)
+
+0.7.0 (January 2020)
+--------------------
+
+- Upgrade scripts to work with Python 3
+- Upgrade maintenance scripts to omero with omero-py and Python 3
+
 0.6.2 (November 2019)
 ---------------------
 
