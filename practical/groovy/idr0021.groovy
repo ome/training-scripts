@@ -33,6 +33,12 @@
  * https://docs.openmicroscopy.org/latest/omero5/developers/Java.html
  */
 
+#@ String(label="Username") USERNAME
+#@ String(label="Password", style='password') PASSWORD
+#@ String(label="Host", value='workshop.openmicroscopy.org') HOST
+#@ Integer(label="Port", value=4064) PORT
+#@ Integer(label="Project ID", value=2331) project_id
+
 import java.util.ArrayList
 import java.lang.Math
 import java.lang.StringBuffer
@@ -80,15 +86,7 @@ import ij.plugin.frame.RoiManager
 import ij.measure.ResultsTable
 
 
-// Setup
-// =====
-
-// OMERO Server details
-HOST = "workshop.openmicroscopy.org"
-PORT = 4064
 project_id = 1101
-USERNAME = "username"
-PASSWORD = "password"
 
 MAP_KEY = "Channels"
 
