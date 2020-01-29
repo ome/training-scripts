@@ -25,7 +25,9 @@
 #
 #
 dir=$(pwd -P)
-OMEROPATH=${OMEROPATH:-/opt/omero/server/OMERO.server/bin/omero}
+OMERODIR=${OMERODIR:-/opt/omero/server/OMERO.server}
+VENV_SERVER=${VENV_SERVER:-/opt/omero/server/venv3}
+
 PASSWORD=${PASSWORD:-ome}
 HOST=${HOST:-workshop.openmicroscopy.org}
 SUDOER=${SUDOER:-trainer-1}
@@ -35,6 +37,9 @@ ATTACHMENTPATH=${ATTACHMENTPATH:-}
 
 deleteimage=false
 deletefile=false
+
+export OMERODIR
+export PATH=$VENV_SERVER/bin:$PATH
 
 if [ -z "$IMAGEPATH" ]; then
     touch image_to_import.fake
@@ -49,13 +54,13 @@ if [ -z "$ATTACHMENTPATH" ]; then
 fi
 
 # Log in as another user
-$OMEROPATH login --sudo ${SUDOER} -u $OMEUSER -s $HOST -w $PASSWORD
+omero login --sudo ${SUDOER} -u $OMEUSER -s $HOST -w $PASSWORD
 
 # Create a dataset as the specified user
-dataset=`$OMEROPATH obj new Dataset name='Basel-workflow'`
+dataset=`omero obj new Dataset name='Basel-workflow'`
 
 # Import the image in the newly created dataset
-result=`$OMEROPATH import -T $dataset $IMAGEPATH --output ids`
+result=`omero import -T $dataset $IMAGEPATH --output ids`
 
 # Retrieve the Image's id. It is returned as Image:123
 imageids=`cut -d':' -f2 <<< $result`
@@ -64,19 +69,19 @@ imageids=`cut -d':' -f2 <<< $result`
 IFS=',' read -ra ids <<< "$imageids"
 
 # Upload a CSV
-result=`$OMEROPATH upload $ATTACHMENTPATH`
+result=`omero upload $ATTACHMENTPATH`
 originalfileid=`cut -d':' -f2 <<< $result`
 printf 'originalfileid %s \n' "$originalfileid"
 
 # Create a file annotation
-result=`$OMEROPATH obj new FileAnnotation file=OriginalFile:$originalfileid`
+result=`omero obj new FileAnnotation file=OriginalFile:$originalfileid`
 fileid=`cut -d':' -f2 <<< $result`
 printf 'fileid %s \n' "$fileid"
 
 # Link the annotation to all the Images
 for id in "${ids[@]}"; do
 	printf 'imageid %s \n' "$id"
-    $OMEROPATH obj new ImageAnnotationLink parent=Image:$id child=FileAnnotation:$fileid
+    omero obj new ImageAnnotationLink parent=Image:$id child=FileAnnotation:$fileid
 done
 
 # Delete the Image and the local file if created
