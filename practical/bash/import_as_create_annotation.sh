@@ -57,7 +57,7 @@ fi
 omero login --sudo ${SUDOER} -u $OMEUSER -s $HOST -w $PASSWORD
 
 # Create a dataset as the specified user
-dataset=`omero obj new Dataset name='Basel-workflow'`
+dataset=`omero obj new Dataset name='image-with-attachment-from-script'`
 
 # Import the image in the newly created dataset
 result=`omero import -T $dataset $IMAGEPATH --output ids`
