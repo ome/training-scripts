@@ -86,7 +86,6 @@ import ij.plugin.frame.RoiManager
 import ij.measure.ResultsTable
 
 
-project_id = 1101
 
 MAP_KEY = "Channels"
 
