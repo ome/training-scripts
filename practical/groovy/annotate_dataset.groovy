@@ -73,8 +73,8 @@ dm = gateway.getFacility(DataManagerFacility)
 user = gateway.getLoggedInUser()
 ctx = new SecurityContext(user.getGroupId())
 d = dm.createDataset(ctx, d, null)
-tag = new TagAnnotationData("new tag 2")
-tag.setTagDescription("new tag 2")
+tag = new TagAnnotationData("new tag")
+tag.setTagDescription("new tag")
 
 
 link = new DatasetAnnotationLinkI()
