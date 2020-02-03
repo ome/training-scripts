@@ -39,6 +39,7 @@
 #@ String(label="Host", value='workshop.openmicroscopy.org') HOST
 #@ Integer(label="Port", value=4064) PORT
 #@ Integer(label="Dataset ID", value=2331) dataset_id
+#@ Integer(label="Target User's name") target_user
 
  import java.util.ArrayList
 
@@ -71,8 +72,6 @@ import ij.measure.ResultsTable
 group_id = -1
 
 // If you want to do analysis for someone else,
-// specify their username
-target_user = ""
 
 
 def connect_to_omero() {
