@@ -298,48 +298,10 @@ def save_summary_as_csv(file, rows, columns) {
 def upload_csv_to_omero(ctx, file, dataset_id) {
     "Upload the CSV file and attach it to the specified dataset"
     svc = gateway.getFacility(DataManagerFacility)
-    file_size = file.length()
-    original_file = new OriginalFileI()
-    original_file.setName(rstring(file.getName()))
-    original_file.setPath(rstring(file.getAbsolutePath()))
-    original_file.setSize(rlong(file_size))
-    checksum_algorithm = new ChecksumAlgorithmI()
-    checksum_algorithm.setValue(rstring(ChecksumAlgorithmSHA1160.value))
-    original_file.setHasher(checksum_algorithm)
-    original_file.setMimetype(rstring("text/csv"))
-    original_file = svc.saveAndReturnObject(ctx, original_file)
-    store = gateway.getRawFileService(ctx)
-
-    // Open file and read stream
-    INC = 262144
-    pos = 0
-    buf = new byte[INC]
-    ByteBuffer bbuf = null
-    stream = null
-    try {
-        store.setFileId(original_file.getId().getValue())
-        stream = new FileInputStream(file)
-        while ((rlen = stream.read(buf)) > 0) {
-            store.write(buf, pos, rlen)
-            pos += rlen
-            bbuf = ByteBuffer.wrap(buf)
-            bbuf.limit(rlen)
-        }
-        original_file = store.save()
-    } finally {
-        if (stream != null) {
-            stream.close()
-        }
-        store.close()
-    }
-    // create the file annotation
+    data = new DatasetData(new DatasetI(dataset_id, false))
     namespace = "training.demo"
-    fa = new FileAnnotationI()
-    fa.setFile(original_file)
-    fa.setNs(rstring(namespace))
-
-    data_object = new DatasetData(new DatasetI(dataset_id, false)) 
-    svc.attachAnnotation(ctx, new FileAnnotationData(fa), data_object)
+    mimetype = "text/csv"
+    svc.attachFile(ctx, file, mimetype, "", file.getName(), namespace, data)
 }
 
 // Prototype analysis example
