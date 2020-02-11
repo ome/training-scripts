@@ -31,6 +31,12 @@
  * https://docs.openmicroscopy.org/latest/omero5/developers/Java.html
  */
 
+#@ String(label="Username") USERNAME
+#@ String(label="Password", style='password') PASSWORD
+#@ String(label="Host", value='workshop.openmicroscopy.org') HOST
+#@ Integer(label="Port", value=4064) PORT
+#@ Integer(label="Image ID", value=2331) image_id
+
 import java.io.File
 import java.lang.reflect.Array
 
@@ -55,17 +61,7 @@ import loci.formats.in.MetadataLevel
 
 import ij.IJ
 
-// Setup
-// =====
-
-// OMERO Server details
-HOST = "workshop.openmicroscopy.org"
-PORT = 4064
 group_id = "-1"
-// parameters to edit
-image_id = 1001
-USERNAME = "username"
-PASSWORD = "password"
 
 def connect_to_omero() {
     "Connect to OMERO"

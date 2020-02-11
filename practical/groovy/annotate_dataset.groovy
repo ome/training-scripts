@@ -29,6 +29,11 @@
  * https://docs.openmicroscopy.org/latest/omero5/developers/Java.html
  */
 
+#@ String(label="Username") USERNAME
+#@ String(label="Password", style='password') PASSWORD
+#@ String(label="Host", value='workshop.openmicroscopy.org') HOST
+#@ Integer(label="Port", value=4064) PORT
+
 // OMERO Dependencies
 import omero.model.DatasetAnnotationLinkI
 import omero.model.DatasetI
@@ -41,15 +46,6 @@ import omero.gateway.model.DatasetData
 import omero.gateway.model.TagAnnotationData
 import omero.log.SimpleLogger
 
-// Setup
-// =====
-
-// OMERO Server details
-HOST = "workshop.openmicroscopy.org"
-PORT = 4064
-// parameters to edit
-USERNAME = "username"
-PASSWORD = "password"
 
 def connect_to_omero() {
     "Connect to OMERO"
@@ -77,8 +73,8 @@ dm = gateway.getFacility(DataManagerFacility)
 user = gateway.getLoggedInUser()
 ctx = new SecurityContext(user.getGroupId())
 d = dm.createDataset(ctx, d, null)
-tag = new TagAnnotationData("new tag 2")
-tag.setTagDescription("new tag 2")
+tag = new TagAnnotationData("new tag")
+tag.setTagDescription("new tag")
 
 
 link = new DatasetAnnotationLinkI()

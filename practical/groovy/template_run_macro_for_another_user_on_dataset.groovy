@@ -36,6 +36,12 @@
  * https://docs.openmicroscopy.org/latest/omero/developers/Java.html
  */
 
+#@ String(label="Username") USERNAME
+#@ String(label="Password", style='password') PASSWORD
+#@ String(label="Host", value='workshop.openmicroscopy.org') HOST
+#@ Integer(label="Port", value=4064) PORT
+#@ Integer(label="Dataset ID", value=2331) dataset_id
+
 import java.util.ArrayList
 
 
@@ -72,18 +78,7 @@ import ij.process.ShortProcessor
 import ij.plugin.frame.RoiManager
 import ij.process.FloatPolygon
 
-
-// Setup
-// =====
-
-// OMERO Server details
-HOST = "workshop.openmicroscopy.org"
-PORT = 4064
 group_id = -1
-//  parameters to edit
-dataset_id = 2331
-USERNAME = "username"
-PASSWORD = "password"
 
 // If you want to do analysis for someone else,
 // specify their username
