@@ -301,7 +301,7 @@ def upload_csv_to_omero(ctx, file, dataset_id) {
     data = new DatasetData(new DatasetI(dataset_id, false))
     namespace = "training.demo"
     mimetype = "text/csv"
-    svc.attachFile(ctx, file, mimetype, "", file.getName(), namespace, data)
+    svc.attachFile(ctx, file, mimetype, "", namespace, data)
 }
 
 // Prototype analysis example
