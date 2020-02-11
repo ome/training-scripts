@@ -301,7 +301,8 @@ def upload_csv_to_omero(ctx, file, dataset_id) {
     data = new DatasetData(new DatasetI(dataset_id, false))
     namespace = "training.demo"
     mimetype = "text/csv"
-    svc.attachFile(ctx, file, mimetype, "", namespace, data)
+    future = svc.attachFile(ctx, file, mimetype, "", namespace, data)
+    future.get()
 }
 
 // Prototype analysis example
@@ -377,4 +378,3 @@ save_summary_as_omero_table(ctx, table_rows, table_columns, dataset_id)
 // Close the connection
 gateway.disconnect()
 println "processing done"
-
