@@ -392,15 +392,15 @@ def save_summary_as_csv(file, rows, columns) {
     sb = new StringBuilder()
     try {
         stream = new PrintWriter(file)
-        l = table_columns.length
+        l = columns.length
         for (i = 0; i < l; i++) {
-            sb.append(table_columns[i].getName())
+            sb.append(columns[i].getName())
             if (i != (l-1)) {
                 sb.append(", ")
             }
         }
         sb.append("\n")
-        table_rows.each() { row ->
+        rows.each() { row ->
             size = row.size()
             for (i = 0; i < size; i++) {
                 value = row.get(i)
