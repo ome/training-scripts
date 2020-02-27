@@ -263,6 +263,8 @@ def create_table_columns(headings) {
     //populate the headings
     for (h = 0; h < size; h++) {
         heading = headings[h]
+        // OMERO.tables queries don't handle whitespace well
+        heading = heading.replace(" ", "_")
         if (heading.equals("Slice") || heading.equals("Dataset") || heading.equals("Label")) {
             table_columns[h] = new TableDataColumn(heading, h, String)
         } else {
