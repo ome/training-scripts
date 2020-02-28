@@ -243,6 +243,8 @@ def create_table_columns(headings) {
     //populate the headings
     for (h = 0; h < headings.size(); h++) {
         heading = headings[h]
+        // OMERO.tables queries don't handle whitespace well
+        heading = heading.replace(" ", "_")
         if (heading.equals("Slice") || heading.equals("Label")) {
             table_columns[h] = new TableDataColumn(heading, h, String)
         } else {
@@ -260,15 +262,15 @@ def save_summary_as_csv(file, rows, columns) {
     sb = new StringBuilder()
     try {
         stream = new PrintWriter(file)
-        l = table_columns.length
+        l = columns.length
         for (i = 0; i < l; i++) {
-            sb.append(table_columns[i].getName())
+            sb.append(columns[i].getName())
             if (i != (l-1)) {
                 sb.append(", ")
             }
         }
         sb.append("\n")
-        table_rows.each() { row ->
+        rows.each() { row ->
             size = row.size()
             for (i = 0; i < size; i++) {
                 value = row.get(i)
