@@ -1,7 +1,13 @@
+0.7.3 (February 2020)
+---------------------
+
+- Remove whitespace from table header [#82](https://github.com/ome/training-scripts/pull/82)
+- Fix bug when parsing result [#83](https://github.com/ome/training-scripts/pull/83)
+
 0.7.2 (February 2020)
 ---------------------
 
-- Add dialog to collect credentials to groovy script [#68](https://github.com/ome/training-scripts/pull/78)
+- Add dialog to collect credentials to groovy script [#78](https://github.com/ome/training-scripts/pull/78)
 - Attach analytical output using the gateway method [#80](https://github.com/ome/training-scripts/pull/80)
 
 0.7.1 (January 2020)
