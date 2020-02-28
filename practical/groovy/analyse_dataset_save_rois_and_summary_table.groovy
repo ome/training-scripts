@@ -224,7 +224,7 @@ def save_summary_as_omero_table(ctx, rows, columns, dataset_id) {
     data = new Object[columns.length][rows.size()]
     for (r = 0; r < rows.size(); r++) {
         row = rows.get(r)
-        for (i = 0; i < row.size(); i++) {
+        for (i = 0; i < columns.length; i++) {
             data[i][r] = row.get(i)
         }
     }
