@@ -8,6 +8,6 @@ They have been moved to following repositories:
  - The files under ``practical/javascript`` have been moved to [omero-guide-figure](https://github.com/ome/omero-guide-figure/tree/master/scripts).
  - The files under ``practical/matlab`` have been moved to [omero-guide-matlab](https://github.com/ome/omero-guide-matlab/tree/master/scripts).
  - The files under ``practical/orbit`` have been moved to [omero-guide-orbit](https://github.com/ome/omero-guide-orbit/tree/master/scripts).
-  - The files under ``practical/python`` have been moved to [omero-guide-python](https://github.com/ome/omero-guide-python/tree/master/scripts).
+ - The files under ``practical/python`` have been moved to [omero-guide-python](https://github.com/ome/omero-guide-python/tree/master/scripts).
 
 Under ``maintenance`` are the files used to manage the server between training sessions.
