@@ -203,8 +203,9 @@ def main(args):
     parser.add_argument('password')
     parser.add_argument('idr_obj', help=obj_help),
     parser.add_argument('local_obj', help=obj_help)
-    parser.add_argument('--ignore_datasets', action='store_true',
-                        help="Can ignore Dataset names IF Images have unique names in Project")
+    parser.add_argument(
+        '--ignore_datasets', action='store_true',
+        help="Can ignore Dataset names IF Images have unique names in Project")
     parser.add_argument('--server', default="workshop.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
