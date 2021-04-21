@@ -48,13 +48,21 @@ def get_idr_datasets_as_dict(project_id):
     return by_name
 
 
-def get_idr_images_as_dict(dataset_id):
+def get_idr_images_as_dict(obj_id, dtype="Dataset"):
     """Get a dict of {name: {id: 1}} for Images in IDR Dataset."""
-    url = webclient_api_url + "images/?id=%s" % dataset_id
-    images = session.get(url).json()['images']
     by_name = {}
-    for i in images:
-        by_name[i['name']] = i
+    if dtype == "Dataset":
+        dataset_ids = [obj_id]
+    elif dtype == "Project":
+        datasets_url = webclient_api_url + "datasets/?id=%s" % obj_id
+        datasets = session.get(datasets_url).json()['datasets']
+        dataset_ids = [d['id'] for d in datasets]
+        print('dataset_ids', dataset_ids)
+    for dataset_id in dataset_ids:
+        url = webclient_api_url + "images/?id=%s" % dataset_id
+        images = session.get(url).json()['images']
+        for i in images:
+            by_name[i['name']] = i
     return by_name
 
 
@@ -73,19 +81,22 @@ def get_idr_wells_as_grid(plate_id):
     return session.get(url).json()['grid']
 
 
-def annotate_project(conn, local_id, idr_id):
+def annotate_project(conn, local_id, idr_id, ignore_datasets=False):
     project = conn.getObject("Project", local_id)
-    idr_datasets = get_idr_datasets_as_dict(idr_id)
+    idr_images = {}
+    if ignore_datasets:
+        idr_images = get_idr_images_as_dict(idr_id, "Project")
+    else:
+        idr_datasets = get_idr_datasets_as_dict(idr_id)
     for dataset in project.listChildren():
-
         print("\n\nDataset", dataset.id, dataset.name)
-        # Get IDR Dataset with same name:
-        idr_dataset = idr_datasets.get(dataset.name)
-        if idr_dataset is None:
-            print("    NO IDR Dataset found!")
-            continue
-
-        idr_images = get_idr_images_as_dict(idr_dataset['id'])
+        if not ignore_datasets:
+            # Get IDR Dataset with same name:
+            idr_dataset = idr_datasets.get(dataset.name)
+            if idr_dataset is None:
+                print("    NO IDR Dataset found!")
+                continue
+            idr_images = get_idr_images_as_dict(idr_dataset['id'])
         for image in dataset.listChildren():
 
             print("Image", image.id, image.name)
@@ -138,7 +149,16 @@ def annotate_plate(conn, plate, idr_plate_id):
         add_new_map_anns(conn, well, url)
 
 
-def run(username, password, idr_obj, local_obj, host, port):
+def run(args):
+
+    username = args.username
+    password = args.password
+    idr_obj = args.idr_obj
+    local_obj = args.local_obj
+    host = args.server
+    port = args.port
+    ignore_datasets = args.ignore_datasets
+    print('ignore_datasets', ignore_datasets)
 
     conn = BlitzGateway(username, password, host=host, port=port)
     try:
@@ -155,7 +175,7 @@ def run(username, password, idr_obj, local_obj, host, port):
             return
         local_id = local_obj.split(':')[1]
         if dtype == 'Project':
-            annotate_project(conn, local_id, idr_id)
+            annotate_project(conn, local_id, idr_id, ignore_datasets)
         elif dtype == 'Plate':
             plate = conn.getObject('Plate', local_id)
             annotate_plate(conn, plate, idr_id)
@@ -183,12 +203,13 @@ def main(args):
     parser.add_argument('password')
     parser.add_argument('idr_obj', help=obj_help),
     parser.add_argument('local_obj', help=obj_help)
+    parser.add_argument('--ignore_datasets', action='store_true',
+                        help="Can ignore Dataset names IF Images have unique names in Project")
     parser.add_argument('--server', default="workshop.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.username, args.password, args.idr_obj, args.local_obj,
-        args.server, args.port)
+    run(args)
 
 
 if __name__ == '__main__':
