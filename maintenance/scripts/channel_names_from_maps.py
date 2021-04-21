@@ -27,7 +27,16 @@ NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 MAP_KEY = "Channels"
 
 
-def run(username, password, project_id, host, port):
+def run(args):
+
+    username = args.username
+    password = args.password
+    project_id = args.project_id
+    host = args.server
+    port = args.port
+    use_stain = args.use_stain
+
+    token_index = 0 if use_stain else 1
 
     conn = BlitzGateway(username, password, host=host, port=port)
     try:
@@ -51,7 +60,12 @@ def run(username, password, project_id, host, port):
                 print("Channels", channels)
                 name_dict = {}
                 for c, ch_name in enumerate(channels):
-                    name_dict[c + 1] = ch_name.split(":")[1]
+                    tokens = ch_name.split(":")
+                    if len(tokens) > token_index:
+                        label = tokens[token_index]
+                    else:
+                        label = ch_name
+                    name_dict[c + 1] = label
                 conn.setChannelNames("Image", [image.id], name_dict,
                                      channelCount=None)
     except Exception as exc:
@@ -65,11 +79,15 @@ def main(args):
     parser.add_argument('username')
     parser.add_argument('password')
     parser.add_argument('project_id')
+    parser.add_argument(
+        '--use_stain', action='store_true',
+        help="""Map Ann Channels are in the form stain:label, e.g. DAPI:DNA.
+If use_stain, channels will be named with the stain instead of the label""")
     parser.add_argument('--server', default="workshop.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.username, args.password, args.project_id, args.server, args.port)
+    run(args)
 
 
 if __name__ == '__main__':
