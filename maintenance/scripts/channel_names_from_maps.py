@@ -26,6 +26,7 @@ from omero.gateway import BlitzGateway, MapAnnotationWrapper
 NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 MAP_KEY = "Channels"
 
+
 def create_map_ann(conn, obj, key_value_data):
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setValue(key_value_data)
@@ -33,8 +34,8 @@ def create_map_ann(conn, obj, key_value_data):
     map_ann.save()
     obj.linkAnnotation(map_ann)
 
-def run(args):
 
+def run(args):
     username = args.username
     password = args.password
     project_id = args.project_id
@@ -71,7 +72,8 @@ def run(args):
                     tokens = ch_name.split(":")
                     if add_map_anns and len(tokens) > 1:
                         key_value_pairs.extend(
-                            [["Ch%s_Stain" % c, tokens[0]], ["Ch%s_Label" % c, tokens[1]]]
+                            [["Ch%s_Stain" % c, tokens[0]],
+                             ["Ch%s_Label" % c, tokens[1]]]
                         )
                     if len(tokens) > token_index:
                         label = tokens[token_index]
