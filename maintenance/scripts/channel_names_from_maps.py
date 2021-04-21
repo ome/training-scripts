@@ -20,12 +20,18 @@
 # Script uses map annotations on each Image to rename channels
 
 import argparse
-from omero.gateway import BlitzGateway
+from omero.gateway import BlitzGateway, MapAnnotationWrapper
 
 
 NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 MAP_KEY = "Channels"
 
+def create_map_ann(conn, obj, key_value_data):
+    map_ann = MapAnnotationWrapper(conn)
+    map_ann.setValue(key_value_data)
+    map_ann.setNs('from.channels.keyvaluepair')
+    map_ann.save()
+    obj.linkAnnotation(map_ann)
 
 def run(args):
 
@@ -35,6 +41,7 @@ def run(args):
     host = args.server
     port = args.port
     use_stain = args.use_stain
+    add_map_anns = args.add_map_anns
 
     token_index = 0 if use_stain else 1
 
@@ -59,8 +66,13 @@ def run(args):
                 channels = values[0].split("; ")
                 print("Channels", channels)
                 name_dict = {}
+                key_value_pairs = []
                 for c, ch_name in enumerate(channels):
                     tokens = ch_name.split(":")
+                    if add_map_anns and len(tokens) > 1:
+                        key_value_pairs.extend(
+                            [["Ch%s_Stain" % c, tokens[0]], ["Ch%s_Label" % c, tokens[1]]]
+                        )
                     if len(tokens) > token_index:
                         label = tokens[token_index]
                     else:
@@ -68,6 +80,8 @@ def run(args):
                     name_dict[c + 1] = label
                 conn.setChannelNames("Image", [image.id], name_dict,
                                      channelCount=None)
+                if len(key_value_pairs) > 0:
+                    create_map_ann(conn, image, key_value_pairs)
     except Exception as exc:
         print("Error while changing names: %s" % str(exc))
     finally:
@@ -83,6 +97,10 @@ def main(args):
         '--use_stain', action='store_true',
         help="""Map Ann Channels are in the form stain:label, e.g. DAPI:DNA.
 If use_stain, channels will be named with the stain instead of the label""")
+    parser.add_argument(
+        '--add_map_anns', action='store_true',
+        help="""Create new Map Anns of the form
+Ch1_Stain:DAPI, Ch1_Label:DNA etc using the Channels Key-Value Pair""")
     parser.add_argument('--server', default="workshop.openmicroscopy.org",
                         help="OMERO server hostname")
     parser.add_argument('--port', default=4064, help="OMERO server port")
