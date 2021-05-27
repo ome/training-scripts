@@ -15,7 +15,7 @@ https://docs.google.com/document/d/18cLSvUKVn8jEp7KSW7e48NvuxHT_mp3tyh98loTTOYY/
 For other users, you will need to have Docker installed.
 This container uses Aspera to download the data from EBI:
 
-	$ docker run --rm -v /tmp:/data imagedata/download idr0021 . /data/
+	$ docker run --rm -v /tmp:/data imagedata/download idr0079 . /data/
 
 Clone https://github.com/IDR/idr0079-hartmann-lateralline and edit
 ```experimentA/idr0079-experimentA-filePaths.tsv```
@@ -53,7 +53,7 @@ We can now use the map annotations to rename channels on all images.
 Run the [channel_names_from_maps.py](../scripts/channel_names_from_maps.py)
 script on the local data, using the local Project ID.
 We are using the `stain` to name channels, e.g. `NLStdTomato`, and also adding
-map annotations for inidividual channels to use for label creation in OMERO.figure:
+map annotations for individual channels to use for label creation in OMERO.figure:
 
     $ python channel_names_from_maps.py username password 1301 --server localhost --use_stain --add_map_anns
 
@@ -101,3 +101,4 @@ We then create an OMERO.table on each Image that has ROIs added above:
 Use the optional `--name NAME` to run on a single named Image:
 
     $ python scripts/csv_to_roi_table
+
