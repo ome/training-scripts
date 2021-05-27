@@ -95,7 +95,6 @@ def set_for_users_by_dataset_name(password, target, host, port, value, unit):
                 print("No dataset with name %s found" % target)
                 continue
 
-            dataset_obj = dataset[0]
             datasetId = dataset[0].getId().getValue()
             print('dataset', datasetId)
             for image in conn.getObject("Dataset", datasetId).listChildren():
@@ -104,6 +103,7 @@ def set_for_users_by_dataset_name(password, target, host, port, value, unit):
             print("Error during calibration: %s" % str(exc))
         finally:
             conn.close()
+
 
 def run(args):
     password = args.password
@@ -116,8 +116,9 @@ def run(args):
     # Handle target is e.g. "Project:1"
     if ':' in target:
         try:
-            target_id = int(target.split(':')[1])
-            set_by_target_id(password, args.user, target, host, port, value, unit)
+            int(target.split(':')[1])
+            set_by_target_id(password, args.user, target, host, port,
+                             value, unit)
             return
         except ValueError:
             print("Not valid Project or Dataset ID")
@@ -125,26 +126,28 @@ def run(args):
     # Assume that target was a Dataset Name
     set_for_users_by_dataset_name(password, target, host, port, value, unit)
 
+
 def main(args):
     """
-    The script sets Pixels Sizes in 2 use-cases. 
-    Each needs a pixel size 'value' eg. 0.85 for X and Y or '0.85x0.2' for XY and Z
+    The script sets Pixels Sizes in 2 use-cases.
+    Each needs a pixel size 'value' eg. 0.85 for X and Y or
+    '0.85x0.2' for XY and Z.
     Units are optional. Default is "MICROMETER".
 
     1) For many users 'user-1...user-50' etc with a NAMED Dataset
-    $ calibrate_images.py [password] [dataset_name] [value] --server [server]
+    $ calibrate_images.py [password] [dataset_name] [value] --server [host]
 
     2) For a single user, where the target is Project:ID or Dataset:ID
-    $ calibrate_images.py [password] [target] [value] --user [username] --server [server]
+    calibrate_images.py [pass] [target] [value] --user [name] --server [host]
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('password')
     parser.add_argument(
         'target',
-        help="Dataset name (for many users) or target Project/Dataset/Image:ID")
+        help="Dataset name (for many users) or Project/Dataset/Image:ID")
     parser.add_argument('value', help="Pixel size value")
     parser.add_argument('--unit', default="MICROMETER",
-        help="Unit from omero.")
+                        help="Unit from omero.")
     parser.add_argument('--user', help="Username ONLY if single user")
     parser.add_argument('--server', default="localhost",
                         help="OMERO server hostname")

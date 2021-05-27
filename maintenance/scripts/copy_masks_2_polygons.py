@@ -1,9 +1,4 @@
 
-import omero
-from omero.gateway import BlitzGateway
-from omero.rtypes import rint, rstring
-
-from skimage import morphology
 from skimage import measure
 
 import argparse
@@ -12,10 +7,10 @@ import numpy as np
 
 import omero
 import omero.clients
+from omero.gateway import BlitzGateway
 from omero.rtypes import unwrap, rint, rstring
 from omero.cli import cli_login
 from omero.api import RoiOptions
-from omero.gateway import BlitzGateway
 
 
 def mask_to_binim_yx(mask):
@@ -41,7 +36,7 @@ def mask_to_binim_yx(mask):
     mask_packed = mask.getBytes()
     # convert bytearray into something we can use
     intarray = np.fromstring(mask_packed, dtype=np.uint8)
-    binarray = np.unpackbits(intarray)   #.astype(self.dtype)
+    binarray = np.unpackbits(intarray)
     # truncate and reshape
     binarray = np.reshape(binarray[: (w * h)], (h, w))
 
@@ -76,7 +71,7 @@ def add_polygon(roi, contour, x_offset=0, y_offset=0, z=None, t=None):
     # points in contour are adjacent pixels, which is too verbose
     # take every nth point
     for count, xy in enumerate(contour):
-        if count%stride == 0:
+        if count % stride == 0:
             coords.append(xy)
     if len(coords) < 2:
         return
@@ -166,11 +161,14 @@ def main(argv):
 
             offset += PAGE_SIZE
             opts.offset = rint(offset)
-            result = roi_service.findByImage(args.imageid, opts, conn.SERVICE_OPTS)
+            result = roi_service.findByImage(args.imageid, opts,
+                                             conn.SERVICE_OPTS)
 
         conn2.close()
 
+
 if __name__ == '__main__':
     # First, login to source OMERO $ omero login
-    # Copy to target server: $ python copy_masks_2_polygons.py username password server FROM_IMAGE TO_IMAGE
+    # Copy to target server, with Image IDs
+    # $ python copy_masks_2_polygons.py user pass server FROM_IID TO_IID
     main(sys.argv[1:])
