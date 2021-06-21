@@ -21,6 +21,7 @@
 
 import argparse
 import omero
+from omero.cli import cli_login
 from omero.rtypes import rstring
 import omero.grid
 from omero.gateway import BlitzGateway
@@ -29,11 +30,8 @@ from omero.gateway import BlitzGateway
 NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 
 
-def run(username, password, plate_id, host, port):
+def run(conn, plate_id):
 
-    conn = BlitzGateway(username, password, host=host, port=port)
-    try:
-        conn.connect()
         query_service = conn.getQueryService()
 
         # Create a name for the Original File
@@ -94,10 +92,10 @@ def run(username, password, plate_id, host, port):
 
         print("Adding data: ", len(data))
         table.addData(data)
-        table.close()
 
         print("table closed...")
         orig_file = table.getOriginalFile()
+        table.close()
         fileAnn = omero.model.FileAnnotationI()
         fileAnn.ns = rstring(NAMESPACE)
         fileAnn.setFile(omero.model.OriginalFileI(orig_file.id.val, False))
@@ -109,22 +107,14 @@ def run(username, password, plate_id, host, port):
         print("save link...")
         conn.getUpdateService().saveAndReturnObject(link)
 
-    except Exception as exc:
-        print("Error while changing names: %s" % str(exc))
-    finally:
-        conn.close()
-
 
 def main(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument('username')
-    parser.add_argument('password')
     parser.add_argument('plate_id')
-    parser.add_argument('--server', default="workshop.openmicroscopy.org",
-                        help="OMERO server hostname")
-    parser.add_argument('--port', default=4064, help="OMERO server port")
     args = parser.parse_args(args)
-    run(args.username, args.password, args.plate_id, args.server, args.port)
+    with cli_login() as cli:
+        conn = BlitzGateway(client_obj=cli._client)
+        run(conn, args.plate_id)
 
 
 if __name__ == '__main__':
