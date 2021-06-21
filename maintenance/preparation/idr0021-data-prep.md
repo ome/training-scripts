@@ -58,42 +58,29 @@ script on the local data.
 Analyse in Fiji and save ROIs in OMERO
 ======================================
 
-Run [analyse_particles_for_another_user.jy](../../practical/jython/analyse_particles_for_another_user.jy) in Fiji with the
-appropriate credentials on a Dataset at a time, updating the dataset_id each time.
+Run [idr0021.groovy](https://github.com/ome/omero-guide-fiji/blob/master/scripts/groovy/idr0021.groovy) in Fiji with the
+appropriate credentials on the `idr0021` Project.
 
-This will Analyse Particles and create ROIs on all channels of each Image.
+This will Analyse Particles and create ROIs on all channels of each Image, using Channel names to pick the correct
+Channel for each Image.
 
-This script also creates a summary OMERO.table one row per image containing measurements results
+This script also creates a summary OMERO.table on the `idr0021` Project, named `Summary_from_Fiji`.
+This can be seen under the `Attachments` tab for the Project, with an `eye` icon that will open the table.
+The table has one row per image containing measurements results
 e.g. the bounding box of the biggest ROI.
-The table is linked to the Project. The output is also saved as a CSV file and linked to the Project.
-
-
-Create Map Annotations and Table from ROIs
-==========================================
-
-First we need to delete an outlier Image that causes
-[problems in OMERO.parade](https://github.com/ome/omero-parade/issues/26). Delete
-```NEDD1ab_NEDD1141_I_012_SIR```. This image is the only Z-stack and no blobs are found
-so the Polygon created covers the whole plane.
-
-The [batch_roi_export_to_table.py](../../practical/python/server/batch_roi_export_to_table.py) script needs to be installed on the server. Run this from the webclient, selecting the ```idr0021``` Project to create a single Table on this Project, that has rows for all Images in the Project.
-
-This script uses the Channel Names to pick a Channel that matches the Dataset name
-for each Image. This is the Channel that needs to be analysed and is used to filter Shapes created
-by Fiji.
-
-This script also creates Map annotations and can create a CSV (could be shown in workshop).
-Options for these are handled by checkboxes at the bottom of the script dialog.
+The output is also saved as a CSV file and linked to the Project.
 
 
 Delete ROIs and Map annotations for 1 Dataset
 =============================================
 
-Edit and run the following scripts on the first Dataset
-to remove Map Annotations and ROIs from all Images in that Dataset so we can show them being
-created in the workshop:
+If you wish to remove ROIs from all Images in a Dataset so we can show them being
+created in the workshop use the Dataset ID:
 
- - [delete_annotations.py](../scripts/delete_annotations.py)
+	$ omero delete Dataset/Image/Roi:123
+
+If you wish to do this for all users, using the Dataset name for each user, use:
+
  - [delete_ROIs.py](../scripts/delete_ROIs.py)
 
 The data is now ready to be presented in a workshop and analysed with ```OMERO.parade```.
