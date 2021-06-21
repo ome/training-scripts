@@ -246,12 +246,14 @@ def save_table(conn, images, image_data, script_params, project=None):
     data = [img_column] + cols
     table.initialize(data)
     table.addData(data)
-    table.close()
 
     if project is None:
         log("No Project found to link table")
     else:
         link_table(conn, table, project)
+
+    # close after table.getOriginalFile()
+    table.close()
 
 
 def save_map_annotations(conn, images, image_data, script_params):
