@@ -96,9 +96,17 @@ and import this:
 
 	$ path/to/omero import INMAC384-DAPI-CM-eGFP_59223_1
 
-We need to populate an OMERO.table on the Plate to demonstrate filtering with
-OMERO.parade. For that we will use the [channel_minmax_to_table.py](../scripts/channel_minmax_to_table.py). Run the command line script with the Plate ID:
+Alternatively, you can copy a Plate from IDR, copying only the first Z and T index of each Image, using
+[idr_copy_plate.py](../scripts/idr_copy_plate.py). This will ask for login details of the server where you 
+wish to copy the Plate. IDR [Plate 422](http://idr.openmicroscopy.org/webclient/?show=plate-422) is a
+suitable Plate:
 
-	$ python maintenance/scripts/channel_minmax_to_table.py username password --server server.address plate_id
+	$ python maintenance/scripts/idr_copy_plate.py 422
+
+We need to populate an OMERO.table on the Plate to demonstrate filtering with
+OMERO.parade. For that we will use the [channel_minmax_to_table.py](../scripts/channel_minmax_to_table.py).
+Run the command line script with the Plate ID:
+
+	$ python maintenance/scripts/channel_minmax_to_table.py PLATE_ID
 
 This should create an Annotation on the Plate called ``Channels_Min_Max_Intensity``.
