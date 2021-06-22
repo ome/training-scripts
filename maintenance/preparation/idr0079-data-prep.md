@@ -77,28 +77,29 @@ Copy Masks to Polygons
 
 The idr0079 images in IDR have Masks, but we want to use Polygons in OMERO.figure.
 Use the [copy_masks_2_polygons.py](../scripts/copy_masks_2_polygons.py) script to
-convert. NB: requires `skimage`. We want to copy to each of the 5-star rated
-images above, in turn, from the ID of the corresponding Image to the local Image ID
+convert. NB: requires `skimage`. We can process an Image or a Dataset at a time:
 
     # login to IDR
     $ omero login
-    # copy to local server
-    $ python copy_masks_2_polygons.py username password server FROM_IMAGE_ID TO_IMAGE_ID
+
+    # copy from IDR e.g Dataset:1 to local server TARGET e.g. Dataset:2
+    $ python copy_masks_2_polygons.py username password server Dataset:1 Dataset:2
 
 Create OMERO.tables
 ===================
 
 We use the tsv files in https://github.com/IDR/idr0079-hartmann-lateralline to create
 an OMERO.table on the Project, with one row per Image, summarising the stats for all the
-ROIs in that Image. This uses [csv_to_table_on_project.py](https://github.com/will-moore/idr0079-hartmann-lateralline/blob/csv_to_tables_scripts/scripts/csv_to_table_on_project.py)
+ROIs in that Image. This uses [idr0079_csv_to_table_on_project.py](../scripts/idr0079_csv_to_table_on_project.py)
 
-Clone the github repo, then:
+Clone the `idr0079-hartmann-lateralline` github repo, then:
 
     $ cd idr0079-hartmann-lateralline
-    $ python scripts/csv_to_table_on_project.py
+    $ python /path/to/training-scripts/maintenance/scripts/csv_to_table_on_project.py
 
 We then create an OMERO.table on each Image that has ROIs added above:
 Use the optional `--name NAME` to run on a single named Image:
 
-    $ python scripts/csv_to_roi_table
-
+    $ cd idr0079-hartmann-lateralline
+    # process ALL raw images (use --name NAME to process 1 image)
+    $ python scripts/csv_to_roi_table.py
