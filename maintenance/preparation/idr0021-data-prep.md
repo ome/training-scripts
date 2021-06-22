@@ -58,6 +58,9 @@ script on the local data.
 Analyse in Fiji and save ROIs in OMERO
 ======================================
 
+First we need to delete an Image that is the only Z-stack and is analyzed differently from the others:
+```NEDD1ab_NEDD1141_I_012_SIR.dv``` in Dataset ```NEDD1-C1```.
+
 Run [idr0021.groovy](https://github.com/ome/omero-guide-fiji/blob/master/scripts/groovy/idr0021.groovy) in Fiji with the
 appropriate credentials on the `idr0021` Project.
 
