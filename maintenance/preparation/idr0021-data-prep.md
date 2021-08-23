@@ -80,7 +80,7 @@ Delete ROIs and Map annotations for 1 Dataset
 If you wish to remove ROIs from all Images in a Dataset so we can show them being
 created in the workshop use the Dataset ID:
 
-	$ omero delete Dataset/Image/Roi:123
+	$ omero delete Dataset/Image/Roi:DATASET_ID
 
 If you wish to do this for all users, using the Dataset name for each user, use:
 
