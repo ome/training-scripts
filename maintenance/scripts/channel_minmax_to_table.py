@@ -32,86 +32,86 @@ NAMESPACE = "openmicroscopy.org/omero/bulk_annotations"
 
 def run(conn, plate_id):
 
-        query_service = conn.getQueryService()
+    query_service = conn.getQueryService()
 
-        # Create a name for the Original File
-        tablename = "Channels_Min_Max_Intensity"
+    # Create a name for the Original File
+    tablename = "Channels_Min_Max_Intensity"
 
-        # Go through all wells in Plate, adding row for each
-        plate = conn.getObject("Plate", plate_id)
-        wellIds = []
-        rowData = []
-        chCount = 0
-        for well in plate._listChildren():
-            well = omero.gateway.WellWrapper(conn, well)
-            image = well.getImage()
-            if image is None:
-                continue
-            wellIds.append(well.id)
-            chCount = image.getSizeC()
-            row = []
-            print("well, image", well.id, image.id)
+    # Go through all wells in Plate, adding row for each
+    plate = conn.getObject("Plate", plate_id)
+    wellIds = []
+    rowData = []
+    chCount = 0
+    for well in plate._listChildren():
+        well = omero.gateway.WellWrapper(conn, well)
+        image = well.getImage()
+        if image is None:
+            continue
+        wellIds.append(well.id)
+        chCount = image.getSizeC()
+        row = []
+        print("well, image", well.id, image.id)
 
-            params = omero.sys.ParametersI()
-            params.addId(image.getPixelsId())
-            query = """select pixels from Pixels as pixels
-                       left outer join fetch pixels.channels as channels
-                       join fetch channels.statsInfo where pixels.id=:id"""
-            result = query_service.findAllByQuery(query, params)
+        params = omero.sys.ParametersI()
+        params.addId(image.getPixelsId())
+        query = """select pixels from Pixels as pixels
+                    left outer join fetch pixels.channels as channels
+                    join fetch channels.statsInfo where pixels.id=:id"""
+        result = query_service.findAllByQuery(query, params)
 
-            row = []
-            for pix in result:
-                for ch in pix.iterateChannels():
-                    si = ch.statsInfo
-                    row.extend([si.globalMin.val, si.globalMax.val])
-            rowData.append(row)
+        row = []
+        for pix in result:
+            for ch in pix.iterateChannels():
+                si = ch.statsInfo
+                row.extend([si.globalMin.val, si.globalMax.val])
+        rowData.append(row)
 
-        print('wellIds', wellIds)
-        print('rowData', rowData)
+    print('wellIds', wellIds)
+    print('rowData', rowData)
 
-        # Now we know how many channels, we can make the table
-        col1 = omero.grid.WellColumn('Well', '', [])
-        columns = [col1]
-        colNames = []
-        for chIdx in range(chCount):
-            for name in ['Ch%sMin' % chIdx, 'Ch%sMax' % chIdx]:
-                colNames.append(name)
-                columns.append(omero.grid.LongColumn(name, '', []))
+    # Now we know how many channels, we can make the table
+    col1 = omero.grid.WellColumn('Well', '', [])
+    columns = [col1]
+    colNames = []
+    for chIdx in range(chCount):
+        for name in ['Ch%sMin' % chIdx, 'Ch%sMax' % chIdx]:
+            colNames.append(name)
+            columns.append(omero.grid.LongColumn(name, '', []))
 
-        table = conn.c.sf.sharedResources().newTable(1, tablename)
-        orig_file = None
-        try:
-            table.initialize(columns)
+    table = conn.c.sf.sharedResources().newTable(1, tablename)
+    orig_file = None
+    try:
+        table.initialize(columns)
 
-            # Add Data from above
-            data1 = omero.grid.WellColumn('Well', '', wellIds)
-            data = [data1]
-            for colIdx in range(len(rowData[0])):
-                colData = [r[colIdx] for r in rowData]
-                print("colData", len(colData))
-                name = colNames[colIdx]
-                data.append(omero.grid.LongColumn(name, '', colData))
+        # Add Data from above
+        data1 = omero.grid.WellColumn('Well', '', wellIds)
+        data = [data1]
+        for colIdx in range(len(rowData[0])):
+            colData = [r[colIdx] for r in rowData]
+            print("colData", len(colData))
+            name = colNames[colIdx]
+            data.append(omero.grid.LongColumn(name, '', colData))
 
-            print("Adding data: ", len(data))
-            table.addData(data)
+        print("Adding data: ", len(data))
+        table.addData(data)
 
-            print("table closed...")
-            orig_file = table.getOriginalFile()
-        finally:
-            table.close()
+        print("table closed...")
+        orig_file = table.getOriginalFile()
+    finally:
+        table.close()
 
-        if orig_file is None:
-            print("Table creation failed")
-        fileAnn = omero.model.FileAnnotationI()
-        fileAnn.ns = rstring(NAMESPACE)
-        fileAnn.setFile(omero.model.OriginalFileI(orig_file.id.val, False))
-        fileAnn = conn.getUpdateService().saveAndReturnObject(fileAnn)
-        link = omero.model.PlateAnnotationLinkI()
-        link.setParent(omero.model.PlateI(plate_id, False))
-        link.setChild(omero.model.FileAnnotationI(fileAnn.id.val, False))
+    if orig_file is None:
+        print("Table creation failed")
+    fileAnn = omero.model.FileAnnotationI()
+    fileAnn.ns = rstring(NAMESPACE)
+    fileAnn.setFile(omero.model.OriginalFileI(orig_file.id.val, False))
+    fileAnn = conn.getUpdateService().saveAndReturnObject(fileAnn)
+    link = omero.model.PlateAnnotationLinkI()
+    link.setParent(omero.model.PlateI(plate_id, False))
+    link.setChild(omero.model.FileAnnotationI(fileAnn.id.val, False))
 
-        print("save link...")
-        conn.getUpdateService().saveAndReturnObject(link)
+    print("save link...")
+    conn.getUpdateService().saveAndReturnObject(link)
 
 
 def main(args):
