@@ -79,23 +79,29 @@ def run(conn, plate_id):
                 columns.append(omero.grid.LongColumn(name, '', []))
 
         table = conn.c.sf.sharedResources().newTable(1, tablename)
-        table.initialize(columns)
+        orig_file = None
+        try:
+            table.initialize(columns)
 
-        # Add Data from above
-        data1 = omero.grid.WellColumn('Well', '', wellIds)
-        data = [data1]
-        for colIdx in range(len(rowData[0])):
-            colData = [r[colIdx] for r in rowData]
-            print("colData", len(colData))
-            name = colNames[colIdx]
-            data.append(omero.grid.LongColumn(name, '', colData))
+            # Add Data from above
+            data1 = omero.grid.WellColumn('Well', '', wellIds)
+            data = [data1]
+            for colIdx in range(len(rowData[0])):
+                colData = [r[colIdx] for r in rowData]
+                print("colData", len(colData))
+                name = colNames[colIdx]
+                data.append(omero.grid.LongColumn(name, '', colData))
 
-        print("Adding data: ", len(data))
-        table.addData(data)
+            print("Adding data: ", len(data))
+            table.addData(data)
 
-        print("table closed...")
-        orig_file = table.getOriginalFile()
-        table.close()
+            print("table closed...")
+            orig_file = table.getOriginalFile()
+        finally:
+            table.close()
+
+        if orig_file is None:
+            print("Table creation failed")
         fileAnn = omero.model.FileAnnotationI()
         fileAnn.ns = rstring(NAMESPACE)
         fileAnn.setFile(omero.model.OriginalFileI(orig_file.id.val, False))
