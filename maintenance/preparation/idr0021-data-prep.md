@@ -70,7 +70,7 @@ Channel for each Image.
 This script also creates a summary OMERO.table on the `idr0021` Project, named `Summary_from_Fiji`.
 This can be seen under the `Attachments` tab for the Project, with an `eye` icon that will open the table.
 The table has one row per image containing measurements results
-e.g. the bounding box of the biggest ROI.
+e.g. the area of the bounding box of the biggest ROI.
 The output is also saved as a CSV file and linked to the Project.
 
 
