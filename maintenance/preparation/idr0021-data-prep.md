@@ -51,8 +51,8 @@ Rename Channels from Map Annotations
 ====================================
 
 We can now use the map annotations to rename channels on all images.
-Edit the ```project_id``` and run the [channel_names_from_maps.py](../scripts/channel_names_from_maps.py)
-script on the local data.
+Run the [channel_names_from_maps.py](../scripts/channel_names_from_maps.py)
+script on the local data, passing in the `Project ID`.
 
 
 Analyse in Fiji and save ROIs in OMERO
