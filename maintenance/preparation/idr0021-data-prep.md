@@ -43,8 +43,8 @@ In the webclient, create a Project 'idr0021' and add the 10 new Datasets created
 Add Map Annotations from IDR
 ============================
 
-Edit the script [idr_get_map_annotations.py](../scripts/idr_get_map_annotations.py) with the ID of the 'idr0021' Project created
-above. This will get map annotations from all images in the [idr0021](https://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
+Run the script [idr_get_map_annotations.py](../scripts/idr_get_map_annotations.py) with the ID of the 'idr0021' Project created
+above. See the script for usage details. This will get map annotations from all images in the [idr0021](https://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
 
 
 Rename Channels from Map Annotations
