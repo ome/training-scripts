@@ -69,8 +69,9 @@ Set Pixel Sizes
 ==========================================
 
 See the commands used for IDR at [idr0079_voxel_sizes.sh]
-(https://github.com/will-moore/idr0079-hartmann-lateralline/blob/voxel_sizes/scripts/idr0079_voxel_sizes.sh)
-and run these commands on the local server, using the appropriate Dataset IDs.
+(https://github.com/IDR/idr0079-hartmann-lateralline/blob/master/scripts/idr0079_voxel_sizes.sh)
+and run these commands on the local server, using the appropriate Dataset IDs, at least
+for the Datasets you wish to use.
 
 Copy Masks to Polygons
 ======================
@@ -89,7 +90,7 @@ Create OMERO.tables
 ===================
 
 We use the tsv files in https://github.com/IDR/idr0079-hartmann-lateralline to create
-an OMERO.table on the Project, with one row per Image, summarising the stats for all the
+an OMERO.table on the Project (for use with OMERO.parade), with one row per Image, summarising the stats for all the
 ROIs in that Image. This uses [idr0079_csv_to_table_on_project.py](../scripts/idr0079_csv_to_table_on_project.py)
 
 Clone the `idr0079-hartmann-lateralline` github repo, then:
@@ -97,9 +98,10 @@ Clone the `idr0079-hartmann-lateralline` github repo, then:
     $ cd idr0079-hartmann-lateralline
     $ python /path/to/training-scripts/maintenance/scripts/csv_to_table_on_project.py
 
-We then create an OMERO.table on each Image that has ROIs added above:
+We then create an OMERO.table on each Image that has ROIs added above, using
+the `_other_measurements.tsv` table for each Image.
 Use the optional `--name NAME` to run on a single named Image:
 
     $ cd idr0079-hartmann-lateralline
     # process ALL raw images (use --name NAME to process 1 image)
-    $ python scripts/csv_to_roi_table.py
+    $ python scripts/csv_to_roi_table.py _other_measurements.tsv
