@@ -30,7 +30,7 @@ def run(name, password, dataset_name, dataset_id, host, port):
         conn.connect()
         roi_service = conn.getRoiService()
         datasets = []
-        if dataset_id >= 0:
+        if int(dataset_id) >= 0:
             datasets.append(conn.getObject("Dataset", dataset_id))
         else:
             datasets = conn.getObjects("Dataset",

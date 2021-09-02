@@ -208,8 +208,8 @@ def create_omero_figure(conn, images, plots):
             panel_x = (col * (panel_height + spacing)) + margin
             j = get_panel_json(image, panel_x, panel_y,
                                panel_width, panel_height, the_t)
-            # Add timestamp in 'secs' to top-left of each movie frame
-            j['labels'] = [{"time": "secs",
+            # Add timestamp in 'milliseconds' to top-left of each movie frame
+            j['labels'] = [{"time": "milliseconds",
                             "size": "12",
                             "position": "topleft",
                             "color": "FFFFFF"}]
