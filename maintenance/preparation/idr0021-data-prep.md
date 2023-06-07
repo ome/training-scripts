@@ -43,57 +43,47 @@ In the webclient, create a Project 'idr0021' and add the 10 new Datasets created
 Add Map Annotations from IDR
 ============================
 
-Edit the script [idr_get_map_annotations.py](../scripts/idr_get_map_annotations.py) with the ID of the 'idr0021' Project created
-above. This will get map annotations from all images in the [idr0021](https://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
+Run the script [idr_get_map_annotations.py](../scripts/idr_get_map_annotations.py) with the ID of the 'idr0021' Project created
+above. See the script for usage details. This will get map annotations from all images in the [idr0021](https://idr.openmicroscopy.org/webclient/?show=project-51) and create identical map annotations on the corresponding images.
 
 
 Rename Channels from Map Annotations
 ====================================
 
 We can now use the map annotations to rename channels on all images.
-Edit the ```project_id``` and run the [channel_names_from_maps.py](../scripts/channel_names_from_maps.py)
-script on the local data.
+Run the [channel_names_from_maps.py](../scripts/channel_names_from_maps.py)
+script on the local data, passing in the `Project ID`.
 
 
 Analyse in Fiji and save ROIs in OMERO
 ======================================
 
-Run [analyse_particles_for_another_user.jy](../../practical/jython/analyse_particles_for_another_user.jy) in Fiji with the
-appropriate credentials on a Dataset at a time, updating the dataset_id each time.
+First we need to delete an Image that is the only Z-stack and is analyzed differently from the others:
+```NEDD1ab_NEDD1141_I_012_SIR.dv``` in Dataset ```NEDD1-C1```.
 
-This will Analyse Particles and create ROIs on all channels of each Image.
+Run [idr0021.groovy](https://github.com/ome/omero-guide-fiji/blob/master/scripts/groovy/idr0021.groovy) in Fiji with the
+appropriate credentials on the `idr0021` Project.
 
-This script also creates a summary OMERO.table one row per image containing measurements results
-e.g. the bounding box of the biggest ROI.
-The table is linked to the Project. The output is also saved as a CSV file and linked to the Project.
+This will Analyse Particles and create ROIs on all channels of each Image, using Channel names to pick the correct
+Channel for each Image.
 
-
-Create Map Annotations and Table from ROIs
-==========================================
-
-First we need to delete an outlier Image that causes
-[problems in OMERO.parade](https://github.com/ome/omero-parade/issues/26). Delete
-```NEDD1ab_NEDD1141_I_012_SIR```. This image is the only Z-stack and no blobs are found
-so the Polygon created covers the whole plane.
-
-The [batch_roi_export_to_table.py](../../practical/python/server/batch_roi_export_to_table.py) script needs to be installed on the server. Run this from the webclient, selecting the ```idr0021``` Project to create a single Table on this Project, that has rows for all Images in the Project.
-
-This script uses the Channel Names to pick a Channel that matches the Dataset name
-for each Image. This is the Channel that needs to be analysed and is used to filter Shapes created
-by Fiji.
-
-This script also creates Map annotations and can create a CSV (could be shown in workshop).
-Options for these are handled by checkboxes at the bottom of the script dialog.
+This script also creates a summary OMERO.table on the `idr0021` Project, named `Summary_from_Fiji`.
+This can be seen under the `Attachments` tab for the Project, with an `eye` icon that will open the table.
+The table has one row per image containing measurements results
+e.g. the area of the bounding box of the biggest ROI.
+The output is also saved as a CSV file and linked to the Project.
 
 
 Delete ROIs and Map annotations for 1 Dataset
 =============================================
 
-Edit and run the following scripts on the first Dataset
-to remove Map Annotations and ROIs from all Images in that Dataset so we can show them being
-created in the workshop:
+If you wish to remove ROIs from all Images in a Dataset so we can show them being
+created in the workshop use the Dataset ID:
 
- - [delete_annotations.py](../scripts/delete_annotations.py)
+	$ omero delete Dataset/Image/Roi:DATASET_ID
+
+If you wish to do this for all users, using the Dataset name for each user, use:
+
  - [delete_ROIs.py](../scripts/delete_ROIs.py)
 
 The data is now ready to be presented in a workshop and analysed with ```OMERO.parade```.
@@ -109,9 +99,17 @@ and import this:
 
 	$ path/to/omero import INMAC384-DAPI-CM-eGFP_59223_1
 
-We need to populate an OMERO.table on the Plate to demonstrate filtering with
-OMERO.parade. For that we will use the [channel_minmax_to_table.py](../scripts/channel_minmax_to_table.py). Run the command line script with the Plate ID:
+Alternatively, you can copy a Plate from IDR, copying only the first Z and T index of each Image, using
+[idr_copy_plate.py](../scripts/idr_copy_plate.py). This will ask for login details of the server where you 
+wish to copy the Plate. IDR [Plate 422](http://idr.openmicroscopy.org/webclient/?show=plate-422) is a
+suitable Plate:
 
-	$ python maintenance/scripts/channel_minmax_to_table.py username password --server server.address plate_id
+	$ python maintenance/scripts/idr_copy_plate.py 422
+
+We need to populate an OMERO.table on the Plate to demonstrate filtering with
+OMERO.parade. For that we will use the [channel_minmax_to_table.py](../scripts/channel_minmax_to_table.py).
+Run the command line script with the Plate ID:
+
+	$ python maintenance/scripts/channel_minmax_to_table.py PLATE_ID
 
 This should create an Annotation on the Plate called ``Channels_Min_Max_Intensity``.

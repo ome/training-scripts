@@ -27,6 +27,7 @@ Usage: $ python idr_copy_plate.py username password idr_plate_id
 
 import argparse
 import omero
+from omero.cli import cli_login
 from omero.gateway import BlitzGateway
 from omero.rtypes import rint, rstring
 from omero.model import PlateI
@@ -69,12 +70,8 @@ def add_images_to_plate(update_service, plate, images, row, column):
         update_service.saveObject(ws)
 
 
-def run(username, password, plate_id, host, port):
+def run(conn, plate_id):
     """Run the script."""
-    # Create connection to training server
-    conn = BlitzGateway(username, password, host=host, port=port)
-    conn.connect()
-
     # Create connection to IDR server
     # NB: conn.connect() not working on IDR. Do it like this
     idr_client = omero.client(host="idr.openmicroscopy.org", port=4064)
@@ -104,21 +101,19 @@ def run(username, password, plate_id, host, port):
         add_images_to_plate(update_service, plate, new_imgs,
                             idr_well.row, idr_well.column)
 
-    conn.close()
-    idr_conn.close()
+    print("Created Plate:", plate.id.val)
 
 
 def main(args):
     """Entry point. Parse args and run."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('username')
-    parser.add_argument('password')
     parser.add_argument('plate_id')
-    parser.add_argument('--server', default="workshop.openmicroscopy.org",
-                        help="OMERO server hostname")
-    parser.add_argument('--port', default=4064, help="OMERO server port")
+
     args = parser.parse_args(args)
-    run(args.username, args.password, args.plate_id, args.server, args.port)
+
+    with cli_login() as cli:
+        conn = BlitzGateway(client_obj=cli._client)
+        run(conn, args.plate_id)
 
 
 if __name__ == '__main__':
