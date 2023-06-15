@@ -94,10 +94,11 @@ def run(plate_id):
 
         print("Adding data: ", len(data))
         table.addData(data)
+
+        # get original file before closing...
+        orig_file = table.getOriginalFile()
         table.close()
 
-        print("table closed...")
-        orig_file = table.getOriginalFile()
         fileAnn = omero.model.FileAnnotationI()
         fileAnn.ns = rstring(NAMESPACE)
         fileAnn.setFile(omero.model.OriginalFileI(orig_file.id.val, False))
