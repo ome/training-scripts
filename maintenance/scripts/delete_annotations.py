@@ -76,7 +76,7 @@ def main(args):
     parser.add_argument('--name', default="trainer-1",
                         help="The user deleting the annotations")
     parser.add_argument('--anntype', default="map",
-                        help="The namespace of the annotations")
+                        help="The type of the annotations")
     parser.add_argument('--namespace',
                         default="omero.batch_roi_export.map_ann",
                         help="The namespace of the annotations")
